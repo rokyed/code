@@ -873,7 +873,7 @@ bool save_world(const char *mname, bool nolms)
     if(!*mname) mname = game::getclientmap();
     setmapfilenames(*mname ? mname : "untitled");
     if(savebak) backup(ogzname, bakname);
-    stream *f = opengzfile(ogzname, "wb");
+    stream *f = openxzfile(ogzname, "wb");
     if(!f) { conoutf(CON_WARN, "could not write map to %s", ogzname); return false; }
 
     int numvslots = vslots.length();
@@ -997,7 +997,8 @@ bool load_world(const char *mname, const char *cname)        // still supports a
 {
     int loadingstart = SDL_GetTicks();
     setmapfilenames(mname, cname);
-    stream *f = opengzfile(ogzname, "rb");
+    stream *f = openxzfile(ogzname, "rb");
+	if(!f) f = opengzfile(ogzname, "rb"); //try old compression
     if(!f) { conoutf(CON_ERROR, "could not read map %s", ogzname); return false; }
     octaheader hdr;
     if(f->read(&hdr, 7*sizeof(int)) != 7*sizeof(int)) { conoutf(CON_ERROR, "map %s has malformatted header", ogzname); delete f; return false; }
