@@ -93,6 +93,7 @@ target_link_libraries(${SB_CLIENT_BINARY}
     ${SDL2_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${ZLIB_LIBRARIES}
+	${LZMA_LIBRARY}
     ${BUILD_EXTRA_LIBS}
 )
 
