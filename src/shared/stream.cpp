@@ -987,6 +987,285 @@ struct gzstream : stream
     }
 };
 
+struct xzstream : stream
+{
+    enum
+    {
+        BUFSIZE  = 16384,
+        OS_UNIX  = 0x03
+    };
+    enum
+    {
+        F_ASCII    = 0x01,
+        F_CRC      = 0x02,
+        F_EXTRA    = 0x04,
+        F_NAME     = 0x08,
+        F_COMMENT  = 0x10,
+        F_RESERVED = 0xE0
+    };
+
+    stream *file;
+    lzma_stream zfile;
+    uchar *buf;
+    bool reading, writing, autoclose;
+    uint crc;
+    size_t headersize;
+
+    xzstream() : file(NULL), buf(NULL), reading(false), writing(false), autoclose(false), crc(0), headersize(0)
+    {
+		zfile.next_in = zfile.next_out = NULL; //pointers for the compression routine chain
+		zfile.avail_in = zfile.avail_out = zfile.total_in = zfile.total_out = 0; //todo do we need those?
+		zfile.allocator = NULL; zfile.internal = NULL; //do not use custom malloc
+		//some yet unused reserved vars:
+		zfile.reserved_ptr1 = zfile.reserved_ptr2 = zfile.reserved_ptr3 = zfile.reserved_ptr4 = NULL;
+	    zfile.reserved_int1 = zfile.reserved_int2 = zfile.reserved_int3 = zfile.reserved_int4 = 0;
+	    zfile.reserved_enum1 = zfile.reserved_enum2 = LZMA_RESERVED_ENUM;
+    }
+
+    ~xzstream()
+    {
+        close();
+    }
+
+    void writestreamheader()
+    {
+	    const uchar header[6] = { 0xFD, '7', 'z', 'X', 'Z', 0x00 };
+        file->write(header, sizeof(header));
+    }
+
+    bool checkstreamheader()
+    {
+        readbuf(10);
+		const uchar header[6] = { 0xFD, '7', 'z', 'X', 'Z', 0x00 };
+		loopi(6) if(readbyte() != header[i]) { conoutf("magic bytes: no xz file"); return false; }
+        uchar flags = readbyte();
+        if(flags & F_RESERVED) return false;
+        skipbytes(6);
+        if(flags & F_EXTRA)
+        {
+            size_t len = readbyte(512);
+            len |= size_t(readbyte(512))<<8;
+            skipbytes(len);
+        }
+        if(flags & F_NAME) while(readbyte(512));
+        if(flags & F_COMMENT) while(readbyte(512));
+        if(flags & F_CRC) skipbytes(2);
+        headersize = size_t(file->tell() - zfile.avail_in);
+        return zfile.avail_in > 0 || !file->end();
+    }
+
+    void readbuf(size_t size = BUFSIZE)
+    {
+        if(!zfile.avail_in) zfile.next_in = (Bytef *)buf;
+        size = min(size, size_t(&buf[BUFSIZE] - &zfile.next_in[zfile.avail_in]));
+        size_t n = file->read((byte *)zfile.next_in + zfile.avail_in, size);
+        if(n > 0) zfile.avail_in += n;
+    }
+
+    uchar readbyte(size_t size = BUFSIZE)
+    {
+        if(!zfile.avail_in) readbuf(size);
+        if(!zfile.avail_in) return 0;
+        zfile.avail_in--;
+        return *(uchar *)zfile.next_in++;
+    }
+
+    void skipbytes(size_t n)
+    {
+        while(n > 0 && zfile.avail_in > 0)
+        {
+            size_t skipped = min(n, size_t(zfile.avail_in));
+            zfile.avail_in -= skipped;
+            zfile.next_in += skipped;
+            n -= skipped;
+        }
+        if(n <= 0) return;
+        file->seek(n, SEEK_CUR);
+    }
+
+    bool open(stream *f, const char *mode, bool needclose, int level) //todo level
+    {
+        if(file) return false;
+        for(; *mode; mode++)
+        {
+            if(*mode=='r') { reading = true; break; }
+            else if(*mode=='w') { writing = true; break; }
+        }
+		//initialize lzma
+        if(reading)
+        {
+			if(lzma_auto_decoder(&zfile, UINT64_MAX, LZMA_TELL_UNSUPPORTED_CHECK) != LZMA_OK) reading = false;
+        }
+        else if(writing) 
+	    {
+			if (lzma_easy_encoder(&zfile, level, LZMA_CHECK_CRC64) != LZMA_OK) writing = false;
+		}
+        else return false; //(!reading && !writing) 
+
+        autoclose = needclose;
+        file = f;
+        crc = crc32(0, NULL, 0);
+        buf = new uchar[BUFSIZE];
+
+        //if(reading)
+        //{
+        //    if(!checkheader()) { stopreading(); return false; }
+        //}
+        //else if(writing) writeheader();
+        return true;
+    }
+
+    void stopreading()
+    {
+        if(!reading) return;
+        lzma_end(&zfile);
+        reading = false;
+    }
+
+    void finishwriting()
+    {
+        if(!writing) return;
+        for(;;)
+        {
+            int err = zfile.avail_out > 0 ? lzma_code (&zfile, LZMA_RUN) : LZMA_OK; //todo LZMA_FINISH ?
+            if(err != LZMA_OK && err != LZMA_STREAM_END) break;
+            flushbuf();
+            if(err == LZMA_STREAM_END) break;
+        }
+        uchar trailer[8] = //todo
+        {
+            uchar(crc&0xFF), uchar((crc>>8)&0xFF), uchar((crc>>16)&0xFF), uchar((crc>>24)&0xFF),
+            uchar(zfile.total_in&0xFF), uchar((zfile.total_in>>8)&0xFF), uchar((zfile.total_in>>16)&0xFF), uchar((zfile.total_in>>24)&0xFF)
+        };
+        file->write(trailer, sizeof(trailer));
+    }
+
+    void stopwriting()
+    {
+        if(!writing) return;
+        lzma_end(&zfile);
+        writing = false;
+    }
+
+    void close()
+    {
+        stopreading();
+        finishwriting();
+        stopwriting();
+        DELETEA(buf);
+        if(autoclose) DELETEP(file);
+    }
+
+    bool end() { return !reading && !writing; }
+    offset tell() { return reading ? zfile.total_out : (writing ? zfile.total_in : offset(-1)); }
+    offset rawtell() { return file ? file->tell() : offset(-1); }
+
+    offset size()
+    {
+        if(!file) return -1;
+        offset pos = tell();
+        if(!file->seek(-4, SEEK_END)) return -1;
+        uint isize = file->getlil<uint>();
+        return file->seek(pos, SEEK_SET) ? isize : offset(-1);
+    }
+
+    offset rawsize() { return file ? file->size() : offset(-1); }
+
+    bool seek(offset pos, int whence)
+    {
+        if(writing || !reading) return false;
+
+        if(whence == SEEK_END)
+        {
+            uchar skip[512];
+            while(read(skip, sizeof(skip)) == sizeof(skip));
+            return !pos;
+        }
+        else if(whence == SEEK_CUR) pos += zfile.total_out;
+
+        if(pos >= (offset)zfile.total_out) pos -= zfile.total_out;
+        else if(pos < 0 || !file->seek(headersize, SEEK_SET)) return false;
+        else
+        {
+            if(zfile.next_in && zfile.total_in <= uint(zfile.next_in - buf))
+            {
+                zfile.avail_in += zfile.total_in;
+                zfile.next_in -= zfile.total_in;
+            }
+            else
+            {
+                zfile.avail_in = 0;
+                zfile.next_in = NULL;
+            }
+            //inflateReset(&zfile); todo
+            crc = crc32(0, NULL, 0);
+        }
+
+        uchar skip[512];
+        while(pos > 0)
+        {
+            size_t skipped = (size_t)min(pos, (offset)sizeof(skip));
+            if(read(skip, skipped) != skipped) { stopreading(); return false; }
+            pos -= skipped;
+        }
+
+        return true;
+    }
+
+    size_t read(void *buf, size_t len)
+    {
+        if(!reading || !buf || !len) return 0;
+        zfile.next_out = (Bytef *)buf;
+        zfile.avail_out = len;
+        while(zfile.avail_out > 0)
+        {
+            if(!zfile.avail_in) //fill buffer
+            {
+                readbuf(BUFSIZE);
+                if(!zfile.avail_in) { stopreading(); break; }
+            }
+			int err = lzma_code(&zfile, LZMA_RUN); //decompress buffer
+            if(err == Z_STREAM_END) { crc = crc32(crc, (Bytef *)buf, len - zfile.avail_out); /*finishreading(); */stopreading(); return len - zfile.avail_out; }
+            else if(err != Z_OK) { stopreading(); break; }
+        }
+        crc = crc32(crc, (Bytef *)buf, len - zfile.avail_out);
+        return len - zfile.avail_out;
+    }
+
+	//writes the buffer to the file (-stream) as soon as its available from the compression routine
+    bool flushbuf(bool full = false)
+    {
+        if(full) lzma_code(&zfile, LZMA_SYNC_FLUSH);
+        if(zfile.next_out && zfile.avail_out < BUFSIZE)
+        {
+            if(file->write(buf, BUFSIZE - zfile.avail_out) != BUFSIZE - zfile.avail_out || (full && !file->flush()))
+                return false;
+        }
+        zfile.next_out = buf;
+        zfile.avail_out = BUFSIZE;
+        return true;
+    }
+
+    bool flush() { return flushbuf(true); }
+
+    size_t write(const void *buf, size_t len)
+    {
+        if(!writing || !buf || !len) return 0;
+        zfile.next_in = (Bytef *)buf;
+        zfile.avail_in = len;
+
+        while(zfile.avail_in > 0)
+        {
+            if(!zfile.avail_out && !flushbuf()) { stopwriting(); break; } //flush everything unflushed before
+            int err = lzma_code(&zfile, LZMA_RUN); //compress data
+            if(err != LZMA_OK) { stopwriting(); break; }
+        }
+
+        crc = crc32(crc, (Bytef *)buf, len - zfile.avail_in);
+        return len - zfile.avail_in;
+    }
+};
+
 struct utf8stream : stream
 {
     enum
@@ -1192,6 +1471,15 @@ stream *opengzfile(const char *filename, const char *mode, stream *file, int lev
     gzstream *gz = new gzstream;
     if(!gz->open(source, mode, !file, level)) { if(!file) delete source; return NULL; }
     return gz;
+}
+
+stream *openxzfile(const char *filename, const char *mode, stream *file, int level)
+{
+    stream *source = file ? file : openfile(filename, mode);
+    if(!source) return NULL;
+    xzstream *xz = new xzstream;
+    if(!xz->open(source, mode, !file, level)) { if(!file) delete source; return NULL; }
+    return xz;
 }
 
 stream *openutf8file(const char *filename, const char *mode, stream *file)

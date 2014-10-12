@@ -50,6 +50,7 @@
 #include <enet/enet.h>
 
 #include <zlib.h>
+#include <lzma.h>
 
 #include "tools.h"
 #include "geom.h"
