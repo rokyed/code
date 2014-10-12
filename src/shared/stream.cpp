@@ -1029,31 +1029,19 @@ struct xzstream : stream
 
     void writestreamheader()
     {
-	    const uchar header[6] = { 0xFD, '7', 'z', 'X', 'Z', 0x00 };
+	    const uchar header[6] = { 0xFE, '8', 'z', 'X', 'Z', 0x00 };
         file->write(header, sizeof(header));
     }
 
     bool checkstreamheader()
     {
-        readbuf(10);
-		const uchar header[6] = { 0xFD, '7', 'z', 'X', 'Z', 0x00 };
+        readbuf(6);
+		const uchar header[6] = { 0xFE, '8', 'z', 'X', 'Z', 0x00 };
 		loopi(6) if(readbyte() != header[i]) { conoutf("magic bytes: no xz file"); return false; }
-        uchar flags = readbyte();
-        if(flags & F_RESERVED) return false;
-        skipbytes(6);
-        if(flags & F_EXTRA)
-        {
-            size_t len = readbyte(512);
-            len |= size_t(readbyte(512))<<8;
-            skipbytes(len);
-        }
-        if(flags & F_NAME) while(readbyte(512));
-        if(flags & F_COMMENT) while(readbyte(512));
-        if(flags & F_CRC) skipbytes(2);
-        headersize = size_t(file->tell() - zfile.avail_in);
-        return zfile.avail_in > 0 || !file->end();
+		return true;
     }
 
+	//fill buffer for reading
     void readbuf(size_t size = BUFSIZE)
     {
         if(!zfile.avail_in) zfile.next_in = (Bytef *)buf;
@@ -1107,11 +1095,11 @@ struct xzstream : stream
         crc = crc32(0, NULL, 0);
         buf = new uchar[BUFSIZE];
 
-        //if(reading)
-        //{
-        //    if(!checkheader()) { stopreading(); return false; }
-        //}
-        //else if(writing) writeheader();
+        if(reading)
+        {
+            if(!checkstreamheader()) { stopreading(); return false; }
+        }
+        else if(writing) writestreamheader();
         return true;
     }
 
