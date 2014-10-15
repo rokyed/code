@@ -1071,7 +1071,7 @@ struct xzstream : stream
         file->seek(n, SEEK_CUR);
     }
 
-    bool open(stream *f, const char *mode, bool needclose, int level) //todo level
+    bool open(stream *f, const char *mode, bool needclose, int level)
     {
         if(file) return false;
         for(; *mode; mode++)
@@ -1115,7 +1115,7 @@ struct xzstream : stream
         if(!writing) return;
         for(;;)
         {
-            int err = zfile.avail_out > 0 ? lzma_code (&zfile, LZMA_RUN) : LZMA_OK; //todo LZMA_FINISH ?
+            int err = zfile.avail_out > 0 ? lzma_code (&zfile, LZMA_FINISH) : LZMA_OK; //todo LZMA_FINISH ?
             if(err != LZMA_OK && err != LZMA_STREAM_END) break;
             flushbuf();
             if(err == LZMA_STREAM_END) break;
@@ -1185,7 +1185,7 @@ struct xzstream : stream
                 zfile.avail_in = 0;
                 zfile.next_in = NULL;
             }
-            //inflateReset(&zfile); todo
+			lzma_auto_decoder(&zfile, UINT64_MAX, LZMA_TELL_UNSUPPORTED_CHECK);
             crc = crc32(0, NULL, 0);
         }
 
