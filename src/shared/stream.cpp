@@ -987,6 +987,12 @@ struct gzstream : stream
     }
 };
 
+////lzma compressed filestream (in xz format)
+//therefore it passes everything from the file to a buffer, (de)compresses it there and make it available
+//it writes in a similar manner to the xz-format (version 1.0.4), which means:
+//  || Stream Header | Block | Block | .. | Block | Index | Stream Footer ||
+// every size is a multiply of 4, if you use  a header before this filestream, make the offset a multiply of 4 as well
+
 struct xzstream : stream
 {
     enum
@@ -1029,14 +1035,14 @@ struct xzstream : stream
 
     void writestreamheader()
     {
-	    const uchar header[6] = { 0xFE, '8', 'z', 'X', 'Z', 0x00 };
+	    const uchar header[6] = { 0xFD, '7', 'z', 'X', 'Z', 0x00 };
         file->write(header, sizeof(header));
     }
 
     bool checkstreamheader()
     {
         readbuf(6);
-		const uchar header[6] = { 0xFE, '8', 'z', 'X', 'Z', 0x00 };
+		const uchar header[6] = { 0xFD, '7', 'z', 'X', 'Z', 0x00 };
 		loopi(6) if(readbyte() != header[i]) { conoutf("magic bytes: no xz file"); return false; }
 		return true;
     }
