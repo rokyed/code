@@ -47,7 +47,15 @@ elseif(${BUILD_TARGET_OSX})
     set(SDL2_INCLUDE_DIRS "${SDL2_INCLUDE_DIR};${SDL2_IMAGE_INCLUDE_DIR};${SDL2_MIXER_INCLUDE_DIR}")
     #include_directories(${SDL2_INCLUDE_DIR} ${SDL2_IMAGE_INCLUDE_DIR} ${SDL2_MIXER_INCLUDE_DIR})
 endif()
-find_library(LZMA_LIBRARY liblzma)
+message(STATUS "Detecting LZMA...")
+
+if(NOT ${BUILD_TARGET_WINDOWS})
+    find_library(LZMA_LIBRARY lzma)
+    find_path(LZMA_INCLUDE_DIR lzma.h)
+else()
+    find_library(LZMA_LIBRARY liblzma)
+	set(LZMA_INCLUDE_DIR "")
+endif()
 
 if(NOT DEFINED ENET_LIBRARIES AND NOT DEFINED LOCAL_ENET)
     set(LOCAL_ENET 1 CACHE INTERNAL "Use local enet library")
@@ -65,6 +73,7 @@ endif()
 include_directories(
     ${ENET_INCLUDE_DIRS}
     ${SDL2_INCLUDE_DIRS}
+	${LZMA_INCLUDE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/shared
     ${CMAKE_CURRENT_SOURCE_DIR}/engine
