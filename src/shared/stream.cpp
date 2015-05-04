@@ -443,6 +443,20 @@ const char *addrepository(const char *dir)
     return pf.dir;
 }
 
+void detectrepositories()
+{
+    // Add required repository "repository/inexor-core" or print error message
+	// Detect other repositories
+	// Validate repositories
+	// Add validated repositories
+}
+
+void validaterepository(const char *name)
+{
+    // Checks if the required folders (media and config) are available
+	// Checks if the repository.json exists
+}
+
 /// Checks whether given file exists (and is available in the specific mode)
 /// Where Path is the filename and mode can optionally be set
 /// Available Modes are "e" (see @Return) "w"/"a" for writeable files only and "d" for executeable files only

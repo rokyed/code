@@ -1475,6 +1475,8 @@ extern bool createdir(const char *path);
 extern size_t fixrepository(char *dir);
 extern const char *sethomedir(const char *dir);
 extern const char *addrepository(const char *dir);
+extern void detectrepositories();
+extern void validaterepository(const char *name);
 extern const char *findfile(const char *filename, const char *mode);
 extern bool findzipfile(const char *filename);
 extern stream *openrawfile(const char *filename, const char *mode);

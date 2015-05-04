@@ -1277,6 +1277,9 @@ int main(int argc, char **argv)
         }
     }
 
+    /// Detect repositories
+    detectrepositories();
+
 	/// parse command line arguments
     execfile("init.cfg", false);
     for(int i = 1; i<argc; i++)
