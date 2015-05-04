@@ -252,7 +252,7 @@ static void mountzip(ziparchive &arch, vector<zipfile> &files, const char *mount
     if(mountdir)
     {
         copystring(mdir, mountdir);
-        if(fixpackagedir(mdir) <= 1) mdir[0] = '\0';
+        if(fixrepository(mdir) <= 1) mdir[0] = '\0';
     }
     loopv(files)
     {

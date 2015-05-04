@@ -233,12 +233,12 @@ done:
 #endif
 
 string homedir = "";
-struct packagedir
+struct repository
 {
     char *dir, *filter;
     size_t dirlen, filterlen;
 };
-vector<packagedir> packagedirs;
+vector<repository> repositories;
 
 /// Create a relative path
 /// @Return (const char*) file relative to (const char*) dir
@@ -373,7 +373,7 @@ bool createdir(const char *path)
 #endif
 }
 
-size_t fixpackagedir(char *dir)
+size_t fixrepository(char *dir)
 {
     path(dir);
     size_t len = strlen(dir);
@@ -412,7 +412,7 @@ const char *sethomedir(const char *dir)
 {
     string pdir;
     copystring(pdir, dir);
-	if(!subhomedir(pdir, sizeof(pdir), dir) || !fixpackagedir(pdir)) return NULL;
+	if(!subhomedir(pdir, sizeof(pdir), dir) || !fixrepository(pdir)) return NULL;
     copystring(homedir, pdir);
 	return homedir;
 }
@@ -424,7 +424,7 @@ const char *addrepository(const char *dir)
 {
     string pdir;
     copystring(pdir, dir);
-    if(!subhomedir(pdir, sizeof(pdir), dir) || !fixpackagedir(pdir)) return NULL;
+    if(!subhomedir(pdir, sizeof(pdir), dir) || !fixrepository(pdir)) return NULL;
     char *filter = pdir;
     for(;;)
     {
@@ -435,7 +435,7 @@ const char *addrepository(const char *dir)
         if(filter > pdir && filter[-1] == PATHDIV && filter[len] == PATHDIV) break;
         filter += len;
     }    
-    packagedir &pf = packagedirs.add();
+    repository &pf = repositories.add();
     pf.dir = filter ? newstring(pdir, filter-pdir) : newstring(pdir);
     pf.dirlen = filter ? filter-pdir : strlen(pdir);
     pf.filter = filter ? newstring(filter) : NULL;
@@ -471,9 +471,9 @@ const char *findfile(const char *filename, const char *mode)
         }
     }
     if(mode[0]=='w' || mode[0]=='a') return filename;
-    loopv(packagedirs)
+    loopv(repositories)
     {
-        packagedir &pf = packagedirs[i];
+        repository &pf = repositories[i];
         if(pf.filter && strncmp(filename, pf.filter, pf.filterlen)) continue;
         formatstring(s)("%s%s", pf.dir, filename);
         if(fileexists(s, mode)) return s;
@@ -553,9 +553,9 @@ int listfiles(const char *dir, const char *ext, vector<char *> &files)
         formatstring(s)("%s%s", homedir, dirname);
         if(listdir(s, false, ext, files)) dirs++;
     }
-    loopv(packagedirs)
+    loopv(repositories)
     {
-        packagedir &pf = packagedirs[i];
+        repository &pf = repositories[i];
         if(pf.filter && strncmp(dirname, pf.filter, dirlen == pf.filterlen-1 ? dirlen : pf.filterlen))
             continue;
         formatstring(s)("%s%s", pf.dir, dirname);
