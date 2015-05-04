@@ -417,10 +417,10 @@ const char *sethomedir(const char *dir)
 	return homedir;
 }
 
-/// Add an optional media directory
-/// Inexor can have multiple source-directories for its content
-/// @Example "media" and "media-other-old-stuff" both can be used simoultaneously
-const char *addpackagedir(const char *dir)
+/// Add an optional repository
+/// Inexor can have multiple repositories for it's media and configuration
+/// @Example "media" and "media-other-old-stuff" both can be used simultaneously
+const char *addrepository(const char *dir)
 {
     string pdir;
     copystring(pdir, dir);

@@ -1287,8 +1287,8 @@ int main(int argc, char **argv)
             case 'r': /* compat, ignore */ break;
             case 'k':
             {
-                const char *dir = addpackagedir(&argv[i][2]);
-                if(dir) logoutf("Adding package directory: %s", dir);
+                const char *dir = addrepository(&argv[i][2]);
+                if(dir) logoutf("Adding repository: %s", dir);
                 break;
             }
             case 'g': logoutf("Setting log file: %s", &argv[i][2]); setlogfile(&argv[i][2]); break;
