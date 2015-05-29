@@ -2265,36 +2265,47 @@ bool validateblock(const char *s)
     }
     return brakdepth == 0;
 }
-
-#ifndef STANDALONE
-static inline bool sortidents(ident *x, ident *y)
+/// Returns a pointer to the extension of string str (but does not allocate a new string) without the dot.
+const char *getextension(const char *str)
 {
-    return strcmp(x->name, y->name) < 0;
+    if(!str) return NULL;
+    loopirev(strlen(str)) {
+        if(str[i] == '\\' || str[i] == '/') return NULL; //reached the previous folder seperator
+        if(str[i] == '.') return &str[i + 1];
+    }
+    return NULL;
 }
+ICOMMAND(getextension, "s", (char *str),
+    const char *a = getextension(str);
+result(a ? a : "");
+);
 
-//cuts the extension of string str. if extension ext is specified, just this extension will be cut
-void cutextension(char *str, char *ext)
+/// Cuts the extension of string str, ext can be NULL to cut all extensions. 
+/// @param ext if != NULL, just this given extension will be cut.
+void cutextension(char *str, const char *ext)
 {
-	if(!str) return;
-	int len = strlen(str);
-	char *pos = NULL;
-	loopirev(len) if(str[i] == '.') { pos = &str[i]; break; }
-	if(ext && ext[0] == '.') ext++;
-	if(pos && (!ext || !strcmp(pos+1, ext))) pos[0] = '\0';
+    if(!str) return;
+    int len = strlen(str);
+    char *pos = NULL;
+    loopirev(len) if(str[i] == '.') { pos = &str[i]; break; }
+    if(ext && ext[0] == '.') ext++;
+    if(pos && (!ext || !strcmp(pos+1, ext))) pos[0] = '\0';
 }
 
 ICOMMAND(cutextension, "ss", (char *str, char *ext), 
-	cutextension(str, ext && ext[0] ? ext : NULL);
-	result(str ? str : ""); 
+    cutextension(str, ext && ext[0] ? ext : NULL);
+result(str ? str : ""); 
 );
 
 static time_t systime = 0;
 static string timebuf;
 
-//returns the time in the given format
+/// Returns a string of the time in the given format.
+/// @param format specifies how srftime will format your string.
+/// @see srftime
 const char *gettimestr(const char *format, bool forcelowercase)
 {
-	if(!systime) { systime = time(NULL); systime -= totalmillis/1000; if(!systime) systime++; }
+    if(!systime) { systime = time(NULL); systime -= totalmillis/1000; if(!systime) systime++; }
     time_t timeoffset = systime + totalmillis/1000;
     strftime(timebuf, sizeof(timebuf), format, localtime(&timeoffset));
 
@@ -2305,9 +2316,15 @@ const char *gettimestr(const char *format, bool forcelowercase)
         while(*src) *dst++ = tolower(*src++);
         *dst++ = '\0'; 
     }
-	return timebuf;
+    return timebuf;
 }
-ICOMMAND(gettimestr, "si", (const char *format, int *forcecase), gettimestr(format, *forcecase!=0));
+ICOMMAND(gettimestr, "si", (const char *format, int *forcecase), gettimestr(format, *forcecase != 0));
+
+#ifndef STANDALONE
+static inline bool sortidents(ident *x, ident *y)
+{
+    return strcmp(x->name, y->name) < 0;
+}
 
 void writecfg(const char *name)
 {
