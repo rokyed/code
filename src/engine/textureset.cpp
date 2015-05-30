@@ -250,7 +250,7 @@ namespace inexor {
             if(alpha)
             {
                 JSON *front = alpha->getchild("front"), *back = alpha->getchild("back");
-                vs.alphafront = front ? clamp(front->valuefloat, 0.0f, 1.0f) : 0;
+                vs.alphafront = front ? clamp(front->valuefloat, 0.0f, 1.0f) : 0.5f; //todo
                 vs.alphaback = back ? clamp(back->valuefloat, 0.0f, 1.0f) : 0;
             }
 
@@ -462,6 +462,28 @@ namespace inexor {
                 if(vs->xoffset) off->addchild("x", JSON_CreateInt(vs->xoffset));
                 if(vs->yoffset) off->addchild("y", JSON_CreateInt(vs->yoffset));
                 root->addchild("offset", off);
+            }
+            if(vs->scrollS || vs->scrollT)
+            {
+                JSON *scr = JSON_CreateObject();
+                if(vs->scrollS) scr->addchild("x", JSON_CreateFloat(vs->scrollS));
+                if(vs->scrollT) scr->addchild("y", JSON_CreateFloat(vs->scrollT));
+                root->addchild("scroll", scr);
+            }
+            if(vs->alphafront != 0.5f || vs->alphaback)
+            {
+                JSON *alpha = JSON_CreateObject();
+                if(vs->alphafront != 0.5f) alpha->addchild("front", JSON_CreateFloat(vs->alphafront));
+                if(vs->alphaback) alpha->addchild("back", JSON_CreateFloat(vs->alphaback));
+                root->addchild("alpha", alpha);
+            }
+            if(vs->colorscale != vec(1.0f, 1.0f, 1.0f))
+            {
+                JSON *col = JSON_CreateObject();
+                col->addchild("red", JSON_CreateFloat(vs->colorscale.r));
+                col->addchild("green", JSON_CreateFloat(vs->colorscale.g));
+                col->addchild("blue", JSON_CreateFloat(vs->colorscale.b));
+                root->addchild("color", col);
             }
         }
 
