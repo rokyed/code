@@ -240,7 +240,8 @@ struct packagedir
 };
 vector<packagedir> packagedirs;
 
-/// Create an appended path! same as dir << file << endl;
+/// Create an appended path! almost the same as dir << file << endl;
+/// If prefix and cmd are set it ends up prefix << (<>part of file) << cmd << dir << file.
 char *makerelpath(const char *dir, const char *file, const char *prefix, const char *cmd)
 {
     static string tmp;
@@ -453,7 +454,7 @@ bool fileexists(const char *path, const char *mode)
 }
 
 /// Creates a directory of given name
-/// @Return Returns true on success
+/// @return Returns true on success
 bool createdir(const char *path)
 {
     size_t len = strlen(path);
@@ -481,7 +482,7 @@ size_t fixpackagedir(char *dir)
     return len;
 }
 
-/// Replaces "$HOME" in string src with the user platforms home-directory
+/// Replaces "$HOME" in string src with the user platforms home-directory.
 bool subhomedir(char *dst, int len, const char *src)
 {
 	const char *sub = strstr(src, "$HOME");
@@ -503,7 +504,7 @@ bool subhomedir(char *dst, int len, const char *src)
 	  return true;
 }
 
-/// sets home directory
+/// sets a home directory, for .
 const char *sethomedir(const char *dir)
 {
     string pdir;
@@ -513,9 +514,9 @@ const char *sethomedir(const char *dir)
 	return homedir;
 }
 
-/// Add an optional media directory
-/// Inexor can have multiple source-directories for its content
-/// @Example "media" and "media-other-old-stuff" both can be used simoultaneously
+/// Add an optional media directory.
+/// Inexor can have multiple source-directories for its content.
+/// @example "media" and "media-other-old-stuff" both can be used simoultaneously.
 const char *addpackagedir(const char *dir)
 {
     string pdir;
@@ -580,7 +581,7 @@ const char *findfile(const char *filename, const char *mode)
 }
 
 /// Internal use only Use listfiles instead.
-/// @Returns false if dirname does not exists
+/// @return false if dirname does not exists.
 bool listdir(const char *dirname, bool rel, const char *ext, vector<char *> &files)
 {
     size_t extsize = ext ? strlen(ext)+1 : 0;
@@ -634,7 +635,7 @@ bool listdir(const char *dirname, bool rel, const char *ext, vector<char *> &fil
 }
 
 /// Lists all files in given directory and put it into vector files
-/// @Argument ext optionally filters for occurences with such extension only 
+/// @param ext optionally filters for occurences with such extension only.
 int listfiles(const char *dir, const char *ext, vector<char *> &files)
 {
     string dirname;
