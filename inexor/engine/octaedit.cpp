@@ -2120,8 +2120,11 @@ void savevslot(JSON *f, int slot)
 	if(slot < 0) return;
 	VSlot &vs = lookupvslot(slot, false);
     Slot &st = *vs.slot;
-    defformatstring(name)("%s.json", st.sts[TEX_DIFFUSE].name);
-	cutextension(name);
+    string name;
+    copystring(name, st.sts[TEX_DIFFUSE].name);
+    cutextension(name);
+    formatstring(name)("/%s.json", makerelpath(inexor::filesystem::getmediadir(DIR_TEXTURE), name));
+    unpath(name);
     f->addchild(JSON_CreateString(name));
 }
 
