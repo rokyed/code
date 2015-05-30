@@ -16,7 +16,6 @@
 #define TEXTURESET_H
 
 #include "engine.h"
-#include "texture.h"
 
 namespace inexor {
     namespace textureset {

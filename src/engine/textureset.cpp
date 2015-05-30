@@ -110,7 +110,7 @@ namespace inexor {
                     st.t = textureload(st.name, 0, true, false, true);
                     if(st.t != notexture) t->needregister |= 1 << k; // remember to register
                 }
-            }            
+            }
         }
 
         void textureset::registerload()
@@ -122,7 +122,7 @@ namespace inexor {
                 loopk(TEX_NUM)
                 {
                     if(k >= t->tex->sts.length()) break; // out of range
-                    if(t->needregister & (1 << k)) registertexture(t->tex->sts[k].name);       
+                    if(t->needregister & (1 << k)) registertexture(t->tex->sts[k].name);
                 }
             }
         }
@@ -145,7 +145,7 @@ namespace inexor {
             {
                 if(slots[i] == texs[0]->tex) start = i;
             }
-            
+
             texturereset(start, texs.length());
 
             loopv(texs) texs[i]->mounted = false;
@@ -214,13 +214,13 @@ namespace inexor {
 
             string shader;
             shader[0] = '\0';
-            if(texmask&(1 << TEX_NORMAL)) strcat_s(shader, "bump");
-            if(texmask&(1 << TEX_ENVMAP)) strcat_s(shader, "env");
-            if(texmask&(1 << TEX_SPEC))   strcat_s(shader, "specmap");
-            if(texmask&(1 << TEX_DEPTH))  strcat_s(shader, "parallax");
-            if(texmask&(1 << TEX_NORMAL)) strcat_s(shader, "glow");
+            if(texmask&(1 << TEX_NORMAL)) strcat(shader, "bump");
+            if(texmask&(1 << TEX_ENVMAP)) strcat(shader, "env");
+            if(texmask&(1 << TEX_SPEC))   strcat(shader, "specmap");
+            if(texmask&(1 << TEX_DEPTH))  strcat(shader, "parallax");
+            if(texmask&(1 << TEX_NORMAL)) strcat(shader, "glow");
 
-            strcat_s(shader, "world");
+            strcat(shader, "world");
 
             return newstring(shader);
         }
@@ -280,7 +280,7 @@ namespace inexor {
                     cutdir(name);
                     JSON *tex = JSON_CreateString(name);
                     root->addchild(jsontextypes[st->type].name, tex);
-                    
+
                     if(st->type == TEX_DIFFUSE) copystring(diffusefile, st->name);
                 }
 
@@ -493,7 +493,7 @@ COMMAND(debugslots, "");
 // - loadalltextures
 // - statistik erstellen -> sortieren
 // - alle texturen -> map texturen -> map json
-// - import command für "#arg1" : 
+// - import command für "#arg1" :
 // - revert make json chars always allocated [DONE]
 // - rename json getchild .. to child getfloat.. to getchildfloat( [DONE]
 // - refractor foralljson to have an independend variablename [DONE]

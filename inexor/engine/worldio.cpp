@@ -2,7 +2,9 @@
 
 #include "inexor/engine/engine.h"
 #include "inexor/shared/filesystem.h"
+#ifndef STANDALONE
 #include "inexor/engine/textureset.h"
+#endif
 
 /// get the map name from a path/file
 /// @param fname folder name
