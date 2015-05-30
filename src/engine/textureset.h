@@ -7,7 +7,7 @@
 /// VSlot       - A Structure holding general info about scale, shadersettings, rotation, ..
 /// Slot        - Basicly thats a "Texture" as you would find it ingame in the texturebrowser.
 ///               It consists of minimum 1 image (the diffuse-file) and various others providing special info (height,..).
-///               Every Slot has a VSlot. (and vice versa: every VSlot has at least one Slot)
+///               Every VSlot has a Slot.
 /// textureset  - A Set of textures/Slots to make loading easier and asynchronous.
 ///
 /// The currently visible stack of ingame-textures (Slots) is vector<Slot *> slots.
@@ -15,9 +15,12 @@
 #ifndef TEXTURESET_H
 #define TEXTURESET_H
 
+#include "engine.h"
+#include "texture.h"
+
 namespace inexor {
     namespace textureset {
-        /// A set of Slots to make threaded loading possible. 
+        /// A set of Slots to make threaded loading possible.
         class textureset
         {
         private:

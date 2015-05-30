@@ -1,8 +1,6 @@
 ///  Texturesets are used to load texture-stacks asynchronously
 ///
 
-#include "engine.h"
-#include "texture.h"
 #include "textureset.h"
 
 static VSlot *reassignvslot(Slot &owner, VSlot *vs);
@@ -12,7 +10,19 @@ namespace inexor {
     namespace textureset {
         SVARP(texturedir, "media/texture");
 
-        const char *jsontextures[8] = { "diffuse", "other", "decal", "normal", "glow", "spec", "depth", "envmap" };
+        struct jsontextype {
+            const char *name;
+            int type;
+        } jsontextypes[8] = {
+            { "diffuse", TEX_DIFFUSE },
+            { "other", TEX_UNKNOWN },
+            { "decal", TEX_DECAL },
+            { "normal", TEX_NORMAL },
+            { "glow", TEX_GLOW },
+            { "spec", TEX_SPEC },
+            { "depth", TEX_DEPTH },
+            { "envmap", TEX_ENVMAP }
+        }; //todo: int gettype() function and const char *getjsontex to not iterate over TEX_NUM
 
         void textureset::addtexture(JSON *j)
         {
@@ -22,7 +32,7 @@ namespace inexor {
             s.loaded = false;
             loopi(TEX_NUM) //check for all 8 kind of textures
             {
-                JSON *sub = j->getchild(jsontextures[i]);
+                JSON *sub = j->getchild(jsontextypes[i].name);
                 if(i == TEX_DIFFUSE && !sub) return; // other stuff wont work?
                 else if(!sub) continue;
                 char *name = sub->valuestring;
@@ -33,14 +43,14 @@ namespace inexor {
                 st.combined = -1;
                 st.t = NULL;
 
-                if(name[0] == '/') copystring(st.name, makerelpath(texturedir, name)); //path relative to texture folder
-                else copystring(st.name, makerelpath(parentdir(sub->currentfile), name)); //path relative to current folder
+                if(name[0] == '/') formatstring(st.name)("%s/%s", texturedir, name); //path relative to texture folder
+                else copystring(st.name, sub->currentfile ? makerelpath(parentdir(sub->currentfile), name): name); //path relative to current folder
 
                 path(st.name);
             }
             if(!s.sts.length()) return; // no textures found
 
-            setslotshader(s, j->getchild("shader")); // TODO
+            setslotshader(s, j->getchild("shader")); // TODO: multithread
 
             //Other Parameters:
             JSON *scale = j->getchild("scale"), *rot = j->getchild("rotation"),
@@ -152,9 +162,9 @@ namespace inexor {
 
             loopi(j->numchilds())
             {
-                const char *name = j->getstring(i);
+                const char *name = j->getchildstring(i);
                 defformatstring(fn) ("%s", name);
-                if (strpbrk(name, "/\\")) formatstring(fn)("%s", makerelpath(parentdir(j->currentfile), name)); //relative path to current folder
+                if(name[0]!='/') formatstring(fn)("%s", makerelpath(parentdir(j->currentfile), name)); //relative path to current folder
                 t->addtexture(fn);
             }
             return t;
@@ -162,7 +172,7 @@ namespace inexor {
 
         bool loadset(const char *name)
         {
-            JSON *j = loadjson(name);
+            JSON *j = loadjson(tempformatstring("%s/%s", texturedir, name));
             if(!j) { conoutf("could not load %s textureset", name); return false; }
             textureset *t = newtextureset(j);
 
@@ -177,7 +187,7 @@ namespace inexor {
         }
         COMMAND(loadset, "s");
 
-        /// Scan Texturedir for texturesets.
+        /// Scan Texturedir for texturesets and load those sets.
         void scantexturedir()
         {
             vector<char *> files;
@@ -193,6 +203,100 @@ namespace inexor {
             t->mount();
         }
         COMMAND(scantexturedir, "");
+
+        /// Guess a shader according to the used textures, allocates string.
+        /// @param texmask a bitmaks containing the loaded textures
+        const char *guessshader(int texmask)
+        {
+            // "bumpenvspecmapparallaxglowworld" with all textures
+
+            if(texmask == (1 << TEX_DIFFUSE)) return newstring("stdworld");
+
+            string shader;
+            shader[0] = '\0';
+            if(texmask&(1 << TEX_NORMAL)) strcat_s(shader, "bump");
+            if(texmask&(1 << TEX_ENVMAP)) strcat_s(shader, "env");
+            if(texmask&(1 << TEX_SPEC))   strcat_s(shader, "specmap");
+            if(texmask&(1 << TEX_DEPTH))  strcat_s(shader, "parallax");
+            if(texmask&(1 << TEX_NORMAL)) strcat_s(shader, "glow");
+
+            strcat_s(shader, "world");
+
+            return newstring(shader);
+        }
+
+        // Add VSlot depending entries to root.
+        void createvslotentries(JSON *root, VSlot *vs)
+        {
+            if(vs->scale != 1.0f)
+            {
+                JSON *scale = JSON_CreateFloat(vs->scale);
+                root->addchild("scale", scale);
+            }
+            if(vs->rotation)
+            {
+                JSON *rot = JSON_CreateInt(vs->rotation);
+                root->addchild("rotation", rot);
+            }
+            if(vs->xoffset)
+            {
+                JSON *xoff = JSON_CreateInt(vs->xoffset);
+                root->addchild("xoffset", xoff);
+            }
+
+            if(vs->yoffset)
+            {
+                JSON *yoff = JSON_CreateInt(vs->yoffset);
+                root->addchild("yoffset", yoff);
+            }
+        }
+
+        /// Exporter/Create texture jsons for already loaded slots.
+        /// Loaded probably through the legacy path.
+        void gentexjsons()
+        {
+            loopvk(vslots)
+            {
+                VSlot *vs = vslots[k];
+                Slot *s = vs->slot;
+
+                JSON *root = JSON_CreateObject();
+
+                string diffusefile; //name the json accordingly to the diffuse file
+
+                JSON *shader; //add an "shader" entry
+                const char *shaderguess = guessshader(s->texmask);
+                if(strcmp(shaderguess, s->shader->name) && !strcmp(s->shader->name, "stdworld"))
+                { // optimize wrong shader setup (e.g. using not as many info-textures as possible )
+                    shader = JSON_CreateString(shaderguess);
+                }
+                else shader = JSON_CreateString(s->shader->name);
+                root->addchild("shader", shader);
+
+                loopv(s->sts) // add all textures
+                {
+                    Slot::Tex *st = &s->sts[i];
+                    defformatstring(name)("%s", st->name);
+                    cutdir(name);
+                    JSON *tex = JSON_CreateString(name);
+                    root->addchild(jsontextypes[st->type].name, tex);
+                    
+                    if(st->type == TEX_DIFFUSE) copystring(diffusefile, st->name);
+                }
+
+                createvslotentries(root, vs);
+
+                cutextension(diffusefile);
+                defformatstring(fn)("%s.json", diffusefile);
+                root->save(fn);
+                conoutf("generated %s", fn);
+
+                delete[] shaderguess;
+                delete root;
+            }
+        }
+        COMMAND(gentexjsons, "");
+
     } // namespace textureset
 }     // namespace inexor
 
@@ -245,6 +349,8 @@ int findslottex(const char *name)
 void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float *scale)
 {
     if(slots.length() >= 0x10000) return;
+    if(!type || !name) return;
+
     static int lastmatslot = -1;
     int tnum = findslottex(type), matslot = findmaterial(type);
     if(tnum < 0) tnum = atoi(type);
@@ -259,7 +365,7 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float
     st.type = tnum;
     st.combined = -1;
     st.t = NULL;
-    if(name && strpbrk(name, "/\\")) copystring(st.name, makerelpath(inexor::textureset::texturedir, name));
+    if(name[0] == '/') formatstring(st.name) ("%s/%s", inexor::textureset::texturedir, name);
     else copystring(st.name, makerelpath(getcurexecdir(), name)); //relative path to current folder
 
     path(st.name);
