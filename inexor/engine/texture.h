@@ -1,5 +1,5 @@
-#ifndef TOOLS_H
-#define TOOLS_H
+#ifndef SHADER_H
+#define SHADER_H
 
 // GL_ARB_vertex_program, GL_ARB_fragment_program
 extern PFNGLGENPROGRAMSARBPROC              glGenProgramsARB_;
@@ -686,14 +686,6 @@ struct MSlot : Slot, VSlot
     }
 };
 
-struct cubemapside
-{
-    GLenum target;
-    const char *name;
-    bool flipx, flipy, swapxy;
-};
-
-extern cubemapside cubemapsides[6];
 extern Texture *notexture;
 extern Shader *defaultshader, *rectshader, *cubemapshader, *notextureshader, *nocolorshader, *nocolorglslshader, *foggedshader, *foggednotextureshader, *stdworldshader, *lineshader, *foggedlineshader;
 extern int reservevpparams, maxvpenvparams, maxvplocalparams, maxfpenvparams, maxfplocalparams, maxvsuniforms, maxfsuniforms;
@@ -703,7 +695,7 @@ extern Shader *useshaderbyname(const char *name);
 extern Texture *loadthumbnail(Slot &slot);
 extern void propagatevslot(VSlot *root, int changed);
 extern void texturereset(int first, int num = 0);
-extern void registertexture(const char *name);
+extern Texture *registertexture(const char *name);
 extern Texture *gettexture(const char *name);
 extern void resetslotshader();
 extern void setslotshader(Slot &s);
@@ -739,9 +731,6 @@ extern void setuptmu(int n, const char *rgbfunc = NULL, const char *alphafunc = 
 extern void setupblurkernel(int radius, float sigma, float *weights, float *offsets);
 extern void setblurshader(int pass, int size, int radius, float *weights, float *offsets, GLenum target = GL_TEXTURE_2D);
 
-extern void savepng(const char *filename, ImageData &image, bool flip = false);
-extern void savetga(const char *filename, ImageData &image, bool flip = false);
-extern bool loaddds(const char *filename, ImageData &image, int force = 0);
 extern bool loadimage(const char *filename, ImageData &image);
 
 extern MSlot &lookupmaterialslot(int slot, bool load = true);
@@ -754,4 +743,4 @@ extern void mergevslot(VSlot &dst, const VSlot &src, const VSlot &delta);
 extern vector<Slot *> slots;
 extern vector<VSlot *> vslots;
 
-#endif // TOOLS_H
+#endif // SHADER_H

@@ -1,7 +1,7 @@
 ///  Texturesets are used to load texture-stacks asynchronously
 ///
 
-#include "textureset.h"
+#include "texture/textureset.h"
 
 ////// Legacy Loading /////
 static VSlot *reassignvslot(Slot &owner, VSlot *vs)
@@ -557,7 +557,7 @@ namespace inexor {
 
 
 // TODO:
-// - make textures look into texturefolder by default
+// - make textures look into texturefolder by default [DONE]
 // - cutextension, cutfolder, getextension [DONE]
 // - replace
 // - loadalltextures

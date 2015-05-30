@@ -27,8 +27,6 @@ prepend(CLIENT_SOURCES_ENGINE ${SOURCE_DIR}/engine
     server.cpp
     shader.cpp
     sound.cpp
-    texture.cpp
-    textureset.cpp
     water.cpp
     world.cpp
     worldio.cpp
@@ -54,6 +52,7 @@ prepend(CLIENT_SOURCES_FPSGAME ${SOURCE_DIR}/fpsgame
 set(CLIENT_SOURCES
   ${CLIENT_SOURCES_ENGINE}
   ${CLIENT_SOURCES_FPSGAME}
+  ${TEXTURE_MODULE_SOURCES}
   ${COMMON_SOURCES} CACHE INTERNAL "")
 
 # Set Binary name

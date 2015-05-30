@@ -11,6 +11,8 @@
 #include "inexor/engine/bih.h"
 #include "inexor/engine/texture.h"
 #include "inexor/engine/model.h"
+#include "inexor/texture/texture2.h"
+#include "inexor/texture/cubemap.h"
 
 
 // GL_ARB_multitexture
@@ -164,20 +166,13 @@ extern int texalign(void *data, int w, int bpp);
 extern void cleanuptexture(Texture *t);
 extern void loadalphamask(Texture *t);
 extern void loadlayermasks();
-extern Texture *cubemapload(const char *name, bool mipit = true, bool msg = true, bool transient = false);
-extern void drawcubemap(int size, const vec &o, float yaw, float pitch, const cubemapside &side);
 extern void loadshaders();
 extern void setuptexparameters(int tnum, void *pixels, int clamp, int filter, GLenum format = GL_RGB, GLenum target = GL_TEXTURE_2D);
 extern void createtexture(int tnum, int w, int h, void *pixels, int clamp, int filter, GLenum component = GL_RGB, GLenum target = GL_TEXTURE_2D, int pw = 0, int ph = 0, int pitch = 0, bool resize = true, GLenum format = GL_FALSE);
+extern void createcompressedtexture(int tnum, int w, int h, uchar *data, int align, int blocksize, int levels, int clamp, int filter, GLenum format, GLenum subtarget);
 extern void blurtexture(int n, int bpp, int w, int h, uchar *dst, const uchar *src, int margin = 0);
 extern void blurnormals(int n, int w, int h, bvec *dst, const bvec *src, int margin = 0);
 extern void renderpostfx();
-extern void initenvmaps();
-extern void genenvmaps();
-extern ushort closestenvmap(const vec &o);
-extern ushort closestenvmap(int orient, int x, int y, int z, int size);
-extern GLuint lookupenvmap(ushort emid);
-extern GLuint lookupenvmap(Slot &slot);
 extern bool reloadtexture(Texture &tex);
 extern bool reloadtexture(const char *name);
 extern void setuptexcompress();
