@@ -2154,8 +2154,8 @@ void saveusedvslots(JSON *f)
 	}
 }
 
-//for now this will just compact the texture slots
-void generatemapjson(char *filename)
+/// Generates a map json, including all textures the map actually uses.
+void genmapjson(const char *filename)
 {
 	if(noedit()) return;
 
@@ -2165,13 +2165,18 @@ void generatemapjson(char *filename)
 
 	saveusedvslots(texarray);
 
-    if(filename && filename[0]) cutextension(filename);
-    defformatstring(fn) ("%s/%s.json", mapdir, filename ? filename : game::getclientmap());
+    // file name and save
+    string s;
+    if(filename && filename[0]){
+        strcpy_s(s, filename);
+        cutextension(s);
+    }
+    defformatstring(fn) ("%s/%s.json", mapdir, filename && filename[0] ? s : game::getclientmap());
     root->save(fn);
 
 	delete root;
 }
-ICOMMAND(generatemapjson, "s", (char *s), generatemapjson(s));
+ICOMMAND(genmapjson, "s", (const char *s), genmapjson(s));
 
 ////////// flip and rotate ///////////////
 uint dflip(uint face) { return face==F_EMPTY ? face : 0x88888888 - (((face&0xF0F0F0F0)>>4) | ((face&0x0F0F0F0F)<<4)); }
