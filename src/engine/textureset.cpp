@@ -288,8 +288,10 @@ namespace inexor {
 
                 cutextension(diffusefile);
                 defformatstring(fn)("%s.json", diffusefile);
-                root->save(fn);
-                conoutf("generated %s", fn);
+
+                const char *found = findfile(fn, "w"); // do not overwrite stuff
+
+                if(!found && root->save(fn))  conoutf("generated %s", fn);
 
                 delete[] shaderguess;
                 delete root;
