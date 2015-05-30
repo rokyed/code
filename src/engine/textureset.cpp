@@ -41,10 +41,7 @@ namespace inexor {
                 st.type = i;
                 st.combined = -1;
                 st.t = NULL;
-
                 filesystem::getmedianame(st.name, name, DIR_TEXTURE, sub);
-                conoutf("st.name %s %s %s", st.name, name, texturedir);
-
                 path(st.name);
             }
             if(!s.sts.length()) return; // no textures found
