@@ -2086,7 +2086,7 @@ bool hastexcube(cube &c, int tex)
 	return false;
 }
 
-void mpreplacetex(int oldtex, int newtex, bool insel, selinfo &sel, bool local)
+void mpreplacetex(int oldtex, int newtex, bool insel, selinfo &sel, bool local, bool update)
 {
     if(local) game::edittrigger(sel, EDIT_REPLACE, oldtex, newtex, insel ? 1 : 0);
     if(insel)
@@ -2097,7 +2097,7 @@ void mpreplacetex(int oldtex, int newtex, bool insel, selinfo &sel, bool local)
     {
         loopi(8) replacetexcube(worldroot[i], oldtex, newtex);
     }
-    allchanged();
+    if(update) allchanged();
 }
 
 void replace(bool insel)
@@ -2120,11 +2120,15 @@ void savevslot(JSON *f, int slot)
 	if(slot < 0) return;
 	VSlot &vs = lookupvslot(slot, false);
     Slot &st = *vs.slot;
-    string name;
+    string name, dir;
     copystring(name, st.sts[TEX_DIFFUSE].name);
     cutextension(name);
-    formatstring(name)("/%s.json", makerelpath(inexor::filesystem::getmediadir(DIR_TEXTURE), name));
-    unpath(name);
+
+    copystring(dir, inexor::filesystem::getmediadir(DIR_TEXTURE));
+    path(dir);
+    path(name);
+    formatstring(name)("/%s.json", GetRelativeFilename(dir, name));
+    uniformfilename(name);
     f->addchild(JSON_CreateString(name));
 }
 
@@ -2151,10 +2155,11 @@ void saveusedvslots(JSON *f)
 		if(usedvslots.length())
 		{
 			savevslot(f, usedvslots[0]);
-			mpreplacetex(usedvslots[0], k, false, sel, true); //unused tex replaces used one. changes will apply when map.cfg gets executed
+			mpreplacetex(usedvslots[0], k, false, sel, true, false); //unused tex replaces used one. changes will apply when map.cfg gets executed
 			usedvslots.remove(0);
 		}
 	}
+    allchanged();
 }
 
 /// Generates a map json, including all textures the map actually uses.
