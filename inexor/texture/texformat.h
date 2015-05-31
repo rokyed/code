@@ -1,4 +1,4 @@
-/// 
+/// @file Small helper functions to organize which OpenGL formats to use.
 
 #ifndef _TEX_FORMAT_H
 #define _TEX_FORMAT_H

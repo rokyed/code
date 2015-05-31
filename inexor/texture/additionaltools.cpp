@@ -1,4 +1,4 @@
-///
+/// @file additional texture generation tools provided by the engine.
 
 //#include "texture/additionaltools.h"
 #include "texture/texsettings.h"

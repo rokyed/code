@@ -1,4 +1,4 @@
-/// @file Texture modifiers applyable on load.
+/// @file Texture modifiers mainly applied on load.
 
 #ifndef TEX_MODIFIERS_H
 #define TEX_MODIFIERS_H

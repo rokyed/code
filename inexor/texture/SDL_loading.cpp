@@ -1,4 +1,4 @@
-/// 
+/// @file Wrapper for the SDL API calls used to load textures.
 
 #include "engine.h"
 #include "texture/SDL_loading.h"

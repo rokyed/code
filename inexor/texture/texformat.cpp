@@ -1,4 +1,4 @@
-///
+/// @file Small helper functions to organize which OpenGL formats to use.
 
 #include "texture/texformat.h"
 #include "texture/texsettings.h"

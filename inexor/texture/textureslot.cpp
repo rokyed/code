@@ -1,5 +1,6 @@
-/// 
-
+/// @file management of texture slots as visible ingame.
+/// each texture slot can have multiple texture frames, of which currently only the first is used
+/// additional frames can be used for various shaders
 
 #include "engine.h"
 #include "texture/texture.h"
@@ -7,10 +8,6 @@
 #include "texture/texmodifiers.h"
 #include "texture/cubemap.h"
 #include "texture/textureslot.h"
-
-// management of texture slots
-// each texture slot can have multiple texture frames, of which currently only the first is used
-// additional frames can be used for various shaders
 
 vector<VSlot *> vslots;
 vector<Slot *> slots;

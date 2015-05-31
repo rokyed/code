@@ -1,4 +1,4 @@
-/// @file SDL loading routine used to load into SDL Surfaces.
+/// @file Wrapper for the SDL API calls used to load textures.
 
 #ifndef _TEX_SDL_LOADING_H
 #define _TEX_SDL_LOADING_H

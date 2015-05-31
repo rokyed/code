@@ -1,4 +1,4 @@
-///  Texturesets are used to load texture-stacks asynchronously
+/// @file Texturesets are used to load texture-slots asynchronously.
 ///
 
 #include "texture/textureset.h"

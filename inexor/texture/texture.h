@@ -1,4 +1,4 @@
-/// @file
+/// @file Main texture loading and organizing routines + main texture structures.
 
 #ifndef _TEX_TEXTURE_H
 #define _TEX_TEXTURE_H

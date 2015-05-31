@@ -1,4 +1,4 @@
-// texture.cpp: texture slot management
+/// @file Main texture loading and organizing routines.
 
 #include "engine.h"
 #include "texture/texture.h"
