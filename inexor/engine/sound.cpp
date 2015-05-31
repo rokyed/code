@@ -1,8 +1,9 @@
 // sound.cpp: basic positional sound using sdl_mixer
 
 #include "inexor/engine/engine.h"
-
+#include "inexor/shared/filesystem.h"
 #include "SDL_mixer.h"
+
 #define MAXVOL MIX_MAX_VOLUME
 
 bool nosound = true;
@@ -197,15 +198,14 @@ Mix_Music *loadmusic(const char *name)
     return music;
 }
 
-SVARP(musicdir, "media/music");
-
 void startmusic(char *name, char *cmd)
 {
     if(nosound) return;
     stopmusic();
     if(soundvol && musicvol && *name)
     {
-        defformatstring(file)("%s/%s", musicdir, name);
+        string file;
+        inexor::filesystem::getmedianame(file, name, DIR_MUSIC);
         path(file);
         if(loadmusic(file))
         {

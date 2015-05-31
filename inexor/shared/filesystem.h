@@ -12,6 +12,7 @@ enum {
     DIR_SKYBOX,
     DIR_UI,
     DIR_ICON,
+    DIR_MUSIC,
     DIR_NUM
 }; /// media path types.
 
@@ -21,6 +22,7 @@ extern char *texturedir;
 extern char *skyboxdir;
 extern char *interfacedir;
 extern char *icondir;
+extern char *musicdir;
 
 namespace inexor
 {

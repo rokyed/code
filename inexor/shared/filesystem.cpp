@@ -10,6 +10,7 @@ SVARP(texturedir, "media/texture");
 SVARP(skyboxdir, "media/skybox");
 SVARP(interfacedir, "media/interface");
 SVARP(icondir, "media/interface/icon");
+SVARP(musicdir, "media/music");
 
 namespace inexor {
     namespace filesystem {
@@ -25,6 +26,7 @@ namespace inexor {
             case DIR_SKYBOX:    return skyboxdir;
             case DIR_UI:        return interfacedir;
             case DIR_ICON:      return icondir;
+            case DIR_MUSIC:     return musicdir;
             }
             return NULL;
         }
