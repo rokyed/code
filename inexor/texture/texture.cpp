@@ -8,7 +8,7 @@
 #include "texture/SDL_loading.h"
 #include "texture/format.h"
 #include "texture/cubemap.h"
-#include "texture/textureslot.h"
+#include "texture/slot.h"
 #include "texture/texsettings.h"
 #include "texture/compressedtex.h"
 #include <unordered_map>

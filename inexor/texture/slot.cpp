@@ -7,7 +7,7 @@
 #include "texture/macros.h"
 #include "texture/modifiers.h"
 #include "texture/cubemap.h"
-#include "texture/textureslot.h"
+#include "texture/slot.h"
 
 vector<VSlot *> vslots;
 vector<Slot *> slots;

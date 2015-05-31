@@ -57,7 +57,7 @@ It does not (yet) use a namespace for the whole module.
   slotsets are used to load texture-slots in chunks.
   namespace: inexor::slotset
  
-* textureslot.cpp
-* textureslot.h
-  Management of texture slots (slots = like they are visible ingame).
+* slot.cpp
+* slot.h
+  Management of texture slots (slots = textures like they are visible ingame).
 
