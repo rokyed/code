@@ -15,7 +15,7 @@
 #ifndef SLOTSET_H
 #define SLOTSET_H
 
-#include "engine.h"
+#include "inexor/engine/engine.h" //todo json outside engine
 
 namespace inexor {
     namespace slotset {

@@ -3,7 +3,8 @@
 #ifndef TEX_MODIFIERS_H
 #define TEX_MODIFIERS_H
 
-#include "engine.h"
+#include "inexor/engine/engine.h"
+#include "inexor/texture/texture.h"
 
 extern void scaletexture(uchar *src, uint sw, uint sh, uint bpp, uint pitch, uchar *dst, uint dw, uint dh);
 extern void resizetexture(int w, int h, bool mipmap, bool canreduce, GLenum target, int compress, int &tw, int &th);

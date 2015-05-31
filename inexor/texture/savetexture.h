@@ -3,7 +3,8 @@
 #ifndef _TEX_SAVETEXTURE_H
 #define _TEX_SAVETEXTURE_H
 
-#include "engine.h"
+#include "inexor/engine/engine.h"
+#include "inexor/texture/texture.h"
 
 enum
 {

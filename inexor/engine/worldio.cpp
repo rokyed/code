@@ -3,7 +3,7 @@
 #include "inexor/engine/engine.h"
 #include "inexor/shared/filesystem.h"
 #ifndef STANDALONE
-#include "inexor/engine/slotset.h"
+#include "inexor/texture/slotset.h"
 #endif
 
 /// get the map name from a path/file

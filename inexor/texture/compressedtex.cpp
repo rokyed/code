@@ -1,6 +1,6 @@
 /// @file compressed texture (mostly dds) loading.
 
-#include "texture/compressedtex.h"
+#include "inexor/texture/compressedtex.h"
 
 VAR(dbgdds, 0, 0, 1);
 

@@ -2,7 +2,7 @@
 
 //#include "texture/texsettings.h"
 
-#include "engine.h"
+#include "inexor/engine/engine.h"
 
 VAR(hwtexsize, 1, 0, 0);
 VAR(hwcubetexsize, 1, 0, 0);

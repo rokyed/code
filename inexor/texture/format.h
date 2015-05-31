@@ -3,7 +3,7 @@
 #ifndef _TEX_FORMAT_H
 #define _TEX_FORMAT_H
 
-#include "engine.h" //bc hasTC
+#include "inexor/engine/engine.h" //bc hasTC
 
 extern GLenum texformat(int bpp);
 extern bool alphaformat(GLenum format);

@@ -1,10 +1,10 @@
 /// @file additional texture generation tools provided by the engine.
 
-//#include "texture/additionaltools.h"
-#include "texture/texsettings.h"
-#include "texture/macros.h"
-#include "texture/savetexture.h"
-#include "texture/compressedtex.h"
+//#include "inexor/texture/additionaltools.h"
+#include "inexor/texture/texsettings.h"
+#include "inexor/texture/macros.h"
+#include "inexor/texture/savetexture.h"
+#include "inexor/texture/compressedtex.h"
 
 void flipnormalmapy(char *destfile, char *normalfile) // jpg/png /tga-> tga
 {

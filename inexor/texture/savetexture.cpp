@@ -1,8 +1,8 @@
 /// @file everything to save images of various formats.
 
-#include "texture/savetexture.h"
-#include "texture/SDL_loading.h"
-#include "texture/modifiers.h"
+#include "inexor/texture/savetexture.h"
+#include "inexor/texture/SDL_loading.h"
+#include "inexor/texture/modifiers.h"
 
 void writepngchunk(stream *f, const char *type, uchar *data = NULL, uint len = 0)
 {

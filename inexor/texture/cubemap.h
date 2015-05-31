@@ -3,7 +3,7 @@
 #ifndef _TEX_CUBEMAP_H
 #define _TEX_CUBEMAP_H
 
-#include "engine.h"
+#include "inexor/engine/engine.h"
 
 struct cubemapside
 {

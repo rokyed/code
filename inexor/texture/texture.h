@@ -98,7 +98,7 @@ struct ImageData
 };
 
 
-#include "texture/slot.h"
+#include "inexor/texture/slot.h"
 
 /// Different Texture Types.
 enum

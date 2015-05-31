@@ -2,12 +2,12 @@
 /// each texture slot can have multiple texture frames, of which currently only the first is used
 /// additional frames can be used for various shaders
 
-#include "engine.h"
-#include "texture/texture.h"
-#include "texture/macros.h"
-#include "texture/modifiers.h"
-#include "texture/cubemap.h"
-#include "texture/slot.h"
+#include "inexor/engine/engine.h"
+#include "inexor/texture/texture.h"
+#include "inexor/texture/macros.h"
+#include "inexor/texture/modifiers.h"
+#include "inexor/texture/cubemap.h"
+#include "inexor/texture/slot.h"
 
 vector<VSlot *> vslots;
 vector<Slot *> slots;

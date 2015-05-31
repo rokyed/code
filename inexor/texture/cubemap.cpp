@@ -1,9 +1,9 @@
 /// @file environment map loading routine.
 
-#include "texture/cubemap.h"
-#include "texture/modifiers.h"
-#include "texture/format.h"
-#include "filesystem.h"
+#include "inexor/texture/cubemap.h"
+#include "inexor/texture/modifiers.h"
+#include "inexor/texture/format.h"
+#include "inexor/shared/filesystem.h"
 
 void forcecubemapload(GLuint tex)
 {

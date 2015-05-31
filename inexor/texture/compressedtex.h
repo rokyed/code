@@ -3,7 +3,7 @@
 #ifndef _TEX_COMPRESSED_H
 #define _TEX_COMPRESSED_H
 
-#include "engine.h"
+#include "inexor/engine/engine.h"
 
 extern bool loaddds(const char *filename, ImageData &image, int force = 0);
 

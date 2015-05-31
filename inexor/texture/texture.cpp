@@ -1,16 +1,16 @@
 /// @file Main texture loading and organizing routines.
 
-#include "engine.h"
-#include "texture/texture.h"
-#include "SDL_image.h"
-#include "filesystem.h"
-#include "texture/modifiers.h"
-#include "texture/SDL_loading.h"
-#include "texture/format.h"
-#include "texture/cubemap.h"
-#include "texture/slot.h"
-#include "texture/texsettings.h"
-#include "texture/compressedtex.h"
+#include "inexor/engine/engine.h"
+//#include "SDL_image.h"
+#include "inexor/shared/filesystem.h"
+#include "inexor/texture/texture.h"
+#include "inexor/texture/modifiers.h"
+#include "inexor/texture/SDL_loading.h"
+#include "inexor/texture/format.h"
+#include "inexor/texture/cubemap.h"
+#include "inexor/texture/slot.h"
+#include "inexor/texture/texsettings.h"
+#include "inexor/texture/compressedtex.h"
 #include <unordered_map>
 #include <map>
 #include <iterator>

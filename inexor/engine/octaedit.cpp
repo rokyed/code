@@ -1,4 +1,5 @@
 #include "inexor/engine/engine.h"
+#include "inexor/shared/filesystem.h"
 
 extern int outline;
 

@@ -1,7 +1,7 @@
 /// @file Wrapper for the SDL API calls used to load textures.
 
-#include "engine.h"
-#include "texture/SDL_loading.h"
+#include "inexor/engine/engine.h"
+#include "inexor/texture/SDL_loading.h"
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
 #define RGBAMASKS 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff
