@@ -337,6 +337,26 @@ VSlot *findvslot(Slot &slot, const VSlot &src, const VSlot &delta)
     return NULL;
 }
 
+VSlot *reassignvslot(Slot &owner, VSlot *vs)
+{
+    owner.variants = vs;
+    while(vs)
+    {
+        vs->slot = &owner;
+        vs->linked = false;
+        vs = vs->next;
+    }
+    return owner.variants;
+}
+
+VSlot *emptyvslot(Slot &owner)
+{
+    int offset = 0;
+    loopvrev(slots) if(slots[i]->variants) { offset = slots[i]->variants->index + 1; break; }
+    for(int i = offset; i < vslots.length(); i++) if(!vslots[i]->changed) return reassignvslot(owner, vslots[i]);
+    return vslots.add(new VSlot(&owner, vslots.length()));
+}
+
 static VSlot *clonevslot(const VSlot &src, const VSlot &delta)
 {
     VSlot *dst = vslots.add(new VSlot(src.slot, vslots.length()));

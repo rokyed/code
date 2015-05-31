@@ -167,6 +167,8 @@ extern void texturereset(int first, int num = 0);
 extern MSlot &lookupmaterialslot(int slot, bool load = true);
 extern Slot &lookupslot(int slot, bool load = true);
 extern VSlot &lookupvslot(int slot, bool load = true);
+extern VSlot *emptyvslot(Slot &owner);
+
 extern VSlot *findvslot(Slot &slot, const VSlot &src, const VSlot &delta);
 extern VSlot *editvslot(const VSlot &src, const VSlot &delta);
 extern void mergevslot(VSlot &dst, const VSlot &src, const VSlot &delta);
