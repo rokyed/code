@@ -8,7 +8,6 @@ static VSlot *emptyvslot(Slot &owner);
 
 namespace inexor {
     namespace textureset {
-        SVARP(texturedir, "media/texture");
 
         struct jsontextype {
             const char *name;
@@ -33,7 +32,7 @@ namespace inexor {
             loopi(TEX_NUM) //check for all 8 kind of textures
             {
                 JSON *sub = j->getchild(jsontextypes[i].name);
-                if(i == TEX_DIFFUSE && !sub) return; // other stuff wont work?
+                if(i == TEX_DIFFUSE && !sub) return; // no diffuse texture: other stuff wont work?
                 else if(!sub) continue;
                 char *name = sub->valuestring;
                 if(!name) continue;
@@ -43,8 +42,8 @@ namespace inexor {
                 st.combined = -1;
                 st.t = NULL;
 
-                if(name[0] == '/') formatstring(st.name)("%s/%s", texturedir, name); //path relative to texture folder
-                else copystring(st.name, sub->currentfile ? makerelpath(parentdir(sub->currentfile), name): name); //path relative to current folder
+                filesystem::getmedianame(st.name, name, DIR_TEXTURE, sub);
+                conoutf("st.name %s %s %s", st.name, name, texturedir);
 
                 path(st.name);
             }
@@ -172,7 +171,9 @@ namespace inexor {
 
         bool loadset(const char *name)
         {
-            JSON *j = loadjson(tempformatstring("%s/%s", texturedir, name));
+            string fname;
+            filesystem::getmedianame(fname, name, DIR_TEXTURE);
+            JSON *j = loadjson(fname);
             if(!j) { conoutf("could not load %s textureset", name); return false; }
             textureset *t = newtextureset(j);
 
@@ -259,6 +260,7 @@ namespace inexor {
             {
                 VSlot *vs = vslots[k];
                 Slot *s = vs->slot;
+                if(!s) continue;
 
                 JSON *root = JSON_CreateObject();
 
@@ -291,7 +293,7 @@ namespace inexor {
 
                 const char *found = findfile(fn, "w"); // do not overwrite stuff
 
-                if(!found && root->save(fn))  conoutf("generated %s", fn);
+                if(root->save(fn))  conoutf("generated %s", fn);
 
                 delete[] shaderguess;
                 delete root;
@@ -367,8 +369,7 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float
     st.type = tnum;
     st.combined = -1;
     st.t = NULL;
-    if(name[0] == '/') formatstring(st.name) ("%s/%s", inexor::textureset::texturedir, name);
-    else copystring(st.name, makerelpath(getcurexecdir(), name)); //relative path to current folder
+    inexor::filesystem::getmedianame(st.name, name, DIR_TEXTURE);
 
     path(st.name);
     if(tnum == TEX_DIFFUSE)
