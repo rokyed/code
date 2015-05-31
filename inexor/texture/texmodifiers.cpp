@@ -1,5 +1,7 @@
 
 #include "texture/texmodifiers.h"
+#include "texture/texsettings.h"
+#include "texture/macros.h"
 
 
 

@@ -4,8 +4,6 @@
 #define _TEX_SAVETEXTURE_H
 
 #include "engine.h"
-#include "texture/SDL_loading.h"
-#include "texture/texmodifiers.h"
 
 enum
 {

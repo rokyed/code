@@ -3,10 +3,7 @@
 #ifndef _TEX_CUBEMAP_H
 #define _TEX_CUBEMAP_H
 
-//#include "engine.h" in modifiers
-#include "texture/texmodifiers.h"
-#include "texture/texformat.h"
-#include "filesystem.h"
+#include "engine.h"
 
 struct cubemapside
 {

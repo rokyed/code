@@ -1,6 +1,10 @@
 ///
 
-#include "texture/additionaltools.h"
+//#include "texture/additionaltools.h"
+#include "texture/texsettings.h"
+#include "texture/macros.h"
+#include "texture/savetexture.h"
+#include "texture/compressedtex.h"
 
 void flipnormalmapy(char *destfile, char *normalfile) // jpg/png /tga-> tga
 {

@@ -1,6 +1,7 @@
 ///
 
 #include "texture/texformat.h"
+#include "texture/texsettings.h"
 
 GLenum texformat(int bpp)
 {

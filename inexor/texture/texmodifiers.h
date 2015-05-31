@@ -5,9 +5,6 @@
 
 #include "engine.h"
 
-#include "texture/texsettings.h"
-#include "texture/macros.h"
-
 extern void scaletexture(uchar *src, uint sw, uint sh, uint bpp, uint pitch, uchar *dst, uint dw, uint dh);
 extern void resizetexture(int w, int h, bool mipmap, bool canreduce, GLenum target, int compress, int &tw, int &th);
 extern void scaleimage(ImageData &s, int w, int h);

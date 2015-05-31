@@ -4,7 +4,6 @@
 #define _TEX_FORMAT_H
 
 #include "engine.h" //bc hasTC
-#include "texture/texsettings.h"
 
 extern GLenum texformat(int bpp);
 extern bool alphaformat(GLenum format);

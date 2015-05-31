@@ -3,7 +3,6 @@
 #ifndef _TEX_SDL_LOADING_H
 #define _TEX_SDL_LOADING_H
 
-#include "engine.h"
 #include "SDL_image.h"
 
 extern SDL_Surface *wrapsurface(void *data, int width, int height, int bpp);
