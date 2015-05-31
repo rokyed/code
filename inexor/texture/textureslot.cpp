@@ -190,7 +190,7 @@ ICOMMAND(compactvslots, "", (),
     allchanged();
 });
 
-static Slot &loadslot(Slot &s, bool forceload);
+Slot &loadslot(Slot &s, bool forceload);
 
 static void clampvslotoffset(VSlot &dst, Slot *slot = NULL)
 {
@@ -579,7 +579,7 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
     t.t = newtexture(NULL, key.getbuf(), ts, 0, true, true, true, compress);
 }
 
-static Slot &loadslot(Slot &s, bool forceload)
+Slot &loadslot(Slot &s, bool forceload)
 {
     linkslotshader(s);
     loopv(s.sts)

@@ -318,14 +318,15 @@ namespace inexor {
                 texentry *t = texs[i];
                 int needload = t->tex->texmask & ~t->loadmask;
                 if(!needload) continue;
-                loopk(TEX_NUM)
-                {
-                    if(k >= t->tex->sts.length()) break; // out of range
-                    if(!(needload & (1 << k))) continue; // not in diff
-                    Slot::Tex &st = t->tex->sts[k];
-                    st.t = textureload(st.name, 0, true, false, true);
-                    if(st.t != notexture) t->needregister |= 1 << k; // remember to register
-                }
+                loadslot(*t->tex, false); //conterminates any threadsafety effords so far.
+                //loopk(TEX_NUM)
+                //{
+                //    if(k >= t->tex->sts.length()) break; // out of range
+                //    if(!(needload & (1 << k))) continue; // not in diff
+                //    Slot::Tex &st = t->tex->sts[k];
+                //    st.t = textureload(st.name, 0, true, false, true);
+                //    if(st.t != notexture) t->needregister |= 1 << k; // remember to register
+                //}
             }
         }
 
@@ -443,7 +444,7 @@ namespace inexor {
             return newstring(shader);
         }
 
-        // Add VSlot depending entries to root.
+        /// Add VSlot depending entries to root.
         void createvslotentries(JSON *root, VSlot *vs)
         {
             if(vs->scale != 1.0f)
@@ -487,7 +488,7 @@ namespace inexor {
             }
         }
 
-        /// Exporter texture jsons for already loaded slots.
+        /// Exporter for texture jsons for already loaded slots.
         /// Loaded probably through the legacy path.
         void gentexjsons()
         {
@@ -559,11 +560,11 @@ namespace inexor {
 // TODO:
 // - make textures look into texturefolder by default [DONE]
 // - cutextension, cutfolder, getextension [DONE]
+// - revert make json chars always allocated [DONE]
+// - rename json getchild .. to child getfloat.. to getchildfloat( [DONE]
+// - refractor foralljson to have an independend variablename [DONE]
 // - replace
 // - loadalltextures
 // - statistik erstellen -> sortieren
 // - alle texturen -> map texturen -> map json
 // - import command für "#arg1" :
-// - revert make json chars always allocated [DONE]
-// - rename json getchild .. to child getfloat.. to getchildfloat( [DONE]
-// - refractor foralljson to have an independend variablename [DONE]

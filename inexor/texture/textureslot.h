@@ -155,6 +155,8 @@ struct MSlot : Slot, VSlot
     }
 };
 
+Slot &loadslot(Slot &s, bool forceload);
+
 extern void cleanupslots();
 extern void cleanupvslots();
 extern void cleanupmaterialslots();
