@@ -100,7 +100,7 @@ namespace inexor {
         {
             if(!j || texs.length() >= 0x10000) return;
 
-            Slot &s = *texs.add(new texentry(new Slot(texs.length())))->tex;
+            Slot &s = *texs.add(new texentry(new Slot(texs.length())))->slot;
             s.loaded = false;
 
             if(!addimagefiles(s, j)) return; // no textures found
@@ -128,13 +128,13 @@ namespace inexor {
             loopv(texs)
             {
                 texentry *t = texs[i];
-                int diff = t->tex->texmask & ~t->loadmask; // All textures which havent been loaded yet
+                int diff = t->slot->texmask & ~t->loadmask; // All textures which havent been loaded yet
                 if(!diff) continue;
                 loopk(TEX_NUM)
                 {
-                    if(k >= t->tex->sts.length()) break; // out of range
+                    if(k >= t->slot->sts.length()) break; // out of range
                     if(!(diff & (1 << k))) continue; // not in diff
-                    Slot::Tex &curimg = t->tex->sts[k];
+                    Slot::Tex &curimg = t->slot->sts[k];
                     curimg.t = gettexture(curimg.name);
                     if(curimg.t) t->loadmask |= 1 << k; //save to loadmask on success
                 }
@@ -146,9 +146,9 @@ namespace inexor {
             loopv(texs)
             {
                 texentry *t = texs[i];
-                int needload = t->tex->texmask & ~t->loadmask;
+                int needload = t->slot->texmask & ~t->loadmask;
                 if(!needload) continue;
-                loadslot(*t->tex, false); //conterminates any threadsafety effords so far.
+                loadslot(*t->slot, false); //conterminates any threadsafety effords so far.
                 //loopk(TEX_NUM)
                 //{
                 //    if(k >= t->tex->sts.length()) break; // out of range
@@ -168,8 +168,8 @@ namespace inexor {
                 if(!t->needregister) continue;
                 loopk(TEX_NUM)
                 {
-                    if(k >= t->tex->sts.length()) break; // out of range
-                    if(t->needregister & (1 << k)) registertexture(t->tex->sts[k].name);
+                    if(k >= t->slot->sts.length()) break; // out of range
+                    if(t->needregister & (1 << k)) registertexture(t->slot->sts[k].name);
                 }
             }
         }
@@ -179,7 +179,7 @@ namespace inexor {
             if(initial) texturereset(0);
             loopv(texs)
             {
-                slots.add(texs[i]->tex);
+                slots.add(texs[i]->slot);
                 texs[i]->mounted = true;
             }
         }
@@ -190,7 +190,7 @@ namespace inexor {
             int start = 0;
             loopv(slots)
             {
-                if(slots[i] == texs[0]->tex) start = i;
+                if(slots[i] == texs[0]->slot) start = i;
             }
 
             texturereset(start, texs.length());

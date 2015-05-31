@@ -38,11 +38,11 @@ namespace inexor {
                 bool mounted = false;
 
                 /// The Texture-Slot
-                Slot *tex;
+                Slot *slot;
 
                 texentry(Slot *s)
                 {
-                    tex = s;
+                    slot = s;
                 }
             };
 
@@ -82,7 +82,7 @@ namespace inexor {
             void echoall()
             {
                 loopv(texs) {
-                    loopvk(texs[i]->tex->sts)  conoutf("tex %d.%d: %s", i, k, texs[i]->tex->sts[k].name);
+                    loopvk(texs[i]->slot->sts) conoutf("tex %d.%d: %s", i, k, texs[i]->slot->sts[k].name);
                 }
             }
         };
