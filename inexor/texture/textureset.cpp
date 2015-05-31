@@ -105,7 +105,8 @@ namespace inexor {
 
             if(!addimagefiles(s, j)) return; // no textures found
 
-            setslotshader(s, j->getchild("shader")); // TODO: multithread
+            JSON *shad = j->getchild("shader");
+            setslotshader(s, shad); // TODO: multithread
 
             addvslotparams(s, j); // other parameters
         }
@@ -239,7 +240,8 @@ namespace inexor {
         void scantexturedir()
         {
             vector<char *> files;
-            listfiles(texturedir, "json", files);
+            listfiles(texturedir, "json", files, true, false, true);
+            conoutf("Loaded %d texture configuration files", files.length());
 
             if(!files.length()) return;
             textureset *t = new textureset();
@@ -356,7 +358,7 @@ namespace inexor {
                 cutextension(diffusefile);
                 defformatstring(fn)("%s.json", diffusefile);
 
-                const char *found = findfile(fn, "w"); // do not overwrite stuff
+                const char *found = findfile(path(fn), "w"); // do not overwrite stuff
 
                 if(root->save(fn))  conoutf("generated %s", fn);
 

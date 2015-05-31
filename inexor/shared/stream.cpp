@@ -582,26 +582,34 @@ const char *findfile(const char *filename, const char *mode)
 
 /// Internal use only Use listfiles instead.
 /// @return false if dirname does not exists.
-bool listdir(const char *dirname, bool rel, const char *ext, vector<char *> &files)
+bool listdir(const char *dirname, bool rel, const char *ext, vector<char *> &files, bool fullname, bool cutext, bool recursive)
 {
     size_t extsize = ext ? strlen(ext)+1 : 0;
-    #ifdef WIN32
-    defformatstring(pathname)(rel ? ".\\%s\\*.%s" : "%s\\*.%s", dirname, ext ? ext : "*");
+    string subdir, filename;
+#ifdef WIN32
+    defformatstring(pathname)(rel ? ".\\%s\\*.%s" : "%s\\*.%s", dirname, ext && !recursive ? ext : "*");
     WIN32_FIND_DATA FindFileData;
     HANDLE Find = FindFirstFile(pathname, &FindFileData);
     if(Find != INVALID_HANDLE_VALUE)
     {
         do {
-            if(!ext) files.add(newstring(FindFileData.cFileName));
+            if(recursive && (!strcmp(FindFileData.cFileName, ".") || !strcmp(FindFileData.cFileName, ".."))) continue;
+
+            if(recursive && FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) //handle subfolder
+            {
+                formatstring(subdir)("%s\\%s", dirname, FindFileData.cFileName);
+                listdir(subdir, true, ext, files, fullname, cutext, recursive);
+            }
             else
             {
-                size_t namelen = strlen(FindFileData.cFileName); 
-                if(namelen > extsize) 
-                { 
-                    namelen -= extsize;
-                    if(FindFileData.cFileName[namelen] == '.' && strncmp(FindFileData.cFileName+namelen+1, ext, extsize-1)==0)
-                        files.add(newstring(FindFileData.cFileName, namelen));
-                }
+                if(ext && recursive && strcmp(ext, getextension(FindFileData.cFileName))) continue; //we search for anything when working recursively but only save extension matches
+
+                if(fullname) formatstring(filename)("%s\\%s", dirname, FindFileData.cFileName);
+                else copystring(filename, FindFileData.cFileName);
+
+                if(cutext) cutextension(filename, ext);
+
+                files.add(newstring(filename));
             }
         } while(FindNextFile(Find, &FindFileData));
         FindClose(Find);
@@ -615,16 +623,19 @@ bool listdir(const char *dirname, bool rel, const char *ext, vector<char *> &fil
         struct dirent *de;
         while((de = readdir(d)) != NULL)
         {
-            if(!ext) files.add(newstring(de->d_name));
-            else
+            if(recursive && (!strcmp(de->d_name, ".") || !strcmp(de->d_name, ".."))) continue;
+            if(recursive && de->d_type == DT_DIR)
             {
-                size_t namelen = strlen(de->d_name);
-                if(namelen > extsize)
-                {
-                    namelen -= extsize;
-                    if(de->d_name[namelen] == '.' && strncmp(de->d_name+namelen+1, ext, extsize-1)==0)
-                        files.add(newstring(de->d_name, namelen));
-                }
+                formatstring(subdir)("%s/%s", dirname, de->d_name);
+                listdir(subdir, rel, ext, files, fullname, cutext, recursive);
+            }
+            else {
+                if(ext && strcmp(ext, getextension(de->d_name))) continue;
+                if(fullname) formatstring(filename)("%s/%s", dirname, de->d_name);
+                else copystring(filename, de->d_name);
+                if(cutext) cutextension(filename, ext);
+
+                files.add(newstring(filename));
             }
         }
         closedir(d);
@@ -635,8 +646,11 @@ bool listdir(const char *dirname, bool rel, const char *ext, vector<char *> &fil
 }
 
 /// Lists all files in given directory and put it into vector files
-/// @param ext optionally filters for occurences with such extension only.
-int listfiles(const char *dir, const char *ext, vector<char *> &files)
+/// @param ext optionally filters for occurences with such extension only if != NULL.
+/// @param recursive optionally list all files in subfolders, if enabled, does not list folders anymore!.
+/// @param fullname receive the full name including the path instead of the sole filename.
+/// @param cutext optionally cuts any extension for any file.
+int listfiles(const char *dir, const char *ext, vector<char *> &files, bool fullname, bool cutext, bool recursive)
 {
     string dirname;
     copystring(dirname, dir);
@@ -644,12 +658,12 @@ int listfiles(const char *dir, const char *ext, vector<char *> &files)
     size_t dirlen = strlen(dirname);
     while(dirlen > 1 && dirname[dirlen-1] == PATHDIV) dirname[--dirlen] = '\0';
     int dirs = 0;
-    if(listdir(dirname, true, ext, files)) dirs++;
+    if(listdir(dirname, true, ext, files, fullname, cutext, recursive)) dirs++;
     string s;
     if(homedir[0])
     {
         formatstring(s)("%s%s", homedir, dirname);
-        if(listdir(s, false, ext, files)) dirs++;
+        if(listdir(s, false, ext, files, fullname, cutext, recursive)) dirs++;
     }
     loopv(packagedirs)
     {
@@ -657,7 +671,7 @@ int listfiles(const char *dir, const char *ext, vector<char *> &files)
         if(pf.filter && strncmp(dirname, pf.filter, dirlen == pf.filterlen-1 ? dirlen : pf.filterlen))
             continue;
         formatstring(s)("%s%s", pf.dir, dirname);
-        if(listdir(s, false, ext, files)) dirs++;
+        if(listdir(s, false, ext, files, fullname, cutext, recursive)) dirs++;
     }
 #ifndef STANDALONE
     dirs += listzipfiles(dirname, ext, files);
