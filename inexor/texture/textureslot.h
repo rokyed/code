@@ -3,11 +3,6 @@
 #ifndef _TEX_SLOT_H
 #define _TEX_SLOT_H
 
-#include "engine.h"
-#include "texture/texture2.h"
-#include "texture/macros.h"
-#include "texture/texmodifiers.h"
-
 //struct Slot;
 //
 //enum

@@ -1,5 +1,11 @@
 /// 
 
+
+#include "engine.h"
+#include "texture/texture2.h"
+#include "texture/macros.h"
+#include "texture/texmodifiers.h"
+#include "texture/cubemap.h"
 #include "texture/textureslot.h"
 
 // management of texture slots

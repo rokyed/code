@@ -10,9 +10,9 @@
 #include "inexor/engine/lightmap.h"
 #include "inexor/engine/bih.h"
 #include "inexor/engine/texture.h"
-#include "inexor/engine/model.h"
 #include "inexor/texture/texture2.h"
 #include "inexor/texture/cubemap.h"
+#include "inexor/engine/model.h"
 
 
 // GL_ARB_multitexture

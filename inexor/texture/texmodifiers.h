@@ -4,8 +4,9 @@
 #define TEX_MODIFIERS_H
 
 #include "engine.h"
-#include "texture/macros.h"
+
 #include "texture/texsettings.h"
+#include "texture/macros.h"
 
 extern void scaletexture(uchar *src, uint sw, uint sh, uint bpp, uint pitch, uchar *dst, uint dw, uint dh);
 extern void resizetexture(int w, int h, bool mipmap, bool canreduce, GLenum target, int compress, int &tw, int &th);

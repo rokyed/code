@@ -3,8 +3,6 @@
 #ifndef _TEX_SETTINGS_H
 #define _TEX_SETTINGS_H
 
-#include "engine.h"
-
 extern int usetexcompress; // from rendergl
 
 extern int hwtexsize;

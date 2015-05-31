@@ -3,13 +3,7 @@
 #ifndef _TEX_FORMAT_H
 #define _TEX_FORMAT_H
 
-//#ifdef WIN32
-///// we define our own math constants (PI, ln(2)...)
-//#define _USE_MATH_DEFINED
-//#endif
-//
-//#include <SDL.h>
-//#include <SDL_opengl.h>
+#include "engine.h" //bc hasTC
 #include "texture/texsettings.h"
 
 extern GLenum texformat(int bpp);

@@ -1,6 +1,7 @@
 // octarender.cpp: fill vertex arrays with different cube surfaces.
 
 #include "inexor/engine/engine.h"
+#include "inexor/texture/cubemap.h"
 
 struct vboinfo
 {

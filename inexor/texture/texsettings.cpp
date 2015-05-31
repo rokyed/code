@@ -1,6 +1,8 @@
 /// @file Settings for texture loading and handling.
 
-#include "texture/texsettings.h"
+//#include "texture/texsettings.h"
+
+#include "engine.h"
 
 VAR(hwtexsize, 1, 0, 0);
 VAR(hwcubetexsize, 1, 0, 0);
