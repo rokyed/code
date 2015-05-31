@@ -1,4 +1,4 @@
-/// @file legacy texture slot loading.
+/// @file Legacy texture slot loading.
 
 #include "engine.h"
 #include "filesystem.h"
