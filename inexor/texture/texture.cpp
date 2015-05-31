@@ -4,7 +4,7 @@
 #include "texture/texture.h"
 #include "SDL_image.h"
 #include "filesystem.h"
-#include "texture/texmodifiers.h"
+#include "texture/modifiers.h"
 #include "texture/SDL_loading.h"
 #include "texture/format.h"
 #include "texture/cubemap.h"

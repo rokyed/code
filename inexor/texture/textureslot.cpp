@@ -5,7 +5,7 @@
 #include "engine.h"
 #include "texture/texture.h"
 #include "texture/macros.h"
-#include "texture/texmodifiers.h"
+#include "texture/modifiers.h"
 #include "texture/cubemap.h"
 #include "texture/textureslot.h"
 

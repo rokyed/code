@@ -2,7 +2,7 @@
 
 #include "texture/savetexture.h"
 #include "texture/SDL_loading.h"
-#include "texture/texmodifiers.h"
+#include "texture/modifiers.h"
 
 void writepngchunk(stream *f, const char *type, uchar *data = NULL, uint len = 0)
 {

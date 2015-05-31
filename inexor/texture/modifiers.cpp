@@ -1,7 +1,7 @@
 /// @file Texture modifiers mainly applied on load.
 
 
-#include "texture/texmodifiers.h"
+#include "texture/modifiers.h"
 #include "texture/texsettings.h"
 #include "texture/macros.h"
 

@@ -1,7 +1,7 @@
 /// @file environment map loading routine.
 
 #include "texture/cubemap.h"
-#include "texture/texmodifiers.h"
+#include "texture/modifiers.h"
 #include "texture/format.h"
 #include "filesystem.h"
 
