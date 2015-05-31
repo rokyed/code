@@ -39,17 +39,20 @@ namespace inexor {
            // if(dirlen >= 2 && (dir[dirlen - 1] == '/' || dir[dirlen - 1] == '\\')) dir[dirlen - 1] = '\0';
 
             const char *dir = getmediadir(type);
-            formatstring(output)("%s/%s%s", dir ? dir : "", basename, extension ? extension : "");
+            formatstring(output)("%s%s%s%s", dir && *dir ? dir : "", dir && *dir ? "/" : "", basename, extension ? extension : "");
             return output;
         }
 
         /// Get a media name either relative to the current file or the specific media folder according to type.
-        /// @warning not threadsafe! (since makerelpath, parentdir and getcurexecdir are not)
+        /// @warning not threadsafe! (since makerelpath, parentdir and getcurexecdir are not + the dir-defintions are not)
         char *getmedianame(char *output, const char *basename, int type, JSON *j)
         {
             ASSERT(basename != NULL && strlen(basename)>=2);
             if(basename[0] == '/') appendmediadir(output, basename+1, type);
-            else if(j && j->currentfile) copystring(output, makerelpath(parentdir(j->currentfile), basename));
+            else if(j && j->currentfile) {
+                const char *dir = parentdir(j->currentfile);
+                formatstring(output)("%s%s%s", *dir ? dir : "", *dir ? "/" : "", basename);
+            }
             else if(!j) copystring(output, makerelpath(getcurexecdir(), basename));
             else copystring(output, basename);
             return output;
