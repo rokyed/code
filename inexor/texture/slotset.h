@@ -1,4 +1,4 @@
-/// @file Texturesets are used to load texture-slots asynchronously.
+/// @file slotsets are used to load texture-slots asynchronously.
 ///
 
 ///// GENERAL:
@@ -8,19 +8,19 @@
 /// Slot        - Basicly thats a "Texture" as you would find it ingame in the texturebrowser.
 ///               It consists of minimum 1 image (the diffuse-file) and various others providing special info (height,..).
 ///               Every VSlot has a Slot.
-/// textureset  - A Set of textures/Slots to make loading easier and asynchronous.
+/// slotset  - A Set of textures/Slots to make loading easier and asynchronous.
 ///
 /// The currently visible stack of ingame-textures (Slots) is vector<Slot *> slots.
 
-#ifndef TEXTURESET_H
-#define TEXTURESET_H
+#ifndef SLOTSET_H
+#define SLOTSET_H
 
 #include "engine.h"
 
 namespace inexor {
-    namespace textureset {
+    namespace slotset {
         /// A set of Slots to make threaded loading possible.
-        class textureset
+        class slotset
         {
         private:
 
@@ -67,15 +67,15 @@ namespace inexor {
             /// Saves loaded textures to the texture registry.
             void registerload();
 
-            /// Add this textureset to the current texture stack of ingame visible textures.
-            /// @param initial if true this textureset becomes the first and only one.
+            /// Add this slotset to the current texture stack of ingame visible textures.
+            /// @param initial if true this slotset becomes the first and only one.
             void mount(bool initial);
 
             /// Mounts remaining textures.
             /// You need to use this after adding textures to a mounted set.
             void mountremaining();
 
-            /// Removes this textureset from the current stack of ingame visible textures.
+            /// Removes this slotset from the current stack of ingame visible textures.
             /// Attention: all following slots will be change its position and hence this has an visual impact ingame! TODO!!
             void unmount();
 
@@ -87,10 +87,10 @@ namespace inexor {
             }
         };
 
-        extern textureset *newtextureset(JSON *parent);
+        extern slotset *newslotset(JSON *parent);
         extern bool loadset(const char *name);
 
-    } // namespace textureset
+    } // namespace slotset
 }     // namespace inexor
 
-#endif //TEXTURESET_H
+#endif //SLOTSET_H

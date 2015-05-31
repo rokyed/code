@@ -3,7 +3,7 @@
 #include "inexor/engine/engine.h"
 #include "inexor/shared/filesystem.h"
 #ifndef STANDALONE
-#include "inexor/engine/textureset.h"
+#include "inexor/engine/slotset.h"
 #endif
 
 /// get the map name from a path/file
@@ -1409,7 +1409,7 @@ bool load_world(const char *mname, const char *cname)        // still supports a
     execfile("config/default_map_settings.cfg", false);
     execfile(cfgname, false);
     
-    inexor::textureset::loadset(jsonname);
+    inexor::slotset::loadset(jsonname);
 
     identflags &= ~IDF_OVERRIDDEN;
    

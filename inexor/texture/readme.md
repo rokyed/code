@@ -52,10 +52,10 @@ It does not (yet) use a namespace for the whole module.
 * texture.h
   (Old) Main texture loading and providing the texture registry.
 
-* textureset.cpp
-* textureset.h
-  Texturesets are used to load texture-slots in chunks.
-  namespace: inexor::textureset
+* slotset.cpp
+* slotset.h
+  slotsets are used to load texture-slots in chunks.
+  namespace: inexor::slotset
  
 * textureslot.cpp
 * textureslot.h

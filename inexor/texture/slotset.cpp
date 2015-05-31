@@ -1,10 +1,10 @@
-/// @file Texturesets are used to load texture-slots asynchronously.
+/// @file Slotsets are used to load and organize texture-slots chunk wise.
 ///
 
-#include "texture/textureset.h"
+#include "inexor/texture/slotset.h"
 
 namespace inexor {
-    namespace textureset {
+    namespace slotset {
 
         struct jsontextype {
             const char *name;
@@ -96,7 +96,7 @@ namespace inexor {
             propagatevslot(&vs, (1 << VSLOT_NUM) - 1); // apply vslot changes
         }
 
-        void textureset::addtexture(JSON *j)
+        void slotset::addtexture(JSON *j)
         {
             if(!j || texs.length() >= 0x10000) return;
 
@@ -111,7 +111,7 @@ namespace inexor {
             addvslotparams(s, j); // other parameters
         }
 
-        void textureset::addtexture(const char *filename)
+        void slotset::addtexture(const char *filename)
         {
             if(!filename || !*filename) return;
             JSON *j = loadjson(filename);
@@ -123,7 +123,7 @@ namespace inexor {
             delete j;
         }
 
-        void textureset::checkload()
+        void slotset::checkload()
         {
             loopv(texs)
             {
@@ -141,7 +141,7 @@ namespace inexor {
             }
         }
 
-        void textureset::load()
+        void slotset::load()
         {
             loopv(texs)
             {
@@ -160,7 +160,7 @@ namespace inexor {
             }
         }
 
-        void textureset::registerload()
+        void slotset::registerload()
         {
             loopv(texs)
             {
@@ -174,7 +174,7 @@ namespace inexor {
             }
         }
 
-        void textureset::mount(bool initial = false)
+        void slotset::mount(bool initial = false)
         {
             if(initial) texturereset(0);
             loopv(texs)
@@ -184,7 +184,7 @@ namespace inexor {
             }
         }
 
-        void textureset::unmount()
+        void slotset::unmount()
         {
             if(!texs[0]) return;
             int start = 0;
@@ -198,14 +198,14 @@ namespace inexor {
             loopv(texs) texs[i]->mounted = false;
         }
 
-        /// Creates a textureset with all textures from a "textures" child of given JSON structure.
-        /// @sideeffects allocates memory for a new textureset
-        textureset *newtextureset(JSON *parent)
+        /// Creates a slotset with all textures from a "textures" child of given JSON structure.
+        /// @sideeffects allocates memory for a new slotset
+        slotset *newslotset(JSON *parent)
         {
             if(!parent) return NULL;
             JSON *j = parent->getchild("textures");
             if(!j) return NULL;
-            textureset *t = new textureset();
+            slotset *t = new slotset();
 
             loopi(j->numchilds())
             {
@@ -222,8 +222,8 @@ namespace inexor {
             string fname;
             filesystem::getmedianame(fname, name, DIR_TEXTURE);
             JSON *j = loadjson(fname);
-            if(!j) { conoutf("could not load %s textureset", name); return false; }
-            textureset *t = newtextureset(j);
+            if(!j) { conoutf("could not load %s slotset", name); return false; }
+            slotset *t = newslotset(j);
 
             delete j;
             t->echoall();
@@ -236,7 +236,7 @@ namespace inexor {
         }
         COMMAND(loadset, "s");
 
-        /// Scan Texturedir for texturesets and load those sets.
+        /// Scan Texturedir for slotsets and load those sets.
         void scantexturedir()
         {
             vector<char *> files;
@@ -244,7 +244,7 @@ namespace inexor {
             conoutf("Loaded %d texture configuration files", files.length());
 
             if(!files.length()) return;
-            textureset *t = new textureset();
+            slotset *t = new slotset();
             loopv(files) t->addtexture(files[i]);
 
             t->checkload();
@@ -383,7 +383,7 @@ namespace inexor {
         }
         COMMAND(debugslots, "");
 
-    } // namespace textureset
+    } // namespace slotset
 }     // namespace inexor
 
 
