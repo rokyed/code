@@ -258,7 +258,7 @@ struct JSON
 /// Load a .json file.
 /// Prints out the error position if it failed to parse if debugjson is enabled.
 /// @sideeffects allocates memory for a JSON structure, needs to be deleted.
-extern JSON *loadjson(const char *filename);
+extern JSON *loadjson(const char *filename, bool msg = true);
 
 
 /// Create a JSON with a boolean value.

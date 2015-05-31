@@ -647,7 +647,7 @@ JSON *JSON_CreateObject()                   { JSON *item= new JSON(); item->type
 
 /// Load a .json file.
 /// @sideeffects allocates memory for a JSON structure, needs to be deleted.
-JSON *loadjson(const char *filename)
+JSON *loadjson(const char *filename, bool msg)
 {
     if(!filename) return NULL;
 
@@ -656,14 +656,17 @@ JSON *loadjson(const char *filename)
     char *buf = loadfile(path(s), NULL);
     if(!buf)
     {
-        conoutf(CON_WARN, "could not find %s", s);
+        if(msg) conoutf(CON_WARN, "could not find %s", s);
         return NULL;
     }
     JSON *j = JSON_Parse(buf);
     if(!j)
     {
-        conoutf(CON_WARN, "JSON File %s malformatted. (Use /debugjson to enable find error position)", s);
-        if(debugjson) conoutf(CON_DEBUG, "could not parse: %s", ep ? ep : "");
+        if(msg)
+        {
+            conoutf(CON_WARN, "JSON File %s malformatted. (Use /debugjson to enable find error position)", s);
+            if(debugjson) conoutf(CON_DEBUG, "could not parse: %s", ep ? ep : "");
+        }
        // if(JSON_Fix(filename)) j = loadjson(filename);
         return NULL;
     }
