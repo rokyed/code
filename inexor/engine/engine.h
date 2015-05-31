@@ -9,9 +9,8 @@
 #include "inexor/engine/octa.h"
 #include "inexor/engine/lightmap.h"
 #include "inexor/engine/bih.h"
-#include "inexor/engine/texture.h"
-#include "inexor/texture/texture2.h"
-#include "inexor/texture/cubemap.h"
+#include "inexor/engine/shader.h"
+#include "inexor/texture/texture.h"
 #include "inexor/engine/model.h"
 
 

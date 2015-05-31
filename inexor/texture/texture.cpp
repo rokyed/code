@@ -1,7 +1,7 @@
 // texture.cpp: texture slot management
 
 #include "engine.h"
-#include "texture/texture2.h"
+#include "texture/texture.h"
 #include "SDL_image.h"
 #include "filesystem.h"
 #include "texture/texmodifiers.h"
