@@ -687,7 +687,7 @@ void JSON::addchild(JSON *item)
 {
     if(!item) return;
 
-    if(!currentfile || !item->currentfile || strcmp(item->currentfile, currentfile) )
+    if(currentfile && (!item->currentfile || strcmp(item->currentfile, currentfile)) )
     {
         delete[] item->currentfile;
         foralljson(item, k, k->currentfile = currentfile;);
