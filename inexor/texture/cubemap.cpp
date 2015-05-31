@@ -2,7 +2,7 @@
 
 #include "texture/cubemap.h"
 #include "texture/texmodifiers.h"
-#include "texture/texformat.h"
+#include "texture/format.h"
 #include "filesystem.h"
 
 void forcecubemapload(GLuint tex)

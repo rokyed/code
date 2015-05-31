@@ -6,7 +6,7 @@
 #include "filesystem.h"
 #include "texture/texmodifiers.h"
 #include "texture/SDL_loading.h"
-#include "texture/texformat.h"
+#include "texture/format.h"
 #include "texture/cubemap.h"
 #include "texture/textureslot.h"
 #include "texture/texsettings.h"

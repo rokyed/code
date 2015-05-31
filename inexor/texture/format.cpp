@@ -1,6 +1,6 @@
 /// @file Small helper functions to organize which OpenGL formats to use.
 
-#include "texture/texformat.h"
+#include "texture/format.h"
 #include "texture/texsettings.h"
 
 GLenum texformat(int bpp)
