@@ -4,6 +4,7 @@
 #define TEX_MODIFIERS_H
 
 #include "inexor/engine/engine.h"
+#include "inexor/texture/texsettings.h"
 #include "inexor/texture/texture.h"
 
 extern void scaletexture(uchar *src, uint sw, uint sh, uint bpp, uint pitch, uchar *dst, uint dw, uint dh);
@@ -18,7 +19,7 @@ extern void texflip(ImageData &s);
 extern void texmad(ImageData &s, const vec &mul, const vec &add);
 extern void texcolorify(ImageData &s, const vec &color, vec weights);
 extern void texcolormask(ImageData &s, const vec &color1, const vec &color2);
-extern void texffmask(ImageData &s, float glowscale, float envscale);
+extern void texffmask(ImageData &s, float glowscale, float envscale, texsettings *set);
 extern void texdup(ImageData &s, int srcchan, int dstchan);
 extern void texdecal(ImageData &s);
 extern void texmix(ImageData &s, int c1, int c2, int c3, int c4);

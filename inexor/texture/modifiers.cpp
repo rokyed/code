@@ -65,23 +65,23 @@ void scaletexture(uchar *src, uint sw, uint sh, uint bpp, uint pitch, uchar *dst
     }
 }
 
-void resizetexture(int w, int h, bool mipmap, bool canreduce, GLenum target, int compress, int &tw, int &th)
+void resizetexture(int w, int h, bool mipmap, bool canreduce, GLenum target, int compress, int &tw, int &th, texsettings *set)
 {
-    int hwlimit = target == GL_TEXTURE_CUBE_MAP_ARB ? hwcubetexsize : hwtexsize,
-        sizelimit = mipmap && maxtexsize ? min(maxtexsize, hwlimit) : hwlimit;
-    if(compress > 0 && (!hasTC || !usetexcompress))
+    int hwlimit = target == GL_TEXTURE_CUBE_MAP_ARB ? set->hwcubetexsize : set->hwtexsize,
+        sizelimit = mipmap && set->maxtexsize ? min(set->maxtexsize, hwlimit) : hwlimit;
+    if(compress > 0 && (!set->hasTC || !set->usetexcompress))
     {
         w = max(w / compress, 1);
         h = max(h / compress, 1);
     }
-    if(canreduce && texreduce)
+    if(canreduce && set->texreduce)
     {
-        w = max(w >> texreduce, 1);
-        h = max(h >> texreduce, 1);
+        w = max(w >> set->texreduce, 1);
+        h = max(h >> set->texreduce, 1);
     }
     w = min(w, sizelimit);
     h = min(h, sizelimit);
-    if((!hasNP2 || !usenp2) && target != GL_TEXTURE_RECTANGLE_ARB && (w&(w - 1) || h&(h - 1)))
+    if((!set->hasNP2 || !set->usenp2) && target != GL_TEXTURE_RECTANGLE_ARB && (w&(w - 1) || h&(h - 1)))
     {
         tw = th = 1;
         while(tw < w) tw *= 2;
@@ -291,9 +291,9 @@ void texcolormask(ImageData &s, const vec &color1, const vec &color2)
     s.replace(d);
 }
 
-void texffmask(ImageData &s, float glowscale, float envscale)
+void texffmask(ImageData &s, float glowscale, float envscale, texsettings *set)
 {
-    if(renderpath != R_FIXEDFUNCTION) return;
+    if(set->renderpath != R_FIXEDFUNCTION) return;
     if(nomasks || s.bpp<3) { s.cleanup(); return; }
     const int minval = 0x18;
     bool glow = false, envmap = true;

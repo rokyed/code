@@ -27,4 +27,5 @@ texsettings::texsettings() : maxtexsize(::maxtexsize), reducefilter(::reducefilt
                             trilinear(::trilinear), bilinear(::bilinear), aniso(::aniso), hwmipmap(::hwmipmap),
                             texcompress(::texcompress), texcompressquality(::texcompressquality), usenp2(::usenp2),
                             hwtexsize(::hwtexsize), hwcubetexsize(::hwcubetexsize), hwmaxaniso(::hwmaxaniso),
-                            renderpath(::renderpath), usetexcompress(::usetexcompress), hasTC(::hasTC)  {}
+                            renderpath(::renderpath), usetexcompress(::usetexcompress), 
+                            hasTC(::hasTC), hasAF(::hasAF), hasGM(::hasGM), hasNP2(::hasNP2) {}
