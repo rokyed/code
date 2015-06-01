@@ -20,3 +20,11 @@ VARFP(texcompressquality, -1, -1, 1, setuptexcompress());
 
 VARFP(hwmipmap, 0, 0, 1, initwarning("texture filtering", INIT_LOAD));
 VARFP(usenp2, 0, 0, 1, initwarning("texture quality", INIT_LOAD));
+
+extern int usetexcompress; // from rendergl
+
+texsettings::texsettings() : maxtexsize(::maxtexsize), reducefilter(::reducefilter), texreduce(::texreduce),
+                            trilinear(::trilinear), bilinear(::bilinear), aniso(::aniso), hwmipmap(::hwmipmap),
+                            texcompress(::texcompress), texcompressquality(::texcompressquality), usenp2(::usenp2),
+                            hwtexsize(::hwtexsize), hwcubetexsize(::hwcubetexsize), hwmaxaniso(::hwmaxaniso),
+                            renderpath(::renderpath), usetexcompress(::usetexcompress), hasTC(::hasTC)  {}
