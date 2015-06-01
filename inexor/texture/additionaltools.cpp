@@ -35,7 +35,7 @@ COMMAND(mergenormalmaps, "ss");
 
 void gendds(char *infile, char *outfile)
 {
-    if(!hasS3TC || usetexcompress <= 1) { conoutf(CON_ERROR, "OpenGL driver does not support S3TC texture compression"); return; }
+    if(!hasS3TC || legacytexsettings()->usetexcompress <= 1) { conoutf(CON_ERROR, "OpenGL driver does not support S3TC texture compression"); return; }
 
     glHint(GL_TEXTURE_COMPRESSION_HINT_ARB, GL_NICEST);
 

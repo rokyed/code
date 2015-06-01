@@ -15,7 +15,7 @@ struct cubemapside
 extern cubemapside cubemapsides[6];
 
 extern Texture *cubemapload(const char *name, bool mipit = true, bool msg = true, bool transient = false);
-extern Texture *cubemaploadwildcard(Texture *t, const char *name, bool mipit, bool msg, bool transient = false);
+extern Texture *cubemaploadwildcard(Texture *t, const char *name, bool mipit, bool msg, bool transient = false, texsettings *tst = NULL);
 
 extern void initenvmaps();
 extern void genenvmaps();

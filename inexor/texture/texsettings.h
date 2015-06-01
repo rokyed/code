@@ -16,17 +16,16 @@ struct texsettings
     // Actually not part of texsettings but rendersettings (which is not yet made):
     int renderpath,
         usetexcompress,
-        usedds, scaledds,
-        hasTC, hasAF, hasGM, hasNP2;
+        usedds, scaledds, maxtmus,
+        hasTC, hasAF, hasCM, hasGM, hasNP2;
+
+    /// @see updateall()
+    texsettings() { updateall(); }
 
     /// Load all data according to the global vars, which we cant use simoultanously from different threads.
-    texsettings();
+    void updateall();
+};
 
-    /// @see texsettings()
-    void update()
-    {
-        texsettings();
-    }
-} legtexsettings; /// Legacy tex settings global
-
+/// Legacy tex settings global.
+extern texsettings *legacytexsettings();
 #endif // _TEX_SETTINGS_H

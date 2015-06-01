@@ -26,10 +26,20 @@ VAR(scaledds, 0, 2, 4);
 
 extern int usetexcompress; // from rendergl
 
-texsettings::texsettings() : maxtexsize(::maxtexsize), reducefilter(::reducefilter), texreduce(::texreduce),
-                            trilinear(::trilinear), bilinear(::bilinear), aniso(::aniso), hwmipmap(::hwmipmap),
-                            texcompress(::texcompress), texcompressquality(::texcompressquality), usenp2(::usenp2),
-                            hwtexsize(::hwtexsize), hwcubetexsize(::hwcubetexsize), hwmaxaniso(::hwmaxaniso),
-                            renderpath(::renderpath), usetexcompress(::usetexcompress),
-                            usedds(::usedds), scaledds(::scaledds),
-                            hasTC(::hasTC), hasAF(::hasAF), hasGM(::hasGM), hasNP2(::hasNP2) {}
+void texsettings::updateall()
+{
+    maxtexsize = ::maxtexsize; reducefilter = ::reducefilter; texreduce = ::texreduce;
+    trilinear = ::trilinear; bilinear = ::bilinear; aniso = ::aniso; texcompress = ::texcompress;
+    texcompressquality = ::texcompressquality; hwmipmap = ::hwmipmap; usenp2 = ::usenp2;
+    hwtexsize = ::hwtexsize; hwcubetexsize = ::hwcubetexsize; hwmaxaniso = ::hwmaxaniso;
+    renderpath = ::renderpath; usetexcompress = ::usetexcompress;
+    usedds = ::usedds; scaledds = ::scaledds; maxtmus = ::maxtmus;
+    hasTC = ::hasTC; hasAF = ::hasAF; hasCM = ::hasCM; hasGM = ::hasGM; hasNP2 = ::hasNP2;
+}
+
+static texsettings legacysets;
+texsettings *legacytexsettings()
+{
+    legacysets.updateall(); // todo: oben vermischen
+    return &legacysets;
+}

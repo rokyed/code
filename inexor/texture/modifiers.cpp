@@ -65,23 +65,23 @@ void scaletexture(uchar *src, uint sw, uint sh, uint bpp, uint pitch, uchar *dst
     }
 }
 
-void resizetexture(int w, int h, bool mipmap, bool canreduce, GLenum target, int compress, int &tw, int &th, texsettings *set)
+void resizetexture(int w, int h, bool mipmap, bool canreduce, GLenum target, int compress, int &tw, int &th, texsettings &tst)
 {
-    int hwlimit = target == GL_TEXTURE_CUBE_MAP_ARB ? set->hwcubetexsize : set->hwtexsize,
-        sizelimit = mipmap && set->maxtexsize ? min(set->maxtexsize, hwlimit) : hwlimit;
-    if(compress > 0 && (!set->hasTC || !set->usetexcompress))
+    int hwlimit = target == GL_TEXTURE_CUBE_MAP_ARB ? tst.hwcubetexsize : tst.hwtexsize,
+        sizelimit = mipmap && tst.maxtexsize ? min(tst.maxtexsize, hwlimit) : hwlimit;
+    if(compress > 0 && (!tst.hasTC || !tst.usetexcompress))
     {
         w = max(w / compress, 1);
         h = max(h / compress, 1);
     }
-    if(canreduce && set->texreduce)
+    if(canreduce && tst.texreduce)
     {
-        w = max(w >> set->texreduce, 1);
-        h = max(h >> set->texreduce, 1);
+        w = max(w >> tst.texreduce, 1);
+        h = max(h >> tst.texreduce, 1);
     }
     w = min(w, sizelimit);
     h = min(h, sizelimit);
-    if((!set->hasNP2 || !set->usenp2) && target != GL_TEXTURE_RECTANGLE_ARB && (w&(w - 1) || h&(h - 1)))
+    if((!tst.hasNP2 || !tst.usenp2) && target != GL_TEXTURE_RECTANGLE_ARB && (w&(w - 1) || h&(h - 1)))
     {
         tw = th = 1;
         while(tw < w) tw *= 2;

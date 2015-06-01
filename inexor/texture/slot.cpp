@@ -190,7 +190,7 @@ ICOMMAND(compactvslots, "", (),
     allchanged();
 });
 
-Slot &loadslot(Slot &s, bool forceload);
+Slot &loadslot(Slot &s, bool forceload, texsettings *tst = NULL);
 
 static void clampvslotoffset(VSlot &dst, Slot *slot = NULL)
 {
@@ -516,17 +516,16 @@ static void addname(vector<char> &key, Slot &slot, Slot::Tex &t, bool combined =
     for(const char *s = path(t.name); *s; key.add(*s++));
 }
 
-static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
-{
-    if(renderpath == R_FIXEDFUNCTION && t.type != TEX_DIFFUSE && t.type != TEX_GLOW && !forceload) { t.t = notexture; return; }
-    vector<char> key;
-    addname(key, s, t);
-    int texmask = 0;
-    bool envmap = renderpath == R_FIXEDFUNCTION && s.shader->type&SHADER_ENVMAP && s.ffenv && hasCM && maxtmus >= 2;
+/// Generate a keyname to find a combined texture in the texture registry.
+void gencombinedname(vector<char> &name, int &texmask, Slot &s, Slot::Tex &t, int index, bool fixedfunction, bool envmap, bool forceload)
+{ //todo refractor
+
+    addname(name, s, t);
+    // bool envmap = fixedfunction && s.shader->type&SHADER_ENVMAP && s.ffenv && hasCM && maxtmus >= 2;
     if(!forceload) switch(t.type)
     {
-    case TEX_DIFFUSE:
-        if(renderpath == R_FIXEDFUNCTION)
+        case TEX_DIFFUSE:
+        if(fixedfunction)
         {
             int mask = (1 << TEX_DECAL) | (1 << TEX_NORMAL);
             if(envmap) mask |= 1 << TEX_SPEC;
@@ -534,45 +533,68 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
             {
                 texmask |= 1 << s.sts[i].type;
                 s.sts[i].combined = index;
-                addname(key, s, s.sts[i], true, envmap && (s.sts[i].type == TEX_NORMAL || s.sts[i].type == TEX_SPEC) ? "<ffenv>" : NULL);
+                addname(name, s, s.sts[i], true, envmap && (s.sts[i].type == TEX_NORMAL || s.sts[i].type == TEX_SPEC) ? "<ffenv>" : NULL);
             }
             break;
         } // fall through to shader case
 
-    case TEX_NORMAL:
+        case TEX_NORMAL:
+        {
+            if(fixedfunction) break;
+            int i = findtextype(s, t.type == TEX_DIFFUSE ? (1 << TEX_SPEC) : (1 << TEX_DEPTH));
+            if(i<0) break;
+            texmask |= 1 << s.sts[i].type;
+            s.sts[i].combined = index;
+            addname(name, s, s.sts[i], true);
+            break;
+        }
+    }
+    name.add('\0');
+}
+
+/// Combine and load texture data to be ready for sending it to the gpu.
+/// @param msg show progress bar, only threadsafe so far if false.
+/// @param tst the instance of texsettings it will use.
+/// @param registry whether or not a new texture entry should be made, TODO!! not threadsafe yet.
+void texcombine(Slot &s, int index, Slot::Tex &t, texsettings *tst, bool msg = true, bool registry = false, bool forceload = false)
+{
+    if(!tst)
     {
-        if(renderpath == R_FIXEDFUNCTION) break;
-        int i = findtextype(s, t.type == TEX_DIFFUSE ? (1 << TEX_SPEC) : (1 << TEX_DEPTH));
-        if(i<0) break;
-        texmask |= 1 << s.sts[i].type;
-        s.sts[i].combined = index;
-        addname(key, s, s.sts[i], true);
-        break;
+        tst = legacytexsettings();
     }
-    }
-    key.add('\0');
+
+    if(tst->renderpath == R_FIXEDFUNCTION && t.type != TEX_DIFFUSE && t.type != TEX_GLOW && !forceload) { t.t = notexture; return; }
+
+    vector<char> key;
+    int texmask = 0; // receive control mask, todo check neccessary?
+
+    bool fixedfunction = tst->renderpath == R_FIXEDFUNCTION;
+    bool envmap = fixedfunction && s.shader->type&SHADER_ENVMAP && s.ffenv && tst->hasCM && tst->maxtmus >= 2;
+
+    gencombinedname(key, texmask, s, t, index, fixedfunction, envmap, forceload);
+
     t.t = gettexture(key.getbuf()); //todo check if working
     if(t.t) return;
     int compress = 0;
     ImageData ts;
-    if(!texturedata(ts, NULL, &t, true, &compress)) { t.t = notexture; return; }
+    if(!texturedata(ts, NULL, tst, &t, msg, &compress)) { t.t = notexture; return; }
     switch(t.type)
     {
     case TEX_DIFFUSE:
-        if(renderpath == R_FIXEDFUNCTION)
+        if(fixedfunction)
         {
             if(!ts.compressed) loopv(s.sts)
             {
                 Slot::Tex &b = s.sts[i];
                 if(b.combined != index) continue;
                 ImageData bs;
-                if(!texturedata(bs, NULL, &b)) continue;
+                if(!texturedata(bs, NULL, tst, &b, msg)) continue;
                 if(bs.w != ts.w || bs.h != ts.h) scaleimage(bs, ts.w, ts.h);
                 switch(b.type)
                 {
-                case TEX_DECAL: blenddecal(ts, bs); break;
-                case TEX_NORMAL: addbump(ts, bs, envmap, (texmask&(1 << TEX_SPEC)) != 0); break;
-                case TEX_SPEC: mergespec(ts, bs, envmap); break;
+                    case TEX_DECAL: blenddecal(ts, bs); break;
+                    case TEX_NORMAL: addbump(ts, bs, envmap, (texmask&(1 << TEX_SPEC)) != 0); break;
+                    case TEX_SPEC: mergespec(ts, bs, envmap); break;
                 }
             }
             break;
@@ -584,22 +606,21 @@ static void texcombine(Slot &s, int index, Slot::Tex &t, bool forceload = false)
             Slot::Tex &a = s.sts[i];
             if(a.combined != index) continue;
             ImageData as;
-            if(!texturedata(as, NULL, &a)) continue;
-            //if(ts.bpp!=4) forcergbaimage(ts);
+            if(!texturedata(as, NULL, tst, &a, msg)) continue;
             if(as.w != ts.w || as.h != ts.h) scaleimage(as, ts.w, ts.h);
             switch(a.type)
             {
-            case TEX_SPEC: mergespec(ts, as); break;
-            case TEX_DEPTH: mergedepth(ts, as); break;
+                case TEX_SPEC: mergespec(ts, as); break;
+                case TEX_DEPTH: mergedepth(ts, as); break;
             }
             break; // only one combination
         }
         break;
     }
-    t.t = newtexture(NULL, key.getbuf(), ts, 0, true, true, true, compress);
+    t.t = newtexture(registry ? t.t : NULL, key.getbuf(), ts, 0, true, true, true, compress);
 }
 
-Slot &loadslot(Slot &s, bool forceload)
+Slot &loadslot(Slot &s, bool forceload, texsettings *tst)
 {
     linkslotshader(s);
     loopv(s.sts)
@@ -613,7 +634,7 @@ Slot &loadslot(Slot &s, bool forceload)
             break;
 
         default:
-            texcombine(s, i, t, forceload);
+            texcombine(s, i, t, tst, true, false, forceload);
             break;
         }
     }
@@ -662,6 +683,8 @@ void linkslotshaders()
     }
 }
 
+/// Load a preview image for the texture browser.
+/// @warning not threadsafe.
 Texture *loadthumbnail(Slot &slot)
 {
     if(slot.thumbnail) return slot.thumbnail;
@@ -706,9 +729,10 @@ Texture *loadthumbnail(Slot &slot)
     else
     {
         ImageData s, g, l;
-        texturedata(s, NULL, &slot.sts[0], false);
-        if(glow >= 0) texturedata(g, NULL, &slot.sts[glow], false);
-        if(layer) texturedata(l, NULL, &layer->slot->sts[0], false);
+        texsettings *tst = legacytexsettings();
+        texturedata(s, NULL, tst, &slot.sts[0], false);
+        if(glow >= 0) texturedata(g, NULL, tst, &slot.sts[glow], false);
+        if(layer) texturedata(l, NULL, tst, &layer->slot->sts[0], false);
         if(!s.data) t = slot.thumbnail = notexture;
         else
         {
@@ -752,7 +776,7 @@ void loadlayermasks()
         if(slot.loaded && slot.layermaskname && !slot.layermask)
         {
             slot.layermask = new ImageData;
-            texturedata(*slot.layermask, slot.layermaskname);
+            texturedata(*slot.layermask, slot.layermaskname, NULL);
             if(!slot.layermask->data) DELETEP(slot.layermask);
         }
     }

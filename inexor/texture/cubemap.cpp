@@ -56,9 +56,14 @@ cubemapside cubemapsides[6] =
 
 VARFP(envmapsize, 4, 7, 10, setupmaterials());
 
-Texture *cubemaploadwildcard(Texture *t, const char *name, bool mipit, bool msg, bool transient)
-{
-    if(!hasCM) return NULL;
+Texture *cubemaploadwildcard(Texture *t, const char *name, bool mipit, bool msg, bool transient, texsettings *tst)
+{ //todo make threadsafe
+    if(!tst)
+    {
+        tst = legacytexsettings();
+    }
+    if(!tst->hasCM) return NULL;
+
     string tname;
     if(!name) copystring(tname, t->name);
     else
@@ -84,7 +89,7 @@ Texture *cubemaploadwildcard(Texture *t, const char *name, bool mipit, bool msg,
             concatstring(sname, wildcard + 1);
         }
         ImageData &s = surface[i];
-        texturedata(s, sname, NULL, msg, &compress);
+        texturedata(s, sname, tst, NULL, msg, &compress);
         if(!s.data) return NULL;
         if(s.w != s.h)
         {
@@ -121,11 +126,11 @@ Texture *cubemaploadwildcard(Texture *t, const char *name, bool mipit, bool msg,
     t->clamp = 3;
     t->xs = t->ys = tsize;
     t->w = t->h = min(1 << envmapsize, tsize);
-    resizetexture(t->w, t->h, mipit, false, GL_TEXTURE_CUBE_MAP_ARB, compress, t->w, t->h);
+    resizetexture(t->w, t->h, mipit, false, GL_TEXTURE_CUBE_MAP_ARB, compress, t->w, t->h, *tst);
     GLenum component = format;
     if(!surface[0].compressed)
     {
-        component = compressedformat(format, t->w, t->h, compress);
+        component = compressedformat(format, *tst, t->w, t->h, compress);
         switch(component)
         {
         case GL_RGB: component = GL_RGB5; break;
@@ -148,7 +153,7 @@ Texture *cubemaploadwildcard(Texture *t, const char *name, bool mipit, bool msg,
                 if(w > 1) w /= 2;
                 if(h > 1) h /= 2;
             }
-            createcompressedtexture(!i ? t->id : 0, w, h, data, s.align, s.bpp, levels, 3, mipit ? 2 : 1, s.compressed, side.target);
+            createcompressedtexture(!i ? t->id : 0, w, h, data, s.align, s.bpp, levels, 3, mipit ? 2 : 1, s.compressed, side.target, tst);
         }
         else
         {

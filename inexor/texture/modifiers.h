@@ -8,7 +8,7 @@
 #include "inexor/texture/texture.h"
 
 extern void scaletexture(uchar *src, uint sw, uint sh, uint bpp, uint pitch, uchar *dst, uint dw, uint dh);
-extern void resizetexture(int w, int h, bool mipmap, bool canreduce, GLenum target, int compress, int &tw, int &th);
+extern void resizetexture(int w, int h, bool mipmap, bool canreduce, GLenum target, int compress, int &tw, int &th, texsettings &tst);
 extern void scaleimage(ImageData &s, int w, int h);
 
 extern void texoffset(ImageData &s, int xoffset, int yoffset);

@@ -19,8 +19,7 @@
 /// @warning not threadsafe.
 void setuptexcompress()
 {
-    legtexsettings.update();
-    texsettings &set = legtexsettings;
+    texsettings &set = *legacytexsettings();
     if(!set.hasTC || !set.usetexcompress) return;
 
     GLenum hint = GL_DONT_CARE;
@@ -97,28 +96,32 @@ void uploadcompressedtexture(GLenum target, GLenum subtarget, GLenum format, int
 }
 
 /// Set OpenGL Texture Parameters like filtering or clamping for the texture given by target.
-void setuptexparameters(int tnum, void *pixels, texsettings &tst, int clamp, int filter, GLenum format, GLenum target)
+/// @warning if tst not specified, function not threadsafe, but legacy path will be used.
+void setuptexparameters(int tnum, void *pixels,  int clamp, int filter, GLenum format, GLenum target, texsettings *tst)
 {
+    if(!tst) tst = legacytexsettings();
+
     glBindTexture(target, tnum);
     glTexParameteri(target, GL_TEXTURE_WRAP_S, clamp&1 ? GL_CLAMP_TO_EDGE : GL_REPEAT);
     if(target!=GL_TEXTURE_1D) glTexParameteri(target, GL_TEXTURE_WRAP_T, clamp&2 ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    if(target == GL_TEXTURE_2D && tst.hasAF && min(tst.aniso, tst.hwmaxaniso) > 0 && filter > 1)
+    if(target == GL_TEXTURE_2D && tst->hasAF && min(tst->aniso, tst->hwmaxaniso) > 0 && filter > 1)
     {
-        glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, min(tst.aniso, tst.hwmaxaniso));
+        glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, min(tst->aniso, tst->hwmaxaniso));
     }
-    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter && tst.bilinear ? GL_LINEAR : GL_NEAREST);
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter && tst->bilinear ? GL_LINEAR : GL_NEAREST);
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER,
         filter > 1 ?
-            (tst.trilinear ?
-                (tst.bilinear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_LINEAR) :
-                (tst.bilinear ? GL_LINEAR_MIPMAP_NEAREST : GL_NEAREST_MIPMAP_NEAREST)) :
-            (filter && tst.bilinear ? GL_LINEAR : GL_NEAREST));
-    if(tst.hasGM && filter > 1 && pixels && tst.hwmipmap && !uncompressedformat(format))
+            (tst->trilinear ?
+                (tst->bilinear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_LINEAR) :
+                (tst->bilinear ? GL_LINEAR_MIPMAP_NEAREST : GL_NEAREST_MIPMAP_NEAREST)) :
+            (filter && tst->bilinear ? GL_LINEAR : GL_NEAREST));
+    if(tst->hasGM && filter > 1 && pixels && tst->hwmipmap && !uncompressedformat(format))
         glTexParameteri(target, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
 }
 
-void createtexture(int tnum, int w, int h, void *pixels, int clamp, int filter, GLenum component, GLenum subtarget, int pw, int ph, int pitch, bool resize, GLenum format, texsettings &tst)
+void createtexture(int tnum, int w, int h, void *pixels, int clamp, int filter, GLenum component, GLenum subtarget, int pw, int ph, int pitch, bool resize, GLenum format, texsettings *tst)
 {
+    if(!tst) tst = legacytexsettings();
     GLenum target = textarget(subtarget), type = GL_UNSIGNED_BYTE;
     switch(component)
     {
@@ -160,24 +163,25 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, int filter, 
             break;
     }
     if(!format) format = component;
-    if(tnum) setuptexparameters(tnum, pixels, tst, clamp, filter, format, target);
+    if(tnum) setuptexparameters(tnum, pixels, clamp, filter, format, target, tst);
     if(!pw) pw = w;
     if(!ph) ph = h;
     int tw = w, th = h;
     bool mipmap = filter > 1 && pixels;
     if(resize && pixels) 
     {
-        resizetexture(w, h, mipmap, false, target, 0, tw, th);
-        if(mipmap) component = compressedformat(component, tst, tw, th);
+        resizetexture(w, h, mipmap, false, target, 0, tw, th, *tst);
+        if(mipmap) component = compressedformat(component, *tst, tw, th);
     }
-    uploadtexture(subtarget, component, tw, th, format, type, pixels, pw, ph, pitch, mipmap, tst); 
+    uploadtexture(subtarget, component, tw, th, format, type, pixels, pw, ph, pitch, mipmap, *tst); 
 }
 
-void createcompressedtexture(int tnum, int w, int h, uchar *data, int align, int blocksize, int levels, int clamp, int filter, GLenum format, GLenum subtarget, texsettings &tst)
+void createcompressedtexture(int tnum, int w, int h, uchar *data, int align, int blocksize, int levels, int clamp, int filter, GLenum format, GLenum subtarget, texsettings *tst)
 {
+    if(!tst) tst = legacytexsettings();
     GLenum target = textarget(subtarget);
-    if(tnum) setuptexparameters(tnum, data, tst, clamp, filter, format, target);
-    uploadcompressedtexture(target, subtarget, format, w, h, data, align, blocksize, levels, filter > 1, tst); 
+    if(tnum) setuptexparameters(tnum, data, clamp, filter, format, target, tst);
+    uploadcompressedtexture(target, subtarget, format, w, h, data, align, blocksize, levels, filter > 1, *tst); 
 }
 
 std::unordered_map<std::string, Texture> textures;
@@ -222,11 +226,7 @@ Texture *newtexture(Texture *t, const char *rname, ImageData &s, int clamp, bool
 {
     if(!t) t = registertexture(rname);
 
-    if(!tst)
-    {
-        tst = &legtexsettings;
-        tst->update(); //todo?
-    }
+    if(!tst) tst = legacytexsettings();
 
     t->clamp = clamp;
     t->mipmap = mipit;
@@ -275,13 +275,13 @@ Texture *newtexture(Texture *t, const char *rname, ImageData &s, int clamp, bool
             if(t->w > 1) t->w /= 2;
             if(t->h > 1) t->h /= 2;
         }
-        createcompressedtexture(t->id, t->w, t->h, data, s.align, s.bpp, levels, clamp, filter, s.compressed, GL_TEXTURE_2D, *tst);
+        createcompressedtexture(t->id, t->w, t->h, data, s.align, s.bpp, levels, clamp, filter, s.compressed, GL_TEXTURE_2D, tst);
     }
     else
     {
-        resizetexture(t->w, t->h, mipit, canreduce, GL_TEXTURE_2D, compress, t->w, t->h);
+        resizetexture(t->w, t->h, mipit, canreduce, GL_TEXTURE_2D, compress, t->w, t->h, *tst);
         GLenum component = compressedformat(format, *tst, t->w, t->h, compress);
-        createtexture(t->id, t->w, t->h, s.data, clamp, filter, component, GL_TEXTURE_2D, t->xs, t->ys, s.pitch, false, format, *tst);
+        createtexture(t->id, t->w, t->h, s.data, clamp, filter, component, GL_TEXTURE_2D, t->xs, t->ys, s.pitch, false, format, tst);
     }
     return t;
 }
@@ -305,11 +305,8 @@ bool texturedata(ImageData &d, const char *tname, texsettings *tst, Slot::Tex *t
 {
     const char *cmds = NULL, *file = tname;
     
-    if(!tst)
-    {
-        tst = &legtexsettings;
-        tst->update();
-    }
+    if(!tst) tst = legacytexsettings();
+
     if(!tname)
     {
         if(!tex) return false;

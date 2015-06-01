@@ -14,4 +14,4 @@ extern GLenum compressedformat(GLenum format, texsettings &tst, int w, int h, in
 extern GLenum textarget(GLenum subtarget);
 extern int formatsize(GLenum format);
 
-#endif _TEX_FORMAT_H
+#endif //_TEX_FORMAT_H
