@@ -140,6 +140,8 @@ namespace inexor {
                     if(curimg.t) t->loadmask |= 1 << k; //save to loadmask on success
                 }
             }
+            settings = new texsettings(); //use the settings we currently have for the whole loading.
+        }
         }
 
         void slotset::load()
@@ -149,7 +151,7 @@ namespace inexor {
                 texentry *t = texs[i];
                 int needload = t->slot->texmask & ~t->loadmask;
                 if(!needload) continue;
-                loadslot(*t->slot, false); //conterminates any threadsafety effords so far.
+                loadslot(*t->slot, false, settings); //conterminates any threadsafety effords so far.
                 //loopk(TEX_NUM)
                 //{
                 //    if(k >= t->tex->sts.length()) break; // out of range

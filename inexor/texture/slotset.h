@@ -50,6 +50,9 @@ namespace inexor {
             /// All included Slots.
             vector<texentry *>texs;
 
+            /// Use our bundeled texture settings to load it, rather than globals.
+            texsettings *settings;
+
             /// Adds a texture to the set from a JSON (Object).
             void addtexture(JSON *j);
 
