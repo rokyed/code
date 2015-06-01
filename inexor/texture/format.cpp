@@ -1,7 +1,6 @@
 /// @file Small helper functions to organize which OpenGL formats to use.
 
 #include "inexor/texture/format.h"
-#include "inexor/texture/texsettings.h"
 
 GLenum texformat(int bpp)
 {
@@ -44,16 +43,17 @@ GLenum uncompressedformat(GLenum format)
     return GL_FALSE;
 }
 
-GLenum compressedformat(GLenum format, int w, int h, int force)
+/// Retreive the prefered format for a compressed texture, according to a given uncompressed one.
+GLenum compressedformat(GLenum format, texsettings &tst, int w, int h, int force)
 {
-    if(hasTC && usetexcompress && texcompress && force >= 0 && (force || w >= texcompress || h >= texcompress)) switch(format)
+    if(tst.hasTC && tst.usetexcompress && tst.texcompress && force >= 0 && (force || w >= tst.texcompress || h >= tst.texcompress)) switch(format)
     {
     case GL_RGB5:
     case GL_RGB8:
     case GL_LUMINANCE:
-    case GL_RGB: return usetexcompress > 1 ? GL_COMPRESSED_RGB_S3TC_DXT1_EXT : GL_COMPRESSED_RGB_ARB;
+    case GL_RGB: return tst.usetexcompress > 1 ? GL_COMPRESSED_RGB_S3TC_DXT1_EXT : GL_COMPRESSED_RGB_ARB;
     case GL_LUMINANCE_ALPHA:
-    case GL_RGBA: return usetexcompress > 1 ? GL_COMPRESSED_RGBA_S3TC_DXT5_EXT : GL_COMPRESSED_RGBA_ARB;
+    case GL_RGBA: return tst.usetexcompress > 1 ? GL_COMPRESSED_RGBA_S3TC_DXT5_EXT : GL_COMPRESSED_RGBA_ARB;
     }
     return format;
 }
