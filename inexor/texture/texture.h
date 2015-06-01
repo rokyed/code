@@ -141,9 +141,9 @@ struct Texture
 
 /// Global used to specify this slot is not loaded.
 /// Todo: make use threadsafe!
-extern Texture *notexture; 
+extern Texture *notexture;
 
-extern bool texturedata(ImageData &d, const char *tname, Slot::Tex *tex = NULL, bool msg = true, int *compress = NULL);
+extern bool texturedata(ImageData &d, const char *tname, texsettings *tst, Slot::Tex *tex = NULL, bool msg = true, int *compress = NULL);
 extern Texture *newtexture(Texture *t, const char *rname, ImageData &s, int clamp = 0, bool mipit = true, bool canreduce = false, bool transient = false, int compress = 0);
 
 extern bool loadimage(const char *filename, ImageData &image);

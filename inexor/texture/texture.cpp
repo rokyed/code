@@ -15,13 +15,16 @@
 #include <map>
 #include <iterator>
 
-
+/// set texcompress quality.
+/// @warning not threadsafe.
 void setuptexcompress()
 {
-    if(!hasTC || !usetexcompress) return;
+    legtexsettings.update();
+    texsettings &set = legtexsettings;
+    if(!set.hasTC || !set.usetexcompress) return;
 
     GLenum hint = GL_DONT_CARE;
-    switch(texcompressquality)
+    switch(set.texcompressquality)
     {
         case 1: hint = GL_NICEST; break;
         case 0: hint = GL_FASTEST; break;
@@ -29,7 +32,7 @@ void setuptexcompress()
     glHint(GL_TEXTURE_COMPRESSION_HINT_ARB, hint);
 }
 
-void uploadtexture(GLenum target, GLenum internal, int tw, int th, GLenum format, GLenum type, void *pixels, int pw, int ph, int pitch, bool mipmap)
+void uploadtexture(GLenum target, GLenum internal, int tw, int th, GLenum format, GLenum type, void *pixels, int pw, int ph, int pitch, bool mipmap, texsettings &tst)
 {
     int bpp = formatsize(format), row = 0, rowalign = 0;
     if(!pitch) pitch = pw*bpp; 
@@ -61,7 +64,7 @@ void uploadtexture(GLenum target, GLenum internal, int tw, int th, GLenum format
         if(target==GL_TEXTURE_1D) glTexImage1D(target, level, internal, tw, 0, format, type, src);
         else glTexImage2D(target, level, internal, tw, th, 0, format, type, src);
         if(row > 0) glPixelStorei(GL_UNPACK_ROW_LENGTH, row = 0);
-        if(!mipmap || (hasGM && hwmipmap) || max(tw, th) <= 1) break;
+        if(!mipmap || (tst.hasGM && tst.hwmipmap) || max(tw, th) <= 1) break;
         int srcw = tw, srch = th;
         if(tw > 1) tw /= 2;
         if(th > 1) th /= 2;
@@ -71,10 +74,10 @@ void uploadtexture(GLenum target, GLenum internal, int tw, int th, GLenum format
     if(buf) delete[] buf;
 }
 
-void uploadcompressedtexture(GLenum target, GLenum subtarget, GLenum format, int w, int h, uchar *data, int align, int blocksize, int levels, bool mipmap)
+void uploadcompressedtexture(GLenum target, GLenum subtarget, GLenum format, int w, int h, uchar *data, int align, int blocksize, int levels, bool mipmap, texsettings &tst)
 {
-    int hwlimit = target==GL_TEXTURE_CUBE_MAP_ARB ? hwcubetexsize : hwtexsize,
-        sizelimit = levels > 1 && maxtexsize ? min(maxtexsize, hwlimit) : hwlimit;
+    int hwlimit = target==GL_TEXTURE_CUBE_MAP_ARB ? tst.hwcubetexsize : tst.hwtexsize,
+        sizelimit = levels > 1 && tst.maxtexsize ? min(tst.maxtexsize, hwlimit) : hwlimit;
     int level = 0;
     loopi(levels)
     {
@@ -92,25 +95,29 @@ void uploadcompressedtexture(GLenum target, GLenum subtarget, GLenum format, int
         data += size;
     }
 }
-    
-void setuptexparameters(int tnum, void *pixels, int clamp, int filter, GLenum format, GLenum target)
+
+/// Set OpenGL Texture Parameters like filtering or clamping for the texture given by target.
+void setuptexparameters(int tnum, void *pixels, texsettings &tst, int clamp, int filter, GLenum format, GLenum target)
 {
     glBindTexture(target, tnum);
     glTexParameteri(target, GL_TEXTURE_WRAP_S, clamp&1 ? GL_CLAMP_TO_EDGE : GL_REPEAT);
     if(target!=GL_TEXTURE_1D) glTexParameteri(target, GL_TEXTURE_WRAP_T, clamp&2 ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    if(target==GL_TEXTURE_2D && hasAF && min(aniso, hwmaxaniso) > 0 && filter > 1) glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, min(aniso, hwmaxaniso));
-    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter && bilinear ? GL_LINEAR : GL_NEAREST);
+    if(target == GL_TEXTURE_2D && tst.hasAF && min(tst.aniso, tst.hwmaxaniso) > 0 && filter > 1)
+    {
+        glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, min(tst.aniso, tst.hwmaxaniso));
+    }
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter && tst.bilinear ? GL_LINEAR : GL_NEAREST);
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER,
         filter > 1 ?
-            (trilinear ?
-                (bilinear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_LINEAR) :
-                (bilinear ? GL_LINEAR_MIPMAP_NEAREST : GL_NEAREST_MIPMAP_NEAREST)) :
-            (filter && bilinear ? GL_LINEAR : GL_NEAREST));
-    if(hasGM && filter > 1 && pixels && hwmipmap && !uncompressedformat(format))
+            (tst.trilinear ?
+                (tst.bilinear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_LINEAR) :
+                (tst.bilinear ? GL_LINEAR_MIPMAP_NEAREST : GL_NEAREST_MIPMAP_NEAREST)) :
+            (filter && tst.bilinear ? GL_LINEAR : GL_NEAREST));
+    if(tst.hasGM && filter > 1 && pixels && tst.hwmipmap && !uncompressedformat(format))
         glTexParameteri(target, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
 }
 
-void createtexture(int tnum, int w, int h, void *pixels, int clamp, int filter, GLenum component, GLenum subtarget, int pw, int ph, int pitch, bool resize, GLenum format)
+void createtexture(int tnum, int w, int h, void *pixels, int clamp, int filter, GLenum component, GLenum subtarget, int pw, int ph, int pitch, bool resize, GLenum format, texsettings &tst)
 {
     GLenum target = textarget(subtarget), type = GL_UNSIGNED_BYTE;
     switch(component)
@@ -153,7 +160,7 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, int filter, 
             break;
     }
     if(!format) format = component;
-    if(tnum) setuptexparameters(tnum, pixels, clamp, filter, format, target);
+    if(tnum) setuptexparameters(tnum, pixels, tst, clamp, filter, format, target);
     if(!pw) pw = w;
     if(!ph) ph = h;
     int tw = w, th = h;
@@ -161,16 +168,16 @@ void createtexture(int tnum, int w, int h, void *pixels, int clamp, int filter, 
     if(resize && pixels) 
     {
         resizetexture(w, h, mipmap, false, target, 0, tw, th);
-        if(mipmap) component = compressedformat(component, tw, th);
+        if(mipmap) component = compressedformat(component, tst, tw, th);
     }
-    uploadtexture(subtarget, component, tw, th, format, type, pixels, pw, ph, pitch, mipmap); 
+    uploadtexture(subtarget, component, tw, th, format, type, pixels, pw, ph, pitch, mipmap, tst); 
 }
 
-void createcompressedtexture(int tnum, int w, int h, uchar *data, int align, int blocksize, int levels, int clamp, int filter, GLenum format, GLenum subtarget)
+void createcompressedtexture(int tnum, int w, int h, uchar *data, int align, int blocksize, int levels, int clamp, int filter, GLenum format, GLenum subtarget, texsettings &tst)
 {
     GLenum target = textarget(subtarget);
-    if(tnum) setuptexparameters(tnum, data, clamp, filter, format, target);
-    uploadcompressedtexture(target, subtarget, format, w, h, data, align, blocksize, levels, filter > 1); 
+    if(tnum) setuptexparameters(tnum, data, tst, clamp, filter, format, target);
+    uploadcompressedtexture(target, subtarget, format, w, h, data, align, blocksize, levels, filter > 1, tst); 
 }
 
 std::unordered_map<std::string, Texture> textures;
@@ -208,9 +215,18 @@ int texalign(void *data, int w, int bpp)
     return 8;
 }
 
-Texture *newtexture(Texture *t, const char *rname, ImageData &s, int clamp, bool mipit, bool canreduce, bool transient, int compress)
+/// Creates a new struct Texture from the image data and infos given.
+/// @param t the space to write into, if not given newtexture is not threadsafe.
+/// @param tst the texture settings instance to use, if not given it will use the legacy one and newtexture is not threadsafe.
+Texture *newtexture(Texture *t, const char *rname, ImageData &s, int clamp, bool mipit, bool canreduce, bool transient, int compress, texsettings *tst)
 {
     if(!t) t = registertexture(rname);
+
+    if(!tst)
+    {
+        tst = &legtexsettings;
+        tst->update(); //todo?
+    }
 
     t->clamp = clamp;
     t->mipmap = mipit;
@@ -238,20 +254,20 @@ Texture *newtexture(Texture *t, const char *rname, ImageData &s, int clamp, bool
     t->w = t->xs = s.w;
     t->h = t->ys = s.h;
 
-    int filter = !canreduce || reducefilter ? (mipit ? 2 : 1) : 0;
+    int filter = !canreduce || tst->reducefilter ? (mipit ? 2 : 1) : 0;
     glGenTextures(1, &t->id);
     if(s.compressed)
     {
         uchar *data = s.data;
         int levels = s.levels, level = 0;
-        if(canreduce && texreduce) loopi(min(texreduce, s.levels-1))
+        if(canreduce && tst->texreduce) loopi(min(tst->texreduce, s.levels - 1))
         {
             data += s.calclevelsize(level++);
             levels--;
             if(t->w > 1) t->w /= 2;
             if(t->h > 1) t->h /= 2;
         } 
-        int sizelimit = mipit && maxtexsize ? min(maxtexsize, hwtexsize) : hwtexsize;
+        int sizelimit = mipit && tst->maxtexsize ? min(tst->maxtexsize, tst->hwtexsize) : tst->hwtexsize;
         while(t->w > sizelimit || t->h > sizelimit)
         {
             data += s.calclevelsize(level++);
@@ -259,13 +275,13 @@ Texture *newtexture(Texture *t, const char *rname, ImageData &s, int clamp, bool
             if(t->w > 1) t->w /= 2;
             if(t->h > 1) t->h /= 2;
         }
-        createcompressedtexture(t->id, t->w, t->h, data, s.align, s.bpp, levels, clamp, filter, s.compressed, GL_TEXTURE_2D);
+        createcompressedtexture(t->id, t->w, t->h, data, s.align, s.bpp, levels, clamp, filter, s.compressed, GL_TEXTURE_2D, *tst);
     }
     else
     {
         resizetexture(t->w, t->h, mipit, canreduce, GL_TEXTURE_2D, compress, t->w, t->h);
-        GLenum component = compressedformat(format, t->w, t->h, compress);
-        createtexture(t->id, t->w, t->h, s.data, clamp, filter, component, GL_TEXTURE_2D, t->xs, t->ys, s.pitch, false, format);
+        GLenum component = compressedformat(format, *tst, t->w, t->h, compress);
+        createtexture(t->id, t->w, t->h, s.data, clamp, filter, component, GL_TEXTURE_2D, t->xs, t->ys, s.pitch, false, format, *tst);
     }
     return t;
 }
@@ -283,13 +299,17 @@ static vec parsevec(const char *arg)
     return v;
 }
 
-VAR(usedds, 0, 1, 1);
-VAR(scaledds, 0, 2, 4);
-
-bool texturedata(ImageData &d, const char *tname, Slot::Tex *tex, bool msg, int *compress)
+/// Load all image data from a file and apply texmodifiers.
+/// @param tst only threadsafe if specified, otherwise legacy path is used.
+bool texturedata(ImageData &d, const char *tname, texsettings *tst, Slot::Tex *tex, bool msg, int *compress)
 {
     const char *cmds = NULL, *file = tname;
-
+    
+    if(!tst)
+    {
+        tst = &legtexsettings;
+        tst->update();
+    }
     if(!tname)
     {
         if(!tex) return false;
@@ -301,9 +321,8 @@ bool texturedata(ImageData &d, const char *tname, Slot::Tex *tex, bool msg, int 
             file++;
         }
         else file = tex->name;
-        
-        static string pname; //todo threadsafe?
-        formatstring(pname)("%s", file);
+
+        defformatstring(pname)("%s", file);
         file = path(pname);
     }
     else if(tname[0]=='<')
@@ -314,7 +333,7 @@ bool texturedata(ImageData &d, const char *tname, Slot::Tex *tex, bool msg, int 
         file++;
     }
 
-    bool raw = !usedds || !compress, dds = false;
+    bool raw = !tst->usedds || !compress, dds = false;
     for(const char *pcmds = cmds; pcmds;)
     {
         #define PARSETEXCOMMANDS(cmds) \
@@ -333,15 +352,15 @@ bool texturedata(ImageData &d, const char *tname, Slot::Tex *tex, bool msg, int 
         PARSETEXCOMMANDS(pcmds);
         if(matchstring(cmd, len, "noff"))
         {
-            if(renderpath==R_FIXEDFUNCTION) return true;
+            if(tst->renderpath==R_FIXEDFUNCTION) return true;
         }
         else if(matchstring(cmd, len, "ffmask") || matchstring(cmd, len, "ffskip"))
         {
-            if(renderpath==R_FIXEDFUNCTION) raw = true;
+            if(tst->renderpath==R_FIXEDFUNCTION) raw = true;
         }
         else if(matchstring(cmd, len, "decal"))
         {
-            if(renderpath==R_FIXEDFUNCTION && !hasTE) raw = true;
+            if(tst->renderpath==R_FIXEDFUNCTION && !hasTE) raw = true;
         }
         else if(matchstring(cmd, len, "dds")) dds = true;
         else if(matchstring(cmd, len, "thumbnail")) raw = true;
@@ -361,7 +380,7 @@ bool texturedata(ImageData &d, const char *tname, Slot::Tex *tex, bool msg, int 
             if(msg) conoutf(CON_WARN, "could not load texture %s", dfile);
             return false;
         }
-        if(d.data && !d.compressed && !dds && compress) *compress = scaledds;
+        if(d.data && !d.compressed && !dds && compress) *compress = tst->scaledds;
     }
 
     if(!d.data)
@@ -382,7 +401,7 @@ bool texturedata(ImageData &d, const char *tname, Slot::Tex *tex, bool msg, int 
         else if(matchstring(cmd, len, "colormask")) texcolormask(d, parsevec(arg[0]), *arg[1] ? parsevec(arg[1]) : vec(1, 1, 1));
         else if(matchstring(cmd, len, "ffmask"))
         {
-            texffmask(d, atof(arg[0]), atof(arg[1]));
+            texffmask(d, atof(arg[0]), atof(arg[1]), tst);
             if(!d.data) break;
         }
         else if(matchstring(cmd, len, "normal")) 
@@ -407,7 +426,7 @@ bool texturedata(ImageData &d, const char *tname, Slot::Tex *tex, bool msg, int 
         else if(matchstring(cmd, len, "compress") || matchstring(cmd, len, "dds")) 
         { 
             int scale = atoi(arg[0]);
-            if(scale <= 0) scale = scaledds;
+            if(scale <= 0) scale = tst->scaledds;
             if(compress) *compress = scale;
         }
         else if(matchstring(cmd, len, "nocompress"))
@@ -423,18 +442,19 @@ bool texturedata(ImageData &d, const char *tname, Slot::Tex *tex, bool msg, int 
         }
         else if(matchstring(cmd, len, "ffskip"))
         {
-            if(renderpath==R_FIXEDFUNCTION) break;
+            if(tst->renderpath==R_FIXEDFUNCTION) break;
         }
     }
 
     return true;
 }
 
+/// TODO NOT THREADSAFE
 void loadalphamask(Texture *t)
 {
     if(t->alphamask || !(t->type&Texture::ALPHA)) return;
     ImageData s;
-    if(!texturedata(s, t->name, NULL, false) || !s.data || s.compressed) return;
+    if(!texturedata(s, t->name, NULL, NULL, false) || !s.data || s.compressed) return;
     t->alphamask = new uchar[s.h * ((s.w+7)/8)];
     uchar *srcrow = s.data, *dst = t->alphamask-1;
     loop(y, s.h)
@@ -453,11 +473,12 @@ void loadalphamask(Texture *t)
 
 /// @param clamp
 /// @param mipit specifies whether mipmap (lower quality versions; usually used when far away or small) textures should be created.
-/// @param msg specifies whether a renderprogress bar should be displayed while loading. Always off if threadsafe = true.
+/// @param msg specifies whether a progress bar should be displayed while loading. Always off if threadsafe = true.
+/// @param tst hands in an own version of all texture settings, used in a threaded environment to be threadsafe.
 /// @param threadsafe if true, the texture wont be automatically registerd to the global texture registry,
 ///        you need to check whether it is loaded via gettexture beforehand in a nonthreaded environment and register it afterwards
 ///        with registertexture.
-Texture *textureload(const char *name, int clamp, bool mipit, bool msg, bool threadsafe)
+Texture *textureload(const char *name, int clamp, bool mipit, bool msg, bool threadsafe, texsettings *tst)
 {
     Texture *t;
 
@@ -466,13 +487,16 @@ Texture *textureload(const char *name, int clamp, bool mipit, bool msg, bool thr
         t = gettexture(name);
         if(t) return t;
     }
-    else t = new Texture;
+    else {
+        ASSERT(tst); // "treadsafe true but not enough args
+        t = new Texture;
+    }
 
     string tname;
     copystring(tname, name);
     int compress = 0;
     ImageData s;
-    if(texturedata(s, tname, NULL, msg && !threadsafe, &compress)) return newtexture(threadsafe ? t : NULL, tname, s, clamp, mipit, false, false, compress);
+    if(texturedata(s, tname, tst, NULL, msg && !threadsafe, &compress)) return newtexture(threadsafe ? t : NULL, tname, s, clamp, mipit, false, false, compress, tst);
     return notexture;
 }
 
@@ -514,6 +538,8 @@ bool reloadtexture(const char *name)
     return true;
 }
 
+/// Reload all textures in case of a quality settings change.
+/// @warning not threadsafe
 bool reloadtexture(Texture &tex)
 {
     if(tex.id) return true;
@@ -523,7 +549,7 @@ bool reloadtexture(Texture &tex)
         {
             int compress = 0;
             ImageData s;
-            if(!texturedata(s, tex.name, NULL, true, &compress) || !newtexture(&tex, NULL, s, tex.clamp, tex.mipmap, false, false, compress)) return false;
+            if(!texturedata(s, tex.name, NULL, NULL, true, &compress) || !newtexture(&tex, NULL, s, tex.clamp, tex.mipmap, false, false, compress)) return false;
             break;
         }
 
