@@ -398,7 +398,7 @@ bool texturedata(ImageData &d, const char *tname, texsettings *tst, Slot::Tex *t
         else if(matchstring(cmd, len, "colormask")) texcolormask(d, parsevec(arg[0]), *arg[1] ? parsevec(arg[1]) : vec(1, 1, 1));
         else if(matchstring(cmd, len, "ffmask"))
         {
-            texffmask(d, atof(arg[0]), atof(arg[1]), tst);
+            texffmask(d, atof(arg[0]), atof(arg[1]), *tst);
             if(!d.data) break;
         }
         else if(matchstring(cmd, len, "normal")) 
@@ -475,6 +475,7 @@ void loadalphamask(Texture *t)
 /// @param threadsafe if true, the texture wont be automatically registerd to the global texture registry,
 ///        you need to check whether it is loaded via gettexture beforehand in a nonthreaded environment and register it afterwards
 ///        with registertexture.
+/// @return notexture if not loaded and threadsafe is false, NULL gets returned if threadsafe is true, but texture wasnt loadable.
 Texture *textureload(const char *name, int clamp, bool mipit, bool msg, bool threadsafe, texsettings *tst)
 {
     Texture *t;
@@ -494,7 +495,7 @@ Texture *textureload(const char *name, int clamp, bool mipit, bool msg, bool thr
     int compress = 0;
     ImageData s;
     if(texturedata(s, tname, tst, NULL, msg && !threadsafe, &compress)) return newtexture(threadsafe ? t : NULL, tname, s, clamp, mipit, false, false, compress, tst);
-    return notexture;
+    return threadsafe ? NULL : notexture;
 }
 
 bool settexture(const char *name, int clamp)

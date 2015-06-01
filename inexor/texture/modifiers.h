@@ -19,7 +19,7 @@ extern void texflip(ImageData &s);
 extern void texmad(ImageData &s, const vec &mul, const vec &add);
 extern void texcolorify(ImageData &s, const vec &color, vec weights);
 extern void texcolormask(ImageData &s, const vec &color1, const vec &color2);
-extern void texffmask(ImageData &s, float glowscale, float envscale, texsettings *set);
+extern void texffmask(ImageData &s, float glowscale, float envscale, texsettings &tst);
 extern void texdup(ImageData &s, int srcchan, int dstchan);
 extern void texdecal(ImageData &s);
 extern void texmix(ImageData &s, int c1, int c2, int c3, int c4);

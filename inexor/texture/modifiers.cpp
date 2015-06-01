@@ -291,9 +291,9 @@ void texcolormask(ImageData &s, const vec &color1, const vec &color2)
     s.replace(d);
 }
 
-void texffmask(ImageData &s, float glowscale, float envscale, texsettings *set)
+void texffmask(ImageData &s, float glowscale, float envscale, texsettings &tst)
 {
-    if(set->renderpath != R_FIXEDFUNCTION) return;
+    if(tst.renderpath != R_FIXEDFUNCTION) return;
     if(nomasks || s.bpp<3) { s.cleanup(); return; }
     const int minval = 0x18;
     bool glow = false, envmap = true;
