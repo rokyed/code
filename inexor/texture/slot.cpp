@@ -573,7 +573,7 @@ void texcombine(Slot &s, int index, Slot::Tex &t, texsettings *tst, bool msg = t
 
     gencombinedname(key, texmask, s, t, index, fixedfunction, envmap, forceload);
 
-    t.t = gettexture(key.getbuf()); //todo check if working
+    if(registry) t.t = gettexture(key.getbuf()); //todo check if working
     if(t.t) return;
     int compress = 0;
     ImageData ts;
