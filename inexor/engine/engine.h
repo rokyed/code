@@ -157,30 +157,15 @@ struct font
 
 extern font *curfont;
 
-// texture
-extern int hwtexsize, hwcubetexsize, hwmaxaniso, maxtexsize;
+// shader
 
-extern Texture *textureload(const char *name, int clamp = 0, bool mipit = true, bool msg = true, bool threadsafe = false, texsettings *tst = NULL);
-extern int texalign(void *data, int w, int bpp);
-extern void cleanuptexture(Texture *t);
-extern void loadalphamask(Texture *t);
-extern void loadlayermasks();
 extern void loadshaders();
-extern void setuptexparameters(int tnum, void *pixels, int clamp, int filter, GLenum format = GL_RGB, GLenum target = GL_TEXTURE_2D, texsettings *tst = NULL );
-extern void createtexture(int tnum, int w, int h, void *pixels, int clamp, int filter, GLenum component = GL_RGB, GLenum target = GL_TEXTURE_2D, int pw = 0, int ph = 0, int pitch = 0, bool resize = true, GLenum format = GL_FALSE, texsettings *tst = NULL);
-extern void createcompressedtexture(int tnum, int w, int h, uchar *data, int align, int blocksize, int levels, int clamp, int filter, GLenum format, GLenum subtarget, texsettings *tst);
-extern void blurtexture(int n, int bpp, int w, int h, uchar *dst, const uchar *src, int margin = 0);
-extern void blurnormals(int n, int w, int h, bvec *dst, const bvec *src, int margin = 0);
 extern void renderpostfx();
-extern bool reloadtexture(Texture &tex);
-extern bool reloadtexture(const char *name);
-extern void setuptexcompress();
-extern void clearslots();
+
+// octaedit + slots TODO: merge into slots.cpp
+
 extern void compacteditvslots();
 extern void compactmruvslots();
-extern void compactvslots(cube *c, int n = 8);
-extern void compactvslot(int &index);
-extern int compactvslots();
 
 // shadowmap
 

@@ -1,8 +1,7 @@
 /// @file Settings for texture loading and handling.
 
-//#include "texture/texsettings.h"
-
 #include "inexor/engine/engine.h"
+#include "inexor/texture/texsettings.h"
 
 VAR(hwtexsize, 1, 0, 0);
 VAR(hwcubetexsize, 1, 0, 0);

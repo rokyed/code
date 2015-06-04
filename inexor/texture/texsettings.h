@@ -28,4 +28,8 @@ struct texsettings
 
 /// Legacy tex settings global.
 extern texsettings *legacytexsettings();
+
+// Todo (to be refractored):
+extern int hwtexsize, hwcubetexsize, hwmaxaniso, maxtexsize;
+
 #endif // _TEX_SETTINGS_H

@@ -4,6 +4,7 @@
 #define _TEX_TEXTURE_H
 
 //#include "texture/textureslot.h" moved to below
+#include "inexor/texture/texsettings.h"
 
 /// Structure holding the Raw Pixel Data and minimum image info.
 /// Used when loading/modifying a texture.
@@ -142,6 +143,19 @@ struct Texture
 /// Global used to specify this slot is not loaded.
 /// Todo: make use threadsafe!
 extern Texture *notexture;
+
+// texture
+
+extern Texture *textureload(const char *name, int clamp = 0, bool mipit = true, bool msg = true, bool threadsafe = false, texsettings *tst = NULL);
+extern int texalign(void *data, int w, int bpp);
+extern void cleanuptexture(Texture *t);
+extern void loadalphamask(Texture *t);
+extern void setuptexparameters(int tnum, void *pixels, int clamp, int filter, GLenum format = GL_RGB, GLenum target = GL_TEXTURE_2D, texsettings *tst = NULL);
+extern void createtexture(int tnum, int w, int h, void *pixels, int clamp, int filter, GLenum component = GL_RGB, GLenum target = GL_TEXTURE_2D, int pw = 0, int ph = 0, int pitch = 0, bool resize = true, GLenum format = GL_FALSE, texsettings *tst = NULL);
+extern void createcompressedtexture(int tnum, int w, int h, uchar *data, int align, int blocksize, int levels, int clamp, int filter, GLenum format, GLenum subtarget, texsettings *tst);
+extern bool reloadtexture(Texture &tex);
+extern bool reloadtexture(const char *name);
+extern void setuptexcompress();
 
 extern bool texturedata(ImageData &d, const char *tname, texsettings *tst, Slot::Tex *tex = NULL, bool msg = true, int *compress = NULL);
 extern Texture *newtexture(Texture *t, const char *rname, ImageData &s, int clamp = 0, bool mipit = true, bool canreduce = false, bool transient = false, int compress = 0, texsettings *tst = NULL);

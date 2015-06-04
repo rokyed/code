@@ -31,4 +31,7 @@ extern void texblur(ImageData &s, int n, int r);
 
 extern void forcergbimage(ImageData &s);
 
+extern void blurtexture(int n, int bpp, int w, int h, uchar *dst, const uchar *src, int margin = 0);
+extern void blurnormals(int n, int w, int h, bvec *dst, const bvec *src, int margin = 0);
+
 #endif //TEX_MODIFIERS_H

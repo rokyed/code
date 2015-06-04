@@ -155,8 +155,10 @@ struct MSlot : Slot, VSlot
     }
 };
 
-Slot &loadslot(Slot &s, bool forceload);
+Slot &loadslot(Slot &s, bool forceload, texsettings *tst = NULL);
+extern void loadlayermasks();
 
+extern void clearslots();
 extern void cleanupslots();
 extern void cleanupvslots();
 extern void cleanupmaterialslots();
@@ -172,6 +174,11 @@ extern VSlot *emptyvslot(Slot &owner);
 extern VSlot *findvslot(Slot &slot, const VSlot &src, const VSlot &delta);
 extern VSlot *editvslot(const VSlot &src, const VSlot &delta);
 extern void mergevslot(VSlot &dst, const VSlot &src, const VSlot &delta);
+
+
+extern void compactvslots(cube *c, int n = 8);
+extern void compactvslot(int &index);
+extern int compactvslots();
 
 extern vector<Slot *> slots;
 extern vector<VSlot *> vslots;

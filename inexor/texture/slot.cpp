@@ -190,8 +190,6 @@ ICOMMAND(compactvslots, "", (),
     allchanged();
 });
 
-Slot &loadslot(Slot &s, bool forceload, texsettings *tst = NULL);
-
 static void clampvslotoffset(VSlot &dst, Slot *slot = NULL)
 {
     if(!slot) slot = dst.slot;
