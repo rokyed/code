@@ -142,7 +142,6 @@ namespace inexor {
             }
             settings = new texsettings(); //use the settings we currently have for the whole loading.
         }
-        }
 
         void slotset::load()
         {
