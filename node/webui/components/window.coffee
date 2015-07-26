@@ -26,14 +26,22 @@ defineComponent 'window', class extends Component
       @elem.css "width", "#{v}px" if v
       @elem.width()
     height: (v) ->
-      @elem.css "height", "#{v}px" if v
+      if v
+        @elem.css "height", "#{v}px"
+
+        # Make sure the content container has a good height
+        c = @elem.find ".win-content"
+        c.css "height", "#{v - (c.offset().top - @Y)}px"
+
       @elem.height()
+
     X: (v) ->
       @elem.css "left", "#{v}px" if v
-      @elem.position().left
+      @elem.offset().left
     Y: (v) ->
       @elem.css "top", "#{v}px" if v
-      @elem.position().top
+      @elem.offset().top
+
 
   # UI: The Component of the UI in this window.
   @componentAcc ui: ".win-content > *"
@@ -51,6 +59,8 @@ defineComponent 'window', class extends Component
   ## FUNCTIONS ##
 
   constructor: ->
+    @move 40, 30, 400, 300
+
     # TODO: Use a better way to process attribute
     # parameters; provide attribute accessors? provide an
     # automatic attribute-sync-to-value service? something
@@ -64,7 +74,7 @@ defineComponent 'window', class extends Component
   # Get the window manager holding this window.
   wm: => Component.componentFor @elem.parents("wm").get(0)
 
-  move: (@x, @y, @width=@width, @heigt=@heigh) =>
+  move: (@X, @Y, @width=@width, @height=@heigh) =>
   resize: (@width, @height) =>
 
   # Close this window

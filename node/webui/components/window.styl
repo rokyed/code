@@ -1,9 +1,7 @@
 @import '../node_modules/bootstrap-styl/bootstrap/glyphicons.styl'
 
 window
-  position: absolute;
-  width: 400px;
-  height: 420px;
+  position: fixed;
   background-color: #fafaf0;
 
   border-radius: 10px;
@@ -14,6 +12,19 @@ window
     3px 4px 16px -6px black,
     0px 0px 2px 0px black // Soft border
 
+  .win-content
+    position: relative
+    display: inline-block
+    width: 100%
+    // set by JS because we need to deal with topbar and
+    // 100% would make the box to big <_<
+    //height: 100%
+
+    overflow: scroll
+
+    & > *
+      position: absolute
+
   &[not-decorated]
     border-radius: 0px
     box-shadow: none
@@ -21,7 +32,7 @@ window
       display: none
 
   .win-topbar
-    background: linear-gradient(to bottom, #ffffff 0%,#f6f6f6 47%,#ededed 100%);
+    background: linear-gradient(to bottom, #ffffff 0%,#f6f6f6 47%,#ededed 100%)
     height: 35px
 
     padding-top: 7px
