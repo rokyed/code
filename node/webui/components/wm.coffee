@@ -24,7 +24,7 @@ defineComponent 'wm', class extends Component
   open: (ui, window_params={}, ui_params={}) =>
     el = @$compile("<window><#{ui}></#{ui}></window>")(@$scope)
 
-    @elem.prepend el
+    @elem.append el
     # TODO: Get rid of the delay
     delay 30, =>
       window = Component.componentFor el
