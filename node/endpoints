@@ -1,0 +1,157 @@
+/api/<version>/
+
+  Enum Gamemodes
+    ffa
+    ..
+
+  Enum Mastermode
+    open
+    veto
+    locked
+    private
+
+  Class Imaged
+    String name
+    Url<Image> thumbnail = "maps/$name/thumbnail"
+
+  Class Server
+    String name
+    String host
+    Integer port
+    Mastermode mastermode
+    mutable Maybe<Player> master
+
+  Class Map
+    String name
+    Maybe<Url<Image>> thumbnail = "maps/$name/thumbnail"
+
+  Class Playermodel
+    String name
+    Mayve<Url<Image>> thumbnail = "playermodels/$name/thumbnail"
+
+  Class Crosshair
+    String name
+    Maybe<Url<Image>> thumbnail = crosshairs/$name/thumbnail"
+    Maybe<Integer> size # not set for the crosshair list
+
+  Class Player
+    mutable String name
+    mutable String model
+    mutable maybe<String> team # Set if mode with teams
+    mutable Boolean spectating
+    Maybe bot/ # Set if this is a bot
+      Player controller
+      Integer skill
+
+    Function kick
+
+  cubescript/
+    Function eval
+    variables/
+
+  Map[] maps
+
+  game/
+    mutable Maybe<Map> map # Set if playing at all
+    mutable Maybe<Gamemode> mode
+    mutable Player player
+    mutable Set<Player> player # Remove player – kick
+    Maybe<Server> server # Set if playing on server
+
+  edit/
+
+  preferences/
+    mutable Boolean showfps
+
+    clock/
+      mutable Boolean show
+      mutable String format
+
+    crosshair/
+      mutable Crosshair main
+      mutable Crosshair team
+      mutable Crosshair hit
+      Set<Crosshair> list
+
+    mouse/
+      mutable Boolean invert
+      mutable Integer sensitivity
+
+    game/
+      mutable Boolean deathscore
+      mutable Boolean damagescreen
+      mutable Boolean damageccompass
+      mutable Boolean hudgun
+      mutable Boolean hudgunsway
+      mutable Boolean muzzleflash
+      mutable Boolean muzzlelight
+      mutable Boolean blood
+      mutable Boolean ragdoll
+      mutable Integer ragdollmillis
+      mutable Boolean hidedead
+      mutable Integer deadpush
+      mutable Integer fullbrightmodels
+      mutable Boolean forceplayermodels
+      mutable Boolean teamskins
+      mutable Boolean outlinemeter
+      mutable Boolean basenumbers
+      mutable Boolean radarteammates
+
+    fx/
+      mutable Integer shaderdetails
+      mutable Boolean waterrefract
+      mutable Boolean waterreflect
+      mutable Boolean causics
+      mutable Boolean verwater
+      mutable Boolean waterfallrefract
+      mutable Boolean waterfallenv
+      mutable Boolean shadowmap
+      mutable Integer shadowmapsize
+      mutable Boolean blurshadowmap
+      mutable Boolean blobs
+      mutable Integer glarepresent
+      mutable Boolean blurglare
+      mutable Boolean glarescale
+      mutable Boolean glare
+      mutable Boolean motionblur
+      mutable Boolean grass
+      mutable Integer grassdist
+      mutable Integer ffdynligts
+      mutable Integer motionblurscale
+      mutable Boolean radarteammates
+      mutable Integer maxdynlights
+      mutable Boolean depthfx
+      mutable Integer depthxsize
+      mutable Boolean declals
+      mutable Integer decalfade
+      mutable Boolean filltjoints
+      mutable Integer maxtexsize
+      mutable Boolean lightmodels
+      mutable Boolean envmapmodels
+      mutable Boolean glowmodels
+      mutable Boolean matskel
+
+    display/
+      mutable Boolean vsync
+      mutable Boolean fullscreen
+      mutable Integer gamma
+      mutable Integer fsaa
+      mutable Integer colorbits
+      mutable Integer depthbits
+      mutable Integer stencilbits
+      mutable Integer aniso
+      mutable Integer depthbits
+      mutable Boolean bilinear
+      mutable Boolean trilinear
+      mutable Integer fov
+      mutable Integer screen_width
+      mutable Integer screen_height
+      mutable Integer depthbits
+
+    sound/
+      mutable Integer soundvol
+      mutable Integer musicvol
+      mutable Integer soundchans
+      mutable Integer soundfreq
+      mutable Integer soundbufferlen
+      mutable Boolean mumble

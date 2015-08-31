@@ -1,4 +1,6 @@
 #include "inexor/shared/cube.h"
+#include <sstream>
+#include <string>
 
 ///////////////////////// character conversion ///////////////
 
@@ -239,6 +241,36 @@ struct packagedir
     size_t dirlen, filterlen;
 };
 vector<packagedir> packagedirs;
+
+ICOMMAND(getpackagedirs, "", (),
+    // TODO: this is all so terrible c++ code
+    char *cwd = get_current_dir_name();
+
+    std::ostringstream os;
+
+    if (homedir[0] != '/') {
+      os << cwd << '/';
+    }
+    os << homedir;
+
+    for (size_t i=0; i < packagedirs.length(); i++) {
+      os.put(':');
+
+      auto &pac = packagedirs[i];
+
+      // Absolutize
+      if (pac.dir[0] != '/') {
+        os << cwd << '/';
+      }
+      os.write(pac.dir, pac.dirlen);
+    }
+
+    // TODO: This is terribly inefficient
+    std::string s = os.str();
+    char *cs = new char[s.length()];
+    memcpy(cs, s.c_str(), s.length());
+    commandret->setstr(cs);
+);
 
 /// Create a relative path
 /// @Return (const char*) file relative to (const char*) dir

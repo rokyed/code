@@ -1,5 +1,5 @@
-Long = require 'inexor/util/Long'
-BufferBuilder = require 'inexor/util/BufferBuilder'
+Long = require 'util/Long'
+BufferBuilder = require 'util/BufferBuilder'
 
 # Pendant of C++ MessageConnect, more specifically
 # inexor::net::MCSocket.

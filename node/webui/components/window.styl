@@ -20,7 +20,10 @@ window
     // 100% would make the box to big <_<
     //height: 100%
 
-    overflow: scroll
+
+    // TODO: Quickfix for getting rid of the bottom-scrollbar in boostrap-gridded containers; GET RID
+    overflow-x: hidden;
+    overflow-y: scroll;
 
     & > *
       position: relative

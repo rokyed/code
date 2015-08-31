@@ -72,6 +72,7 @@ bootstrap = -> require [
   window.defineComponent = Component.wrap
 
   # Component files to load
+  # TODO: Load html-only components
   components = _.filter AssetManager.list(), (f) ->
       f.match /^\/(components|windows)\/.*\.js$/
 
@@ -88,6 +89,6 @@ bootstrap = -> require [
       # Initialize the window manager
       window.WM = Component.componentFor $ "wm#masterWM"
 
-      WM.open "inx-example"
+      WM.open "main-menu"
 
 do main

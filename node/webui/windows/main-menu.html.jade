@@ -1,0 +1,26 @@
+.container-fluid
+  .row
+
+    .form-inline
+      .form-group
+      label.control-label.sr-only(for="nick") Name:
+      input#nick.form-control(inx-var="nick")
+
+    button.btn.btn-default.btn-block(guiopen="payermodel-menu")
+      | Model:
+      span(inx-var="playermodel")
+
+    button.btn.btn-default.btn-block(guiopen="crosshair-menu")
+      | Crosshair:
+      // TODO: Add some sort of text-box class for texts sized boxes?
+      img(style="width: 1em; height: 1em; background: blue")
+
+    hr
+
+    button.btn.btn-default.btn-block(guiopen="match-menu") Bot Match
+
+    hr
+
+    button.btn.btn-default.btn-block(guiopen="config-menu") Config
+    button.btn.btn-default.btn-block(guiopen="about-menu") About
+    button.btn.btn-danger.btn-block Quit

@@ -12,7 +12,7 @@ defineComponent 'window', class extends Component
   @restrict: "E"
   @transclude: true
 
-  @inject "uuid"
+  @inject "uuid", "$timeout"
 
   ## ACCESSORS ##
 
@@ -30,8 +30,8 @@ defineComponent 'window', class extends Component
         @elem.css "height", "#{v}px"
 
         # Make sure the content container has a good height
-        c = @elem.find ".win-content"
-        c.css "height", "#{v - (c.offset().top - @Y)}px"
+        offset = (@winContent().offset().top - @Y)
+        @winContent().css "height", "#{v - offset}px"
 
       @elem.height()
 
@@ -56,9 +56,15 @@ defineComponent 'window', class extends Component
   @set decorated: (v) ->
     @elem.attr "not-decorated", (if v then "" else null)
 
+  @get scrollTop: ->     @winContent().scrollTop()
+  @set scrollTop: (v) -> @winContent().scrollTop v
+  @get scrollLeft: ->     @winContent().scrollLeft()
+  @set scrollLeft: (v) -> @winContent().scrollLeft v
+
   ## FUNCTIONS ##
 
   constructor: ->
+    # TODO: Appropriately size on first open
     @move 40, 30, 400, 300
 
     # TODO: Use a better way to process attribute
@@ -73,6 +79,7 @@ defineComponent 'window', class extends Component
 
   # Get the window manager holding this window.
   wm: => Component.componentFor @elem.parents("wm").get(0)
+  winContent: => @elem.find ".win-content"
 
   move: (@X, @Y, @width=@width, @height=@heigh) =>
   resize: (@width, @height) =>
@@ -82,9 +89,22 @@ defineComponent 'window', class extends Component
 
   # Put this window to the top of the stack
   toTop: =>
-    par = @$ @elem.parent()
-    @elem.detach()
-    par.append @elem
+    @protectScrollState =>
+      par = @$ @elem.parent()
+      @elem.detach()
+      par.append @elem
+
+  # With operations that will destroy the scroll status
+  # (that is detaching the element from dom and then re
+  # inserting it), this will make sure the scroll state
+  # remains unchanged.
+  protectScrollState: (f) ->
+    l = @scrollLeft
+    t = @scrollTop
+    r = f()
+    @scrollLeft = l
+    @scrollTop = t
+    r
 
 
   ## EVENT MANAGEMENT ##

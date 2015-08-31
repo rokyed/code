@@ -1,6 +1,6 @@
 Uuid = require 'uuid'
 Protobuf = require 'protobufjs'
-Long = require 'inexor/util/Long'
+Long = require 'util/Long'
 
 # Load a protobuf protocol description from a file
 #

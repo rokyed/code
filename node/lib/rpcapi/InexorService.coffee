@@ -1,12 +1,12 @@
 Net = require 'net'
-MProto = require 'inexor/rpcapi/MessageProto'
-SocketMessageConnect = require 'inexor/rpcapi/SocketMessageConnect'
-MCRpcClient = require 'inexor/rpcapi/MCRpcClient'
+MProto = require 'rpcapi/MessageProto'
+SocketMessageConnect = require 'rpcapi/SocketMessageConnect'
+MCRpcClient = require 'rpcapi/MCRpcClient'
 
 default_config = ->
   cfg =
     socket: path: "/tmp/inexor.socket"
-    proto: "../../../inexor/rpc/inexor_service.proto"
+    proto: "../inexor/rpc/inexor_service.proto"
   if process.platform.match /^win/
     cfg.socket = port: 56732
   cfg

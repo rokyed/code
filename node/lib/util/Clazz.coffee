@@ -215,6 +215,12 @@ def ["lodash", "underscore.string"], (_, _s) ->
     @customAccessorType "": (name, f, val) ->
       f.call @, val
 
+    @customAccessorType "ro": (name, f, val) ->
+      if val
+        throw new Error "#{@}.#{name} is read only!"
+      else
+        f.call @, name
+
     # Register all the accessors defined for this class with
     # the instance
     #

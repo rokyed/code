@@ -26,7 +26,7 @@ class BufferBuilder
   # @option [Buffer] Buf, The buffer to initialize this with
   constructor: (opts={}) ->
     @bs  = opts.bs || 1024
-    @alloc = @bs
+    @alloc = opts.alloc || @bs
     @buf =  new Buffer @alloc
     @len = 0
 

@@ -29,6 +29,7 @@ defineComponent 'wm', class extends Component
     delay 30, =>
       window = Component.componentFor el
       window.title ||= ui
+      window.toTop()
       @_.merge window, window_params
       @_.merge window.ui, ui_params
 

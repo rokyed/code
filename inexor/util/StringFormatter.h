@@ -3,6 +3,7 @@
 
 #include <sstream>
 #include <string>
+#include <iostream>
 
 namespace inexor {
 namespace util {
@@ -23,8 +24,7 @@ namespace util {
 
     StringFormatter() : sbuf(std::ios_base::out | std::ios_base::ate) {}
 
-    StringFormatter(const StringFormatter& other) : sbuf(std::ostringstream::ate)
-    {
+    StringFormatter(const StringFormatter& other) : sbuf(std::ostringstream::ate) {
         sbuf.str(other.sbuf.str()); // TODO move ?? other solution?
     }
 
