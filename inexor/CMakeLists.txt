@@ -15,6 +15,8 @@ add_subdirectory(libraries)
 declare_module(shared ./shared)
 declare_module(engine ./engine)
 declare_module(fpsgame ./fpsgame)
+
+declare_module(texture ./texture)
 add_subdirectory(util)
 add_subdirectory(net) # net module, asio lib
 add_subdirectory(rpc) # rpc module, protobuf lib

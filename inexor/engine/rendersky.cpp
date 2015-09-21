@@ -1,5 +1,6 @@
 #include "inexor/engine/engine.h"
 #include "inexor/shared/filesystem.h"
+#include "inexor/texture/cubemap.h"
 
 Texture *sky[6] = { 0, 0, 0, 0, 0, 0 }, *clouds[6] = { 0, 0, 0, 0, 0, 0 };
 

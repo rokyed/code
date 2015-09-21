@@ -28,7 +28,6 @@ prepend(CLIENT_SOURCES_ENGINE ${SOURCE_DIR}/engine
     server.cpp
     shader.cpp
     sound.cpp
-    texture.cpp
     water.cpp
     world.cpp
     worldio.cpp
@@ -53,6 +52,7 @@ prepend(CLIENT_SOURCES_FPSGAME ${SOURCE_DIR}/fpsgame
 
 set(CLIENT_SOURCES
   ${SHARED_MODULE_SOURCES}
+  ${TEXTURE_MODULE_SOURCES}
   ${CLIENT_SOURCES_ENGINE}
   ${CLIENT_SOURCES_FPSGAME} CACHE INTERNAL "")
 

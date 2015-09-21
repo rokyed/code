@@ -1116,6 +1116,7 @@ void resetslotshader()
     slotparams.shrink(0);
 }
 
+/// Set slot shader for the deprecated cfg-pipeline
 void setslotshader(Slot &s)
 {
     s.shader = slotshader;
@@ -1124,6 +1125,19 @@ void setslotshader(Slot &s)
         s.shader = stdworldshader;
         return;
     }
+    loopv(slotparams) s.params.add(slotparams[i]);
+}
+
+/// Set shader for a texture slot s from a JSON value
+void setslotshader(Slot &s, JSON *j)
+{
+    if(!j || !j->valuestring)
+    {
+        s.shader = stdworldshader;
+        return;
+    }
+    setshader(j->valuestring); //todo optimize
+    s.shader = slotshader;
     loopv(slotparams) s.params.add(slotparams[i]);
 }
 

@@ -2,8 +2,8 @@
 
 #include "inexor/engine/engine.h"
 #include "inexor/shared/filesystem.h"
-
 #include "SDL_mixer.h"
+
 #define MAXVOL MIX_MAX_VOLUME
 
 bool nosound = true;
