@@ -84,12 +84,14 @@ static inline void assignvslotlayer(VSlot &vs)
     }
 }
 
+/// Set the vs.index according to compactvslots global counter
 static void assignvslot(VSlot &vs)
 {
     vs.index = compactedvslots++;
     assignvslotlayer(vs);
 }
 
+///compacting mode: set index to compactvslots++ = vs.index, marking mode, just set vs.index
 void compactvslot(int &index)
 {
     if(vslots.inrange(index))
@@ -100,6 +102,7 @@ void compactvslot(int &index)
     }
 }
 
+/// Loops through all n subcubes of c, (reassigning vs.index to compactvslots++ in markmode and otherwise sets cubetexture to the new vslot) when texture was used
 void compactvslots(cube *c, int n)
 {
     if((compactvslotsprogress++ & 0xFFF) == 0) renderprogress(min(float(compactvslotsprogress) / allocnodes, 1.0f), markingvslots ? "marking slots..." : "compacting slots...");
@@ -115,6 +118,8 @@ void compactvslots(cube *c, int n)
     }
 }
 
+// reset all indicies of the vslots
+// the first indicies go to the first variants of all slots, then to all first variants layers
 int compactvslots()
 {
     clonedvslots = 0;
@@ -195,7 +200,7 @@ static void clampvslotoffset(VSlot &dst, Slot *slot = NULL)
     if(!slot) slot = dst.slot;
     if(slot && slot->sts.inrange(0))
     {
-        if(!slot->loaded) loadslot(*slot, false);
+        if(!slot->loaded) slot->load(false);
         int xs = slot->sts[0].t->xs, ys = slot->sts[0].t->ys;
         if((dst.rotation & 5) == 1) swap(xs, ys);
         dst.xoffset %= xs; if(dst.xoffset < 0) dst.xoffset += xs;
@@ -210,7 +215,7 @@ static void clampvslotoffset(VSlot &dst, Slot *slot = NULL)
 
 static void propagatevslot(VSlot &dst, const VSlot &src, int diff, bool edit = false)
 {
-    if(diff & (1 << VSLOT_SHPARAM)) loopv(src.params) dst.params.add(src.params[i]);
+    if(diff & (1 << VSLOT_SHPARAM)) loopv(src.params) dst.params.add(src.params[i]); //todo cleanup ?? doppelt gemoppelt..
     if(diff & (1 << VSLOT_SCALE)) dst.scale = src.scale;
     if(diff & (1 << VSLOT_ROTATION))
     {
@@ -618,34 +623,12 @@ void texcombine(Slot &s, int index, Slot::Tex &t, texsettings *tst, bool msg = t
     t.t = newtexture(registry ? t.t : NULL, key.getbuf(), ts, 0, true, true, true, compress);
 }
 
-Slot &loadslot(Slot &s, bool forceload, texsettings *tst)
-{
-    linkslotshader(s);
-    loopv(s.sts)
-    {
-        Slot::Tex &t = s.sts[i];
-        if(t.combined >= 0) continue;
-        switch(t.type)
-        {
-        case TEX_ENVMAP:
-            if(hasCM && (renderpath != R_FIXEDFUNCTION || (s.shader->type&SHADER_ENVMAP && s.ffenv && maxtmus >= 2) || forceload)) t.t = cubemapload(t.name);
-            break;
-
-        default:
-            texcombine(s, i, t, tst, true, false, forceload);
-            break;
-        }
-    }
-    s.loaded = true;
-    return s;
-}
-
 MSlot &lookupmaterialslot(int index, bool load)
 {
     MSlot &s = materialslots[index];
     if(load && !s.linked)
     {
-        if(!s.loaded) loadslot(s, true);
+        if(!s.loaded) s.load(true);
         linkvslotshader(s);
         s.linked = true;
     }
@@ -655,7 +638,7 @@ MSlot &lookupmaterialslot(int index, bool load)
 Slot &lookupslot(int index, bool load)
 {
     Slot &s = slots.inrange(index) ? *slots[index] : (slots.inrange(DEFAULT_GEOM) ? *slots[DEFAULT_GEOM] : dummyslot);
-    return s.loaded || !load ? s : loadslot(s, false);
+    return s.loaded || !load ? s : s.load(false);
 }
 
 VSlot &lookupvslot(int index, bool load)
@@ -663,7 +646,7 @@ VSlot &lookupvslot(int index, bool load)
     VSlot &s = vslots.inrange(index) && vslots[index]->slot ? *vslots[index] : (slots.inrange(DEFAULT_GEOM) && slots[DEFAULT_GEOM]->variants ? *slots[DEFAULT_GEOM]->variants : dummyvslot);
     if(load && !s.linked)
     {
-        if(!s.slot->loaded) loadslot(*s.slot, false);
+        if(!s.slot->loaded) s.slot->load(false);
         linkvslotshader(s);
         s.linked = true;
     }
