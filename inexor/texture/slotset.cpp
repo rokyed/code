@@ -150,7 +150,7 @@ namespace inexor {
                 texentry *t = texs[i];
                 int needload = t->slot->texmask & ~t->loadmask;
                 if(!needload) continue;
-                loadslot(*t->slot, false, settings); //conterminates any threadsafety effords so far.
+                t->slot->load(false, settings); //conterminates any threadsafety effords so far.
                 //loopk(TEX_NUM)
                 //{
                 //    if(k >= t->tex->sts.length()) break; // out of range

@@ -161,7 +161,6 @@ extern bool texturedata(ImageData &d, const char *tname, texsettings *tst, Slot:
 extern Texture *newtexture(Texture *t, const char *rname, ImageData &s, int clamp = 0, bool mipit = true, bool canreduce = false, bool transient = false, int compress = 0, texsettings *tst = NULL);
 
 extern bool loadimage(const char *filename, ImageData &image);
-extern Texture *loadthumbnail(Slot &slot);
 
 // Texture Registry:
 extern Texture *registertexture(const char *name);
