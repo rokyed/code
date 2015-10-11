@@ -20,44 +20,22 @@
 namespace inexor {
     namespace slotset {
         /// A set of Slots to make threaded loading possible.
-        class slotset
+        class slotregistry
         {
         private:
 
-            /// One entry to the set.
-            class texentry
-            {
-            public:
-                /// A bitmask containing which of the 8 textures of the slot already have been loaded.
-                int loadmask = 0;
-
-                /// A bitmask containing which of the 8 textures of the slot have been loaded in a thread and need a registration now.
-                int needregister = 0;
-
-                /// Whether this Slot is usable ingame.
-                bool mounted = false;
-
-                /// The Texture-Slot
-                Slot *slot;
-
-                texentry(Slot *s)
-                {
-                    slot = s;
-                }
-            };
-
         public:
             /// All included Slots.
-            vector<texentry *>texs;
+            vector<Slot *>slots;
 
             /// Use our bundeled texture settings to load it, rather than globals.
             texsettings *settings;
 
             /// Adds a texture to the set from a JSON (Object).
-            void addtexture(JSON *j);
+            void addslot(JSON *j);
 
             /// Adds a texture to the set from a json-file.
-            void addtexture(const char *filename);
+            void addslot(const char *filename);
 
             /// Checks if textures may do not need to be loaded since they are already stored somewhere
             void checkload();
@@ -66,9 +44,6 @@ namespace inexor {
             /// This function is threadsafe.
             /// @usage 1. checkload (not threaded) 2. load (threaded) 3. registerload (not threaded)
             void load();
-
-            /// Saves loaded textures to the texture registry.
-            void registerload();
 
             /// Add this slotset to the current texture stack of ingame visible textures.
             /// @param initial if true this slotset becomes the first and only one.
@@ -84,13 +59,13 @@ namespace inexor {
 
             void echoall()
             {
-                loopv(texs) {
-                    loopvk(texs[i]->slot->sts) conoutf("tex %d.%d: %s", i, k, texs[i]->slot->sts[k].name);
+                loopv(slots) {
+                    loopvk(slots[i]->sts) conoutf("tex %d.%d: %s", i, k, slots[i]->sts[k].name);
                 }
             }
         };
 
-        extern slotset *newslotset(JSON *parent);
+        extern slotregistry *newslotset(JSON *parent);
         extern bool loadset(const char *name);
 
     } // namespace slotset

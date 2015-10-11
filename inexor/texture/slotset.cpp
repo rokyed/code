@@ -97,7 +97,7 @@ namespace inexor {
             propagatevslot(&vs, (1 << VSLOT_NUM) - 1); // apply vslot changes
         }
 
-        void slotset::addtexture(JSON *j)
+        void slotset::addslot(JSON *j)
         {
             if(!j || texs.length() >= 0x10000) return;
 
@@ -112,12 +112,13 @@ namespace inexor {
             addvslotparams(s, j); // other parameters
         }
 
-        void slotset::addtexture(const char *filename)
+        void slotset::addslot(const char *filename)
         {
             if(!filename || !*filename) return;
             JSON *j = loadjson(filename);
             if(!j) {
-                conoutf("could not load texture definition %s", filename); return;
+                conoutf("could not load texture slot definition %s", filename);
+                return;
             }
 
             addtexture(j);
@@ -148,26 +149,7 @@ namespace inexor {
             loopv(texs)
             {
                 texentry *t = texs[i];
-                int needload = t->slot->texmask & ~t->loadmask;
-                if(!needload) continue;
                 t->slot->load(false, settings); //conterminates any threadsafety effords so far.
-                //loopk(TEX_NUM)
-                //{
-                //    if(k >= t->tex->sts.length()) break; // out of range
-                //    if(!(needload & (1 << k))) continue; // not in diff
-                //    Slot::Tex &st = t->tex->sts[k];
-                //    st.t = textureload(st.name, 0, true, false, true);
-                //    if(st.t != notexture) t->needregister |= 1 << k; // remember to register
-                //}
-            }
-        }
-
-        void slotset::registerload()
-        {
-            loopv(texs)
-            {
-                texentry *t = texs[i];
-                if(!t->needregister) continue;
                 loopk(TEX_NUM)
                 {
                     if(k >= t->slot->sts.length()) break; // out of range
