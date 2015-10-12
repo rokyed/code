@@ -340,23 +340,30 @@ VSlot *Slot::findvariant(const VSlot &src, const VSlot &delta)
     return NULL;
 }
 
-VSlot *reassignvslot(Slot &owner, VSlot *vs)
+VSlot::VSlot(Slot *slot, int index) : slot(slot), next(NULL), index(index), changed(0), skipped(0)
 {
-    owner.variants = vs;
+    reset();
+    if(slot) slot->addvariant(this);
+}
+
+/// Sets a chain of VSlot variants for the owner slot.
+VSlot *Slot::setvariantchain(VSlot *vs)
+{
+    variants = vs;
     while(vs)
     {
-        vs->slot = &owner;
+        vs->slot = this;
         vs->linked = false;
         vs = vs->next;
     }
-    return owner.variants;
+    return vs;
 }
 
 VSlot *emptyvslot(Slot &owner)
 {
     int offset = 0;
     loopvrev(slots) if(slots[i]->variants) { offset = slots[i]->variants->index + 1; break; }
-    for(int i = offset; i < vslots.length(); i++) if(!vslots[i]->changed) return reassignvslot(owner, vslots[i]);
+    for(int i = offset; i < vslots.length(); i++) if(!vslots[i]->changed) return owner.setvariantchain(vslots[i]);
     return vslots.add(new VSlot(&owner, vslots.length()));
 }
 
@@ -371,6 +378,7 @@ static VSlot *clonevslot(const VSlot &src, const VSlot &delta)
 
 VARP(autocompactvslots, 0, 256, 0x10000);
 
+/// Select a VSlot beeing src but having modifications based on delta (??)
 VSlot *editvslot(const VSlot &src, const VSlot &delta)
 {
     VSlot *exists = src.slot->findvariant(src, delta);
@@ -520,30 +528,14 @@ static void addname(vector<char> &key, Slot &slot, Slot::Tex &t, bool combined =
 }
 
 /// Generate a keyname to find a combined texture in the texture registry.
-void gencombinedname(vector<char> &name, int &texmask, Slot &s, Slot::Tex &t, int index, bool fixedfunction, bool envmap, bool forceload)
-{ //todo refractor
-
+void gencombinedname(vector<char> &name, int &texmask, Slot &s, Slot::Tex &t, int index, bool forceload)
+{
     addname(name, s, t);
-    // bool envmap = fixedfunction && s.shader->type&SHADER_ENVMAP && s.ffenv && hasCM && maxtmus >= 2;
     if(!forceload) switch(t.type)
     {
         case TEX_DIFFUSE:
-        if(fixedfunction)
-        {
-            int mask = (1 << TEX_DECAL) | (1 << TEX_NORMAL);
-            if(envmap) mask |= 1 << TEX_SPEC;
-            for(int i = -1; (i = findtextype(s, mask, i)) >= 0;)
-            {
-                texmask |= 1 << s.sts[i].type;
-                s.sts[i].combined = index;
-                addname(name, s, s.sts[i], true, envmap && (s.sts[i].type == TEX_NORMAL || s.sts[i].type == TEX_SPEC) ? "<ffenv>" : NULL);
-            }
-            break;
-        } // fall through to shader case
-
         case TEX_NORMAL:
         {
-            if(fixedfunction) break;
             int i = findtextype(s, t.type == TEX_DIFFUSE ? (1 << TEX_SPEC) : (1 << TEX_DEPTH));
             if(i<0) break;
             texmask |= 1 << s.sts[i].type;
@@ -559,7 +551,7 @@ void gencombinedname(vector<char> &name, int &texmask, Slot &s, Slot::Tex &t, in
 /// @param msg show progress bar, only threadsafe so far if false.
 /// @param tst the instance of texsettings it will use.
 /// @param registry whether or not a new texture entry should be made, TODO!! not threadsafe yet.
-void texcombine(Slot &s, int index, Slot::Tex &t, texsettings *tst, bool msg = true, bool registry = false, bool forceload = false)
+void Slot::combine(Slot &s, int index, Slot::Tex &t, texsettings *tst, bool msg, bool registry, bool forceload)
 {
     if(!tst)
     {
@@ -571,10 +563,7 @@ void texcombine(Slot &s, int index, Slot::Tex &t, texsettings *tst, bool msg = t
     vector<char> key;
     int texmask = 0; // receive control mask, todo check neccessary?
 
-    bool fixedfunction = tst->renderpath == R_FIXEDFUNCTION;
-    bool envmap = fixedfunction && s.shader->type&SHADER_ENVMAP && s.ffenv && tst->hasCM && tst->maxtmus >= 2;
-
-    gencombinedname(key, texmask, s, t, index, fixedfunction, envmap, forceload);
+    gencombinedname(key, texmask, s, t, index, forceload);
 
     if(registry) t.t = gettexture(key.getbuf()); //todo check if working
     if(t.t) return;
@@ -584,25 +573,6 @@ void texcombine(Slot &s, int index, Slot::Tex &t, texsettings *tst, bool msg = t
     switch(t.type)
     {
     case TEX_DIFFUSE:
-        if(fixedfunction)
-        {
-            if(!ts.compressed) loopv(s.sts)
-            {
-                Slot::Tex &b = s.sts[i];
-                if(b.combined != index) continue;
-                ImageData bs;
-                if(!texturedata(bs, NULL, tst, &b, msg)) continue;
-                if(bs.w != ts.w || bs.h != ts.h) scaleimage(bs, ts.w, ts.h);
-                switch(b.type)
-                {
-                    case TEX_DECAL: blenddecal(ts, bs); break;
-                    case TEX_NORMAL: addbump(ts, bs, envmap, (texmask&(1 << TEX_SPEC)) != 0); break;
-                    case TEX_SPEC: mergespec(ts, bs, envmap); break;
-                }
-            }
-            break;
-        } // fall through to shader case
-
     case TEX_NORMAL:
         if(!ts.compressed) loopv(s.sts)
         {

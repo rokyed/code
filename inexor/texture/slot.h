@@ -38,11 +38,7 @@ struct VSlot
     vec envscale;
     int skipped;
 
-    VSlot(Slot *slot = NULL, int index = -1) : slot(slot), next(NULL), index(index), changed(0), skipped(0)
-    {
-        reset();
-        if(slot) addvariant(slot);
-    }
+    VSlot(Slot *slot = NULL, int index = -1);
 
     void addvariant(Slot *slot);
 
@@ -125,23 +121,28 @@ struct Slot
             t.combined = -1;
         }
     }
+
+
+    inline void addvariant(VSlot *vs)
+    {
+        if(!variants) variants = vs;
+        else
+        {
+            VSlot *prev = variants;
+            while(prev->next) prev = prev->next;
+            prev->next = vs;
+        }
+    }
+    VSlot *setvariantchain(VSlot *vs);
+
     VSlot *findvariant(const VSlot &src, const VSlot &delta);
+
+    void combine(Slot &s, int index, Slot::Tex &t, texsettings *tst, bool msg = true, bool registry = false, bool forceload = false);
 
     Slot &load(bool forceload, texsettings *tst = NULL);
     Texture *loadthumbnail();
     void loadlayermask();
 };
-
-inline void VSlot::addvariant(Slot *slot)
-{
-    if(!slot->variants) slot->variants = this;
-    else
-    {
-        VSlot *prev = slot->variants;
-        while(prev->next) prev = prev->next;
-        prev->next = this;
-    }
-}
 
 struct MSlot : Slot, VSlot
 {
