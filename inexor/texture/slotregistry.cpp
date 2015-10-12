@@ -164,22 +164,6 @@ namespace texture {
         if(load) t->load();
     }
 
-    /// Scan Texturedir for slotsets and load those sets.
-    void scantexturedir()
-    {
-        vector<char *> files;
-        listfiles(texturedir, "json", files, true, false, true);
-        conoutf("Loaded %d texture configuration files", files.length());
-
-        if(!files.length()) return;
-        slotregistry *t = new slotregistry();
-        loopv(files) t->addslot(files[i]);
-
-        t->load();
-        // t->mount();
-    }
-    COMMAND(scantexturedir, "");
-
     /// Echo all texture slots loaded.
     void debugslots()
     {
