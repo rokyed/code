@@ -119,6 +119,27 @@ struct Slot
             t.combined = -1;
         }
     }
+
+    void load(bool msg, bool forceload)
+    {
+        linkslotshader(*this);
+        loopv(sts)
+        {
+            Slot::Tex &t = sts[i];
+            if(t.combined >= 0) continue;
+            switch(t.type)
+            {
+            case TEX_ENVMAP:
+                t.t = cubemapload(t.name);
+                break;
+
+            default:
+                texcombine(s, i, t, msg, forceload);
+                break;
+            }
+        }
+        loaded = true;
+    }
 };
 
 inline void VSlot::addvariant(Slot *slot)
@@ -149,7 +170,6 @@ struct MSlot : Slot, VSlot
     }
 };
 
-Slot &loadslot(Slot &s, bool msg, bool forceload);
 extern void loadlayermasks();
 
 extern void clearslots();
