@@ -2,9 +2,6 @@
 
 #include "inexor/engine/engine.h"
 #include "inexor/shared/filesystem.h"
-#ifndef STANDALONE
-#include "inexor/texture/slotset.h"
-#endif
 
 /// remove map postfix (.ogz) from file path/name to get map name
 void cutogz(char *s) 
@@ -1417,10 +1414,8 @@ bool load_world(const char *mname, const char *cname)        // still supports a
     execfile("config/default_map_settings.cfg", false);
     execfile(cfgname, false);
 
-    inexor::slotset::loadset(jsonname);
-
     identflags &= ~IDF_OVERRIDDEN;
-   
+
     extern void fixlightmapnormals();
     if(hdr.version <= 25) fixlightmapnormals();
     extern void fixrotatedlightmaps();
