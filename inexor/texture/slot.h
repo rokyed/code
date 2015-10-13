@@ -48,8 +48,6 @@ class VSlot
 
     VSlot(Slot *slot = NULL, int index = -1);
 
-    void addvariant(Slot *slot);
-
     void reset()
     {
         params.shrink(0);
