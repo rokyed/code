@@ -691,8 +691,6 @@ void Slot::addtexture(int type, const char *filename, const char *configdir)
 {
     Slot::Tex &st = sts.add();
     st.type = type;
-    st.combined = -1; // we have to combine them in a seperate step..
-    st.t = NULL;
     inexor::filesystem::getmedianame(st.name, MAXSTRLEN, filename, DIR_TEXTURE);
     path(st.name);
     loaded = false;

@@ -78,9 +78,9 @@ public:
     struct Tex
     {
         int type;
-        Texture *t;
+        Texture *t = NULL;
         string name;
-        int combined;
+        int combined = -1;
     };
     int index;
     vector<Tex> sts;
