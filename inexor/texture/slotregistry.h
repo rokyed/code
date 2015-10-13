@@ -31,6 +31,9 @@ namespace texture {
         /// All child vslots (derived from slots).
         vector<VSlot *>vslots;
 
+        /// All given material slots (beeing a merged vslot and slot)
+        MSlot materialslots[(MATF_VOLUME | MATF_INDEX) + 1];
+
         slotregistry(JSON *j = NULL);
         slotregistry(const char *filename, bool load);
 
@@ -43,15 +46,31 @@ namespace texture {
         /// Loads all slots to memory.
         void load();
 
-        void echo()
+        void cleanup()
         {
-            loopv(slots) {
-                loopvk(slots[i]->sts) conoutf("tex %d.%d: %s", i, k, slots[i]->sts[k].name);
-            }
+            loopv(slots) slots[i]->cleanup();
+            loopv(vslots) vslots[i]->cleanup();
+            loopi((MATF_VOLUME | MATF_INDEX) + 1) materialslots[i].cleanup();
         }
+
+        /// Resets all textures from the slots-stack.
+        /// @param first: the texturepos from whereon you want to reset
+        /// @param num: the number of slots you want to reset from thereon. All if 0
+        /// @example reset(0, 40); resets the first 40 textures
+        void reset(int first, int num = 0);
+
+        /// Print a list of all included **slots**, its textures and the amount of VSlots they got.
+        void echo();
 
         /// Export textureset to json file.
         void write(const char *filename);
+
+
+        // Other:
+        void loadlayermasks()
+        {
+            loopv(slots) slots[i]->loadlayermask();
+        }
     };
 
 }   // namespace texture

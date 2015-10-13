@@ -150,7 +150,24 @@ namespace texture {
         if(load) t->load();
     }
 
-    /// Echo all texture slots loaded.
+    void slotregistry::echo()
+    {
+        int numtextures = 0;
+        int slotvslots = 0;
+        loopv(slots) {
+            int numvslots = 0;
+            VSlot *vs = slots[i]->variants;
+            for(numvslots = 0; vs; vs = vs->next) numvslots++;
+            conoutf("## Slot %d (deriving VSlots: %d)", i, numvslots);
+            slotvslots += numvslots;
+
+            loopvk(slots[i]->sts) conoutf("texture %d: %s", k, slots[i]->sts[k].name);
+            numtextures += slots[i]->sts.length();
+        }
+        conoutf("slotregistry has %d slots with %d textures", slots.length(), numtextures);
+    }
+
+    /// Echo all texture mapslots loaded.
     void debugslots()
     {
         int numtexs = 0;
@@ -160,7 +177,6 @@ namespace texture {
             numtexs += slots[i]->sts.length();
         }
         conoutf("%d slots taken..", slots.length());
-        conoutf("having %d textures", numtexs);
     }
     COMMAND(debugslots, "");
 
