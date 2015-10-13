@@ -56,8 +56,8 @@ namespace texture {
         /// Resets all textures from the slots-stack.
         /// @param first: the texturepos from whereon you want to reset
         /// @param num: the number of slots you want to reset from thereon. All if 0
-        /// @example reset(0, 40); resets the first 40 textures
-        void reset(int first, int num = 0);
+        /// @example texturereset(0, 40); resets the first 40 textures
+        void texturereset(int first, int num = 0);
 
         /// Print a list of all included **slots**, its textures and the amount of VSlots they got.
         void echo();
@@ -71,6 +71,9 @@ namespace texture {
         {
             loopv(slots) slots[i]->loadlayermask();
         }
+
+        /// Resets the material stack back to its initial state.
+        void materialreset();
     };
 
 }   // namespace texture

@@ -167,6 +167,33 @@ namespace texture {
         conoutf("slotregistry has %d slots with %d textures", slots.length(), numtextures);
     }
 
+    void slotregistry::texturereset(int first, int num)
+    {
+        resetslotshader(); //TODO
+        first = clamp(first, 0, slots.length());
+        if(!num) num = slots.length() - first;
+        num = clamp(num, 0, slots.length() - first);
+
+        loopi(num)
+        {
+            Slot *s = slots.remove(first);
+            for(VSlot *vs = s->variants; vs; vs = vs->next) vs->slot = &dummyslot;
+            delete s;
+        }
+
+        while(vslots.length())
+        {
+            VSlot *vs = vslots.last();
+            if(vs->slot != &dummyslot || vs->changed) break;
+            delete vslots.pop();
+        }
+    }
+
+    void slotregistry::materialreset()
+    {
+        loopi((MATF_VOLUME | MATF_INDEX) + 1) materialslots[i].reset();
+    }
+
     /// Echo all texture mapslots loaded.
     void debugslots()
     {
