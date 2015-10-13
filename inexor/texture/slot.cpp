@@ -16,24 +16,6 @@ MSlot materialslots[(MATF_VOLUME | MATF_INDEX) + 1];
 Slot dummyslot;
 VSlot dummyvslot(&dummyslot);
 
-/// Some textures get merged/"combined" internally before sending it to the gpu to save memory.
-/// Those are currently the spec + depthmap and the normal
-int inflictedtexture(int changedtex)
-{
-
-}
-
-void Slot::addtexture(int type, const char *filename, const char *configdir)
-{
-    Slot::Tex &st = sts.add();
-    st.type = type;
-    st.combined = -1; // we have to combine them in a seperate step..
-    st.t = NULL;
-    inexor::filesystem::getmedianame(st.name, MAXSTRLEN, filename, DIR_TEXTURE);
-    path(st.name);
-    loaded = false;
-}
-
 /// Resets all textures from the slots-stack.
 /// @param first: the texturepos from whereon you want to reset
 /// @param num: the number of slots you want to reset from thereon. All if 0
@@ -702,6 +684,18 @@ VSlot::VSlot(Slot *slot, int index) : slot(slot), next(NULL), index(index), chan
 {
     reset();
     if(slot) slot->addvariant(this);
+}
+
+
+void Slot::addtexture(int type, const char *filename, const char *configdir)
+{
+    Slot::Tex &st = sts.add();
+    st.type = type;
+    st.combined = -1; // we have to combine them in a seperate step..
+    st.t = NULL;
+    inexor::filesystem::getmedianame(st.name, MAXSTRLEN, filename, DIR_TEXTURE);
+    path(st.name);
+    loaded = false;
 }
 
 /// Combine and load texture data to be ready for sending it to the gpu.
