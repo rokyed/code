@@ -79,9 +79,7 @@ COMMAND(autograss, "s");
 void slotscroll(int slotid, float scrollS, float scrollT)
 {
     if(slots.empty() || !slots.inrange(slotid)) return;
-    Slot &s = *slots[slotid];
-    s.variants->scroll = vec2(scrollS, scrollT).div(1000.0f);
-    propagatevslot(s.variants, 1 << VSLOT_SCROLL);
+    slots[slotid]->setscroll(scrollS, scrollT);
 }
 
 void texscroll(float *scrollS, float *scrollT)
@@ -95,9 +93,7 @@ COMMAND(texscroll, "ff");
 void slotoffset(int slotid, int xoffset, int yoffset)
 {
     if(slots.empty() || !slots.inrange(slotid)) return;
-    Slot &s = *slots[slotid];
-    s.variants->offset = ivec2(xoffset, yoffset).max(0);
-    propagatevslot(s.variants, 1 << VSLOT_OFFSET);
+    slots[slotid]->setoffset(xoffset, yoffset);
 }
 
 void texoffset_(int *xoffset, int *yoffset)
@@ -113,9 +109,7 @@ COMMANDN(texoffset, texoffset_, "ii");
 void slotrotate(int slotid, int rot)
 {
     if(slots.empty() || !slots.inrange(slotid)) return;
-    Slot &s = *slots[slotid];
-    s.variants->rotation = clamp(rot, 0, 5);
-    propagatevslot(s.variants, 1 << VSLOT_ROTATION);
+    slots[slotid]->setrotate(rot);
 }
 
 void texrotate_(int *rot)
@@ -129,9 +123,7 @@ COMMANDN(texrotate, texrotate_, "i");
 void slotscale(int slotid, float scale)
 {
     if(slots.empty() || !slots.inrange(slotid)) return;
-    Slot &s = *slots[slotid];
-    s.variants->scale = scale <= 0 ? 1 : scale;
-    propagatevslot(s.variants, 1 << VSLOT_SCALE);
+    slots[slotid]->setscale(scale);
 }
 
 void texscale(float *scale)
@@ -157,10 +149,7 @@ COMMAND(texlayer, "isif");
 void slotalpha(int slotid, float front, float back)
 {
     if(slots.empty() || !slots.inrange(slotid)) return;
-    Slot &s = *slots[slotid];
-    s.variants->alphafront = clamp(front, 0.0f, 1.0f);
-    s.variants->alphaback = clamp(back, 0.0f, 1.0f);
-    propagatevslot(s.variants, 1 << VSLOT_ALPHA);
+    slots[slotid]->setalpha(front, back);
 }
 
 void texalpha(float *front, float *back)
@@ -175,9 +164,7 @@ COMMAND(texalpha, "ff");
 void slotcolor(int slotid, float r, float g, float b)
 {
     if(slots.empty() || !slots.inrange(slotid)) return;
-    Slot &s = *slots[slotid];
-    s.variants->colorscale = vec(r, g, b).clamp(0.0f, 1.0f);
-    propagatevslot(s.variants, 1 << VSLOT_COLOR);
+    slots[slotid]->setcolor(r, g, b);
 }
 
 void texcolor(float *r, float *g, float *b)

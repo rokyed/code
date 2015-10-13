@@ -853,6 +853,43 @@ void Slot::loadlayermask()
     }
 }
 
+void Slot::setscroll(float scrollS, float scrollT)
+{
+    variants->scroll = vec2(scrollS, scrollT).div(1000.0f);
+    propagatevslot(variants, 1 << VSLOT_SCROLL);
+}
+
+void Slot::setoffset(int xoffset, int yoffset)
+{
+    variants->offset = ivec2(xoffset, yoffset).max(0);
+    propagatevslot(variants, 1 << VSLOT_OFFSET);
+}
+
+void Slot::setrotate(int rot)
+{
+    variants->rotation = clamp(rot, 0, 5);
+    propagatevslot(variants, 1 << VSLOT_ROTATION);
+}
+
+void Slot::setscale(float scale)
+{
+    variants->scale = scale <= 0 ? 1 : scale;
+    propagatevslot(variants, 1 << VSLOT_SCALE);
+}
+
+void Slot::setalpha(float front, float back)
+{
+    variants->alphafront = clamp(front, 0.0f, 1.0f);
+    variants->alphaback = clamp(back, 0.0f, 1.0f);
+    propagatevslot(variants, 1 << VSLOT_ALPHA);
+}
+
+void Slot::setcolor(float r, float g, float b)
+{
+    variants->colorscale = vec(r, g, b).clamp(0.0f, 1.0f);
+    propagatevslot(variants, 1 << VSLOT_COLOR);
+}
+
 void loadlayermasks()
 {
     loopv(slots) slots[i]->loadlayermask();

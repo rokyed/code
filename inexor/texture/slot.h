@@ -142,6 +142,15 @@ public:
     Slot &load(bool msg, bool forceload);
     Texture *loadthumbnail();
     void loadlayermask();
+
+    /// Force values for all variant vslots:
+    void setscroll(float scrollS, float scrollT);
+    void setoffset(int xoffset, int yoffset);
+    void setrotate(int rot);
+    void setscale(float scale);
+    void setalpha(float front, float back);
+    void setcolor(float r, float g, float b);
+    void setlayer(int *layer, char *name, int *mode, float *scale); // TODO, Layer uses vslots instead of references..
 };
 
 struct MSlot : Slot, VSlot
