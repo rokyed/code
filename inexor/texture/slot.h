@@ -130,7 +130,7 @@ public:
 
     Tex *findtexture(int type)
     {
-        loopv(sts) if((1 << sts[i].type)&(1 << type) && sts[i].combined<0) return &sts[i]; //masks are matching, TODO really necessary if no combined allowed?
+        loopv(sts) if((1 << sts[i].type)&(1 << type) && sts[i].combined<0) return &sts[i]; //masks are matching, TODO really necessary if combined not allowed?
         return NULL;
     }
 
@@ -157,6 +157,7 @@ public:
     void setlayer(int *layer, char *name, int *mode, float *scale); // TODO, Layer uses vslots instead of references..
 };
 
+/// Material Slot, actually just a merge of Slot and VSlot
 struct MSlot : Slot, VSlot
 {
     MSlot() : VSlot(this) {}

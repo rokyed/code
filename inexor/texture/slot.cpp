@@ -34,13 +34,6 @@ void Slot::addtexture(int type, const char *filename, const char *configdir)
     loaded = false;
 }
 
-/// Resolves a missing part of the texturestack so following textures wont be effected ingame.
-void rewireslots(int first, int num)
-{
-    // TODO
-
-}
-
 /// Resets all textures from the slots-stack.
 /// @param first: the texturepos from whereon you want to reset
 /// @param num: the number of slots you want to reset from thereon. All if 0
@@ -66,10 +59,7 @@ void texturereset(int first, int num)
         if(vs->slot != &dummyslot || vs->changed) break;
         delete vslots.pop();
     }
-
-    rewireslots(first, num);
 }
-
 ICOMMAND(texturereset, "ii", (int *first, int *last), texturereset(*first, *last));
 
 void materialreset()
@@ -468,49 +458,6 @@ bool unpackvslot(ucharbuf &buf, VSlot &dst, bool delta)
     return true;
 }
 
-
-inline void Slot::addvariant(VSlot *vs)
-{
-    if(!variants) variants = vs;
-    else
-    {
-        VSlot *prev = variants;
-        while(prev->next) prev = prev->next;
-        prev->next = vs;
-    }
-}
-
-VSlot *Slot::findvariant(const VSlot &src, const VSlot &delta)
-{
-    for(VSlot *dst = variants; dst; dst = dst->next)
-    {
-        if((!dst->changed || dst->changed == (src.changed | delta.changed)) &&
-            comparevslot(*dst, src, src.changed & ~delta.changed) &&
-            comparevslot(*dst, delta, delta.changed))
-            return dst;
-    }
-    return NULL;
-}
-
-VSlot::VSlot(Slot *slot, int index) : slot(slot), next(NULL), index(index), changed(0)
-{
-    reset();
-    if(slot) slot->addvariant(this);
-}
-
-/// Sets a chain of VSlot variants for the owner slot.
-VSlot *Slot::setvariantchain(VSlot *vs)
-{
-    variants = vs;
-    while(vs)
-    {
-        vs->slot = this;
-        vs->linked = false;
-        vs = vs->next;
-    }
-    return vs;
-}
-
 /// Wrapper around new VSlot to reuse unused dead vslots.
 /// @warning not threadsafe since it accesses slots and vslots globals.
 VSlot *emptyvslot(Slot &owner)
@@ -653,6 +600,110 @@ void gencombinedname(vector<char> &name, int &texmask, Slot &s, Slot::Tex &t, in
     name.add('\0');
 }
 
+MSlot &lookupmaterialslot(int index, bool load)
+{
+    MSlot &s = materialslots[index];
+    if(load && !s.linked)
+    {
+        if(!s.loaded) s.load(true, true);
+        linkvslotshader(s);
+        s.linked = true;
+    }
+    return s;
+}
+
+Slot &lookupslot(int index, bool load)
+{
+    Slot &s = slots.inrange(index) ? *slots[index] : (slots.inrange(DEFAULT_GEOM) ? *slots[DEFAULT_GEOM] : dummyslot);
+    return s.loaded || !load ? s : s.load(true, false);
+}
+
+VSlot &lookupvslot(int index, bool load)
+{
+    VSlot &s = vslots.inrange(index) && vslots[index]->slot ? *vslots[index] : (slots.inrange(DEFAULT_GEOM) && slots[DEFAULT_GEOM]->variants ? *slots[DEFAULT_GEOM]->variants : dummyvslot);
+    if(load && !s.linked)
+    {
+        if(!s.slot->loaded) s.slot->load(true, false);
+        linkvslotshader(s);
+        s.linked = true;
+    }
+    return s;
+}
+
+void loadlayermasks()
+{
+    loopv(slots) slots[i]->loadlayermask();
+}
+
+void cleanupslots()
+{
+    loopv(slots) slots[i]->cleanup();
+}
+
+void cleanupvslots()
+{
+    loopv(vslots) vslots[i]->cleanup();
+}
+
+void cleanupmaterialslots()
+{
+    loopi((MATF_VOLUME | MATF_INDEX) + 1) materialslots[i].cleanup();
+}
+
+void linkslotshaders() //todo merge into class interface
+{
+    loopv(slots) if(slots[i]->loaded) linkslotshader(*slots[i]);
+    loopv(vslots) if(vslots[i]->linked) linkvslotshader(*vslots[i]);
+    loopi((MATF_VOLUME | MATF_INDEX) + 1) if(materialslots[i].loaded)
+    {
+        linkslotshader(materialslots[i]);
+        linkvslotshader(materialslots[i]);
+    }
+}
+
+void Slot::setscroll(float scrollS, float scrollT)
+{
+    variants->scroll = vec2(scrollS, scrollT).div(1000.0f);
+    propagatevslot(variants, 1 << VSLOT_SCROLL);
+}
+
+void Slot::setoffset(int xoffset, int yoffset)
+{
+    variants->offset = ivec2(xoffset, yoffset).max(0);
+    propagatevslot(variants, 1 << VSLOT_OFFSET);
+}
+
+void Slot::setrotate(int rot)
+{
+    variants->rotation = clamp(rot, 0, 5);
+    propagatevslot(variants, 1 << VSLOT_ROTATION);
+}
+
+void Slot::setscale(float scale)
+{
+    variants->scale = scale <= 0 ? 1 : scale;
+    propagatevslot(variants, 1 << VSLOT_SCALE);
+}
+
+void Slot::setalpha(float front, float back)
+{
+    variants->alphafront = clamp(front, 0.0f, 1.0f);
+    variants->alphaback = clamp(back, 0.0f, 1.0f);
+    propagatevslot(variants, 1 << VSLOT_ALPHA);
+}
+
+void Slot::setcolor(float r, float g, float b)
+{
+    variants->colorscale = vec(r, g, b).clamp(0.0f, 1.0f);
+    propagatevslot(variants, 1 << VSLOT_COLOR);
+}
+
+VSlot::VSlot(Slot *slot, int index) : slot(slot), next(NULL), index(index), changed(0)
+{
+    reset();
+    if(slot) slot->addvariant(this);
+}
+
 /// Combine and load texture data to be ready for sending it to the gpu.
 /// Combination is used to merge the diffuse and the specularity map into one texture (spec as alpha)
 /// and to merge the normal info and the depth info into another (depth as alpha)
@@ -689,48 +740,7 @@ void Slot::combinetextures(int index, Slot::Tex &t, bool msg, bool forceload)
             }
             break;
     }
-    t.t = newtexture( t.t, key.getbuf(), ts, 0, true, true, true, compress);
-}
-
-MSlot &lookupmaterialslot(int index, bool load)
-{
-    MSlot &s = materialslots[index];
-    if(load && !s.linked)
-    {
-        if(!s.loaded) s.load(true, true);
-        linkvslotshader(s);
-        s.linked = true;
-    }
-    return s;
-}
-
-Slot &lookupslot(int index, bool load)
-{
-    Slot &s = slots.inrange(index) ? *slots[index] : (slots.inrange(DEFAULT_GEOM) ? *slots[DEFAULT_GEOM] : dummyslot);
-    return s.loaded || !load ? s : s.load(true, false);
-}
-
-VSlot &lookupvslot(int index, bool load)
-{
-    VSlot &s = vslots.inrange(index) && vslots[index]->slot ? *vslots[index] : (slots.inrange(DEFAULT_GEOM) && slots[DEFAULT_GEOM]->variants ? *slots[DEFAULT_GEOM]->variants : dummyvslot);
-    if(load && !s.linked)
-    {
-        if(!s.slot->loaded) s.slot->load(true, false);
-        linkvslotshader(s);
-        s.linked = true;
-    }
-    return s;
-}
-
-void linkslotshaders()
-{
-    loopv(slots) if(slots[i]->loaded) linkslotshader(*slots[i]);
-    loopv(vslots) if(vslots[i]->linked) linkvslotshader(*vslots[i]);
-    loopi((MATF_VOLUME | MATF_INDEX) + 1) if(materialslots[i].loaded)
-    {
-        linkslotshader(materialslots[i]);
-        linkvslotshader(materialslots[i]);
-    }
+    t.t = newtexture(t.t, key.getbuf(), ts, 0, true, true, true, compress);
 }
 
 Slot &Slot::load(bool msg, bool forceload)
@@ -848,59 +858,38 @@ void Slot::loadlayermask()
     }
 }
 
-void Slot::setscroll(float scrollS, float scrollT)
+VSlot *Slot::findvariant(const VSlot &src, const VSlot &delta)
 {
-    variants->scroll = vec2(scrollS, scrollT).div(1000.0f);
-    propagatevslot(variants, 1 << VSLOT_SCROLL);
+    for(VSlot *dst = variants; dst; dst = dst->next)
+    {
+        if((!dst->changed || dst->changed == (src.changed | delta.changed)) &&
+            comparevslot(*dst, src, src.changed & ~delta.changed) &&
+            comparevslot(*dst, delta, delta.changed))
+            return dst;
+    }
+    return NULL;
 }
 
-void Slot::setoffset(int xoffset, int yoffset)
+inline void Slot::addvariant(VSlot *vs)
 {
-    variants->offset = ivec2(xoffset, yoffset).max(0);
-    propagatevslot(variants, 1 << VSLOT_OFFSET);
+    if(!variants) variants = vs;
+    else
+    {
+        VSlot *prev = variants;
+        while(prev->next) prev = prev->next;
+        prev->next = vs;
+    }
 }
 
-void Slot::setrotate(int rot)
+/// Sets a chain of VSlot variants for the owner slot.
+VSlot *Slot::setvariantchain(VSlot *vs)
 {
-    variants->rotation = clamp(rot, 0, 5);
-    propagatevslot(variants, 1 << VSLOT_ROTATION);
-}
-
-void Slot::setscale(float scale)
-{
-    variants->scale = scale <= 0 ? 1 : scale;
-    propagatevslot(variants, 1 << VSLOT_SCALE);
-}
-
-void Slot::setalpha(float front, float back)
-{
-    variants->alphafront = clamp(front, 0.0f, 1.0f);
-    variants->alphaback = clamp(back, 0.0f, 1.0f);
-    propagatevslot(variants, 1 << VSLOT_ALPHA);
-}
-
-void Slot::setcolor(float r, float g, float b)
-{
-    variants->colorscale = vec(r, g, b).clamp(0.0f, 1.0f);
-    propagatevslot(variants, 1 << VSLOT_COLOR);
-}
-
-void loadlayermasks()
-{
-    loopv(slots) slots[i]->loadlayermask();
-}
-
-void cleanupslots()
-{
-    loopv(slots) slots[i]->cleanup();
-}
-
-void cleanupvslots()
-{
-    loopv(vslots) vslots[i]->cleanup();
-}
-
-void cleanupmaterialslots()
-{
-    loopi((MATF_VOLUME | MATF_INDEX) + 1) materialslots[i].cleanup();
+    variants = vs;
+    while(vs)
+    {
+        vs->slot = this;
+        vs->linked = false;
+        vs = vs->next;
+    }
+    return vs;
 }
