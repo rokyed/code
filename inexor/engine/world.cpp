@@ -1,6 +1,9 @@
 // world.cpp: core map management stuff
 
 #include "inexor/engine/engine.h"
+#include "inexor/texture/slotregistry.h"
+
+using namespace inexor;
 
 VARR(mapversion, 1, MAPVERSION, 0);
 VARNR(mapscale, worldscale, 1, 0, 0);
@@ -1237,6 +1240,7 @@ void resetmap()
     resetlightmaps();
     clearpvs();
     clearslots();
+    texture::switchcurslotreg();
     clearparticles();
     cleardecals();
     clearsleep();

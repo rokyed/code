@@ -7,6 +7,23 @@
 namespace inexor {
 namespace texture {
 
+    static slotregistry *currentslotreg = NULL;
+
+    /// Set the current slot registry to the specific given one and (atm) DELETES the current one (at this stage we dont further need it).
+    /// @warning not threadsafe.
+    void switchcurslotreg()
+    {
+        delete currentslotreg;
+        currentslotreg = new slotregistry();
+    }
+
+    /// Receive the current maps texture slot stack.
+    slotregistry *getcurslotreg()
+    {
+        if(!currentslotreg) switchcurslotreg();
+        return currentslotreg;
+    }
+
     struct jsontextype {
         const char *name;
         int type;

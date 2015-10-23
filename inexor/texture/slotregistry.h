@@ -76,6 +76,8 @@ namespace texture {
         void materialreset();
     };
 
+    extern slotregistry *getcurslotreg();
+    extern void switchcurslotreg();
 }   // namespace texture
 }   // namespace inexor
 
