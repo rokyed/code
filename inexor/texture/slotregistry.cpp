@@ -134,6 +134,17 @@ namespace texture {
         }
     }
 
+    void slotregistry::linkshaders()
+    {
+        loopv(slots) if(slots[i]->loaded) linkslotshader(*slots[i]);
+        loopv(vslots) if(vslots[i]->linked) linkvslotshader(*vslots[i]);
+        loopi((MATF_VOLUME | MATF_INDEX) + 1) if(materialslots[i].loaded)
+        {
+            linkslotshader(materialslots[i]);
+            linkvslotshader(materialslots[i]);
+        }
+    }
+
     /// Creates a slotregistry with all textures from a "textures" child of given JSON structure.
     /// @sideeffects allocates memory for a new slotset
     slotregistry::slotregistry(JSON *parent)

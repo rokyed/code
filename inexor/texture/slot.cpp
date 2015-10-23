@@ -638,17 +638,6 @@ void cleanupmaterialslots()
     loopi((MATF_VOLUME | MATF_INDEX) + 1) materialslots[i].cleanup();
 }
 
-void linkslotshaders() //todo merge into class interface
-{
-    loopv(slots) if(slots[i]->loaded) linkslotshader(*slots[i]);
-    loopv(vslots) if(vslots[i]->linked) linkvslotshader(*vslots[i]);
-    loopi((MATF_VOLUME | MATF_INDEX) + 1) if(materialslots[i].loaded)
-    {
-        linkslotshader(materialslots[i]);
-        linkvslotshader(materialslots[i]);
-    }
-}
-
 void Slot::setscroll(float scrollS, float scrollT)
 {
     variants->scroll = vec2(scrollS, scrollT).div(1000.0f);

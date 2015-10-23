@@ -1,6 +1,7 @@
 // shader.cpp: OpenGL GLSL shader management
 
 #include "inexor/engine/engine.h"
+#include "inexor/texture/slotregistry.h"
 
 Shader *Shader::lastshader = NULL;
 
@@ -1001,7 +1002,7 @@ void fixshaderdetail()
     // must null out separately because fixdetailshader can recursively set it
     enumerate(shaders, Shader, s, { if(!s.forced) s.detailshader = NULL; });
     enumerate(shaders, Shader, s, { if(s.forced) s.fixdetailshader(); }); 
-    linkslotshaders();
+    inexor::texture::getcurslotreg()->linkshaders(); //TODO OTHER SOLUTION
 }
 
 int Shader::uniformlocversion()
@@ -1442,7 +1443,7 @@ void reloadshaders()
     identflags &= ~IDF_PERSIST;
     loadshaders();
     identflags |= IDF_PERSIST;
-    linkslotshaders();
+    inexor::texture::getcurslotreg()->linkshaders(); //TODO OTHER SOLUTION
     enumerate(shaders, Shader, s, 
     {
         if(!s.standard && !(s.type&(SHADER_DEFERRED|SHADER_INVALID)) && !s.variantshader) 

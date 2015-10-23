@@ -46,6 +46,12 @@ namespace texture {
         /// Loads all slots to memory.
         void load();
 
+        /// To be useable the used shaders have to be linked to the slots/vslots/matslots.
+        /// TODO Refractor when refractoring the shader stuff
+        void linkshaders();
+
+        /// Cleanup all data: Unload all textures and unlink the shaders.
+        /// (textures beeing preserverd in memory and the textureregistry though)
         void cleanup()
         {
             loopv(slots) slots[i]->cleanup();

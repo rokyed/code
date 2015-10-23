@@ -459,7 +459,6 @@ extern void setslotshader(Slot &s);
 extern void setslotshader(Slot &s, JSON *j);
 extern void linkslotshader(Slot &s, bool load = true);
 extern void linkvslotshader(VSlot &s, bool load = true);
-extern void linkslotshaders();
 extern const char *getshaderparamname(const char *name, bool insert = true);
 
 #define MAXDYNLIGHTS 5
