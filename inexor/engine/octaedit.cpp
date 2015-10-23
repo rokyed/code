@@ -1,6 +1,5 @@
 #include "inexor/engine/engine.h"
 #include "inexor/shared/filesystem.h"
-#include "inexor/texture/slot.h"
 
 extern SharedVar<int> outline;
 
@@ -999,7 +998,7 @@ static void packvslots(cube &c, vector<uchar> &buf, vector<ushort> &used)
             hdr.index = index;
             hdr.slot = vs.slot->index;
             lilswap(&hdr.index, 2);
-            packvslot(buf, vs);
+            vs.serialize(buf);
         }
     }
 }
@@ -1081,7 +1080,7 @@ static void unpackvslots(block3 &b, ucharbuf &buf)
         if(!hdr.index) break;
         VSlot &vs = *lookupslot(hdr.slot, false).variants;
         VSlot ds;
-        if(!unpackvslot(buf, ds, false)) break;
+        if(!ds.unserialize(buf, false)) break;
         if(vs.index < 0 || vs.index == DEFAULT_SKY) continue;
         VSlot *edit = editvslot(vs, ds);
         unpackingvslots.add(vslotmap(hdr.index, edit ? edit : &vs));
@@ -2027,7 +2026,7 @@ void mpeditvslot(int delta, VSlot &ds, int allfaces, selinfo &sel, bool local)
 bool mpeditvslot(int delta, int allfaces, selinfo &sel, ucharbuf &buf)
 {
     VSlot ds;
-    if(!unpackvslot(buf, ds, delta != 0)) return false;
+    if(!ds.unserialize(buf, delta != 0)) return false;
     editingvslot(ds.layer);
     mpeditvslot(delta, ds, allfaces, sel, false);
     return true;
@@ -2156,7 +2155,7 @@ static int unpacktex(int &tex, ucharbuf &buf, bool insert = true)
 {
     if(tex < 0x10000) return true;
     VSlot ds;
-    if(!unpackvslot(buf, ds, false)) return false;
+    if(!ds.unserialize(buf, false)) return false;
     VSlot &vs = *lookupslot(tex & 0xFFFF, false).variants;
     if(vs.index < 0 || vs.index == DEFAULT_SKY) return false;
     VSlot *edit = insert ? editvslot(vs, ds) : vs.slot->findvariant(vs, ds);

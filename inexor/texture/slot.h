@@ -75,6 +75,15 @@ class VSlot
         linked = false;
     }
 
+    ///Pack a virtual Slot (e.g. after it has been modified) for broadcasting it to the other clients.
+    /// @param buf the output buffer containing the network message like vslot info.
+    void serialize(vector<uchar> &buf) const;
+
+    /// Unpack a virtual Slot modified by another client.
+    /// @param buf the buffer from the network packet containing the vslot info.
+    /// @param delta
+    bool unserialize(ucharbuf &buf, bool delta);
+
     /// Old Cube2 mapformat (ogz) method to load the vslot.
     /// @param f (file) stream.
     /// @param changed a bitmask containing the actual changed values, so new defaults will be preserved.
@@ -213,9 +222,6 @@ extern void compactvslots(cube *c, int n = 8);
 extern void compactvslot(int &index);
 extern void compactvslot(VSlot &vs);
 extern int compactvslots();
-
-extern void packvslot(vector<uchar> &buf, const VSlot &src);
-extern bool unpackvslot(ucharbuf &buf, VSlot &dst, bool delta);
 
 extern vector<Slot *> slots;
 extern vector<VSlot *> vslots;

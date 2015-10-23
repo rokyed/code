@@ -5,6 +5,7 @@
 
 #include "inexor/fpsgame/game.h"
 #include "inexor/shared/filesystem.h"
+#include "inexor/engine/engine.h" // TODO: refractor (we do this currently bc of VSLOT dependency)
 
 namespace game
 {
@@ -839,7 +840,7 @@ namespace game
                 {
                     messages.pad(2);
                     int offset = messages.length();
-                    if(tex1) packvslot(messages, arg1);
+                    if(tex1) lookupvslot(arg1).serialize(messages);
                     *(ushort *)&messages[offset-2] = lilswap(ushort(messages.length() - offset));
                 }
                 break;
@@ -854,8 +855,8 @@ namespace game
                 {
                     messages.pad(2);
                     int offset = messages.length();
-                    if(tex1) packvslot(messages, arg1);
-                    if(tex2) packvslot(messages, arg2);
+                    if(tex1) lookupvslot(arg1).serialize(messages); // pack vslot
+                    if(tex2) lookupvslot(arg2).serialize(messages);
                     *(ushort *)&messages[offset-2] = lilswap(ushort(messages.length() - offset));
                 }
                 break;
@@ -874,7 +875,8 @@ namespace game
                 {
                     messages.pad(2);
                     int offset = messages.length();
-                    packvslot(messages, vs);
+                    if(vs) vs->serialize(messages);
+                    else messages.put(0xFF);
                     *(ushort *)&messages[offset-2] = lilswap(ushort(messages.length() - offset));
                 }
                 break;

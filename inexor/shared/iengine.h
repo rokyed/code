@@ -115,13 +115,6 @@ extern void mpdelcube(selinfo &sel, bool local);
 extern bool mpeditvslot(int delta, int allfaces, selinfo &sel, ucharbuf &buf);
 extern void mpremip(bool local);
 
-// texture
-
-class VSlot;
-
-extern void packvslot(vector<uchar> &buf, int index);
-extern void packvslot(vector<uchar> &buf, const VSlot *vs);
-
 // command
 extern int variable(const char *name, int min, int cur, int max, SharedVar<int> *storage, identfun fun, int flags);
 extern float fvariable(const char *name, float min, float cur, float max, SharedVar<float> *storage, identfun fun, int flags);

@@ -312,76 +312,62 @@ static bool comparevslot(const VSlot &dst, const VSlot &src, int diff)
     return true;
 }
 
-///Pack a virtual Slot after it has been modified for broadcasting it to the other clients.
-void packvslot(vector<uchar> &buf, const VSlot &src)
+void VSlot::serialize(vector<uchar> &buf) const
 {
-    if(src.changed & (1 << VSLOT_SHPARAM))
+    if(changed & (1 << VSLOT_SHPARAM))
     {
-        loopv(src.params)
+        loopv(params)
         {
-            const SlotShaderParam &p = src.params[i];
+            const SlotShaderParam &p = params[i];
             buf.put(VSLOT_SHPARAM);
             sendstring(p.name, buf);
             loopj(4) putfloat(buf, p.val[j]);
         }
     }
-    if(src.changed & (1 << VSLOT_SCALE))
+    if(changed & (1 << VSLOT_SCALE))
     {
         buf.put(VSLOT_SCALE);
-        putfloat(buf, src.scale);
+        putfloat(buf, scale);
     }
-    if(src.changed & (1 << VSLOT_ROTATION))
+    if(changed & (1 << VSLOT_ROTATION))
     {
         buf.put(VSLOT_ROTATION);
-        putfloat(buf, src.rotation);
+        putfloat(buf, rotation);
     }
-    if(src.changed & (1 << VSLOT_OFFSET))
+    if(changed & (1 << VSLOT_OFFSET))
     {
         buf.put(VSLOT_OFFSET);
-        putint(buf, src.offset.x);
-        putint(buf, src.offset.y);
+        putint(buf, offset.x);
+        putint(buf, offset.y);
     }
-    if(src.changed & (1 << VSLOT_SCROLL))
+    if(changed & (1 << VSLOT_SCROLL))
     {
         buf.put(VSLOT_SCROLL);
-        putfloat(buf, src.scroll.x);
-        putfloat(buf, src.scroll.y);
+        putfloat(buf, scroll.x);
+        putfloat(buf, scroll.y);
     }
-    if(src.changed & (1 << VSLOT_LAYER))
+    if(changed & (1 << VSLOT_LAYER))
     {
         buf.put(VSLOT_LAYER);
-        putuint(buf, vslots.inrange(src.layer) && !vslots[src.layer]->changed ? src.layer : 0);
+        putuint(buf, vslots.inrange(layer) && !vslots[layer]->changed ? layer : 0);
     }
-    if(src.changed & (1 << VSLOT_ALPHA))
+    if(changed & (1 << VSLOT_ALPHA))
     {
         buf.put(VSLOT_ALPHA);
-        putfloat(buf, src.alphafront);
-        putfloat(buf, src.alphaback);
+        putfloat(buf, alphafront);
+        putfloat(buf, alphaback);
     }
-    if(src.changed & (1 << VSLOT_COLOR))
+    if(changed & (1 << VSLOT_COLOR))
     {
         buf.put(VSLOT_COLOR);
-        putfloat(buf, src.colorscale.r);
-        putfloat(buf, src.colorscale.g);
-        putfloat(buf, src.colorscale.b);
+        putfloat(buf, colorscale.r);
+        putfloat(buf, colorscale.g);
+        putfloat(buf, colorscale.b);
     }
     buf.put(0xFF);
 }
 
-void packvslot(vector<uchar> &buf, int index)
-{
-    if(vslots.inrange(index)) packvslot(buf, *vslots[index]);
-    else buf.put(0xFF);
-}
-
-void packvslot(vector<uchar> &buf, const VSlot *vs)
-{
-    if(vs) packvslot(buf, *vs);
-    else buf.put(0xFF);
-}
-
-/// Unpack a virtual Slot modified by another client.
-bool unpackvslot(ucharbuf &buf, VSlot &dst, bool delta)
+bool VSlot::unserialize(ucharbuf &buf, bool delta)
 {
     while(buf.remaining())
     {
@@ -395,46 +381,46 @@ bool unpackvslot(ucharbuf &buf, VSlot &dst, bool delta)
             getstring(name, buf);
             SlotShaderParam p = { name[0] ? getshaderparamname(name) : NULL, -1,{ 0, 0, 0, 0 } };
             loopi(4) p.val[i] = getfloat(buf);
-            if(p.name) dst.params.add(p);
+            if(p.name) params.add(p);
             break;
         }
         case VSLOT_SCALE:
-            dst.scale = getfloat(buf);
-            if(dst.scale <= 0) dst.scale = 1;
-            else if(!delta) dst.scale = clamp(dst.scale, 1 / 8.0f, 8.0f);
+            scale = getfloat(buf);
+            if(scale <= 0) scale = 1;
+            else if(!delta) scale = clamp(scale, 1 / 8.0f, 8.0f);
             break;
         case VSLOT_ROTATION:
-            dst.rotation = getint(buf);
-            if(!delta) dst.rotation = clamp(dst.rotation, 0, 5);
+            rotation = getint(buf);
+            if(!delta) rotation = clamp(rotation, 0, 5);
             break;
         case VSLOT_OFFSET:
-            dst.offset.x = getint(buf);
-            dst.offset.y = getint(buf);
-            if(!delta) dst.offset.max(0);
+            offset.x = getint(buf);
+            offset.y = getint(buf);
+            if(!delta) offset.max(0);
             break;
         case VSLOT_SCROLL:
-            dst.scroll.x = getfloat(buf);
-            dst.scroll.y = getfloat(buf);
+            scroll.x = getfloat(buf);
+            scroll.y = getfloat(buf);
             break;
         case VSLOT_LAYER:
         {
             int tex = getuint(buf);
-            dst.layer = vslots.inrange(tex) ? tex : 0;
+            layer = vslots.inrange(tex) ? tex : 0;
             break;
         }
         case VSLOT_ALPHA:
-            dst.alphafront = clamp(getfloat(buf), 0.0f, 1.0f);
-            dst.alphaback = clamp(getfloat(buf), 0.0f, 1.0f);
+            alphafront = clamp(getfloat(buf), 0.0f, 1.0f);
+            alphaback = clamp(getfloat(buf), 0.0f, 1.0f);
             break;
         case VSLOT_COLOR:
-            dst.colorscale.r = clamp(getfloat(buf), 0.0f, 2.0f);
-            dst.colorscale.g = clamp(getfloat(buf), 0.0f, 2.0f);
-            dst.colorscale.b = clamp(getfloat(buf), 0.0f, 2.0f);
+            colorscale.r = clamp(getfloat(buf), 0.0f, 2.0f);
+            colorscale.g = clamp(getfloat(buf), 0.0f, 2.0f);
+            colorscale.b = clamp(getfloat(buf), 0.0f, 2.0f);
             break;
         default:
             return false;
         }
-        dst.changed |= 1 << changed;
+        changed |= 1 << changed;
     }
     if(buf.overread()) return false;
     return true;

@@ -222,6 +222,12 @@ namespace texture {
         loopi((MATF_VOLUME | MATF_INDEX) + 1) materialslots[i].reset();
     }
 
+    void slotregistry::serializevslot(vector<uchar> &buf, int index)
+    {
+        if(vslots.inrange(index)) vslots[index]->serialize(buf);
+        else buf.put(0xFF);
+    }
+
     void slotregistry::savetoogz(stream *f, int numvslots)
     {
         if(vslots.empty()) return;

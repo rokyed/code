@@ -15,11 +15,12 @@
 #ifndef INEXOR_TEX_SLOTREGISTRY_H
 #define INEXOR_TEX_SLOTREGISTRY_H
 
-#include "inexor/engine/engine.h" //todo json outside engine
+#include "inexor/engine/engine.h"
 
 namespace inexor {
 namespace texture {
-    /// A set of Slots to make threaded loading possible.
+
+    /// A set of Slots to be bundled within a map.
     class slotregistry
     {
     private:
@@ -80,6 +81,10 @@ namespace texture {
 
         /// Resets the material stack back to its initial state.
         void materialreset();
+
+
+        /// Put the vslot (with the given index number) in a network package.
+        void serializevslot(vector<uchar> &buf, int index);
 
         /// Save all included virtual slots (vslots) to the old ogz Cube2 mapformat.
         /// @param f (file) stream
