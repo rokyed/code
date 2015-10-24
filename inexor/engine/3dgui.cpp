@@ -6,7 +6,6 @@
 #include "inexor/engine/engine.h"
 #include "inexor/engine/textedit.h"
 #include "inexor/shared/filesystem.h"
-#include "inexor/texture/slotregistry.h"
 
 static struct gui *windowhit = NULL;
 static bool layoutpass, actionon = false;
@@ -646,29 +645,12 @@ struct gui : g3d_gui
             gle::color(light);
             rect_(x, y, xs, ys, 0);
         }
-    }        
+    }
 
     void previewslot(VSlot &vslot, bool overlaid, int x, int y, int size, bool hit)
     {
-        Slot &slot = *vslot.slot;
-        if(slot.sts.empty()) return;
-        VSlot *layer = NULL;
-        Texture *t = NULL, *glowtex = NULL, *layertex = NULL;
-        if(slot.loaded)
-        {
-            t = slot.sts[0].t;
-            if(t == notexture) return;
-            Slot &slot = *vslot.slot;
-            if(slot.texmask&(1<<TEX_GLOW)) { loopvj(slot.sts) if(slot.sts[j].type==TEX_GLOW) { glowtex = slot.sts[j].t; break; } }
-            if(vslot.layer)
-            {
-                layer = &lookupvslot(vslot.layer);
-                if(!layer->slot->sts.empty()) layertex = layer->slot->sts[0].t;
-            }
-        }
-        else if(slot.thumbnail && slot.thumbnail != notexture) t = slot.thumbnail;
-        else return;
-        float xt = min(1.0f, t->xs/(float)t->ys), yt = min(1.0f, t->ys/(float)t->xs), xs = size, ys = size;
+        float xs = size, ys = size;
+
         if(hit && actionon) 
         {
             hudnotextureshader->set();
@@ -676,53 +658,8 @@ struct gui : g3d_gui
             rect_(x+SHADOW, y+SHADOW, xs, ys);
             hudshader->set();	
         }
-        SETSHADER(hudrgb);
-        gle::defvertex(2);
-        gle::deftexcoord0();
         const vec &color = hit ? vec(1, 0.5f, 0.5f) : (overlaid ? vec(1, 1, 1) : light);
-        vec2 tc[4] = { vec2(0, 0), vec2(1, 0), vec2(1, 1), vec2(0, 1) };
-        float xoff = vslot.offset.x, yoff = vslot.offset.y;
-        if(vslot.rotation)
-        {
-            if((vslot.rotation&5) == 1) { swap(xoff, yoff); loopk(4) swap(tc[k].x, tc[k].y); }
-            if(vslot.rotation >= 2 && vslot.rotation <= 4) { xoff *= -1; loopk(4) tc[k].x *= -1; }
-            if(vslot.rotation <= 2 || vslot.rotation == 5) { yoff *= -1; loopk(4) tc[k].y *= -1; }
-        }
-        loopk(4) { tc[k].x = tc[k].x/xt - xoff/t->xs; tc[k].y = tc[k].y/yt - yoff/t->ys; } 
-        if(slot.loaded) gle::color(vec(color).mul(vslot.colorscale));
-        else gle::color(color);
-        glBindTexture(GL_TEXTURE_2D, t->id);
-        gle::begin(GL_TRIANGLE_STRIP);
-        gle::attribf(x,    y);    gle::attrib(tc[0]);
-        gle::attribf(x+xs, y);    gle::attrib(tc[1]);
-        gle::attribf(x,    y+ys); gle::attrib(tc[3]);
-        gle::attribf(x+xs, y+ys); gle::attrib(tc[2]);
-        gle::end();
-        if(glowtex)
-        {
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-            glBindTexture(GL_TEXTURE_2D, glowtex->id);
-            if(hit || overlaid) gle::color(vec(vslot.glowcolor).mul(color));
-            else gle::color(vslot.glowcolor);
-            gle::begin(GL_TRIANGLE_STRIP);
-            gle::attribf(x,    y);    gle::attrib(tc[0]);
-            gle::attribf(x+xs, y);    gle::attrib(tc[1]);
-            gle::attribf(x,    y+ys); gle::attrib(tc[3]);
-            gle::attribf(x+xs, y+ys); gle::attrib(tc[2]);
-            gle::end();
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        }
-        if(layertex)
-        {
-            glBindTexture(GL_TEXTURE_2D, layertex->id);
-            gle::color(vec(color).mul(layer->colorscale));
-            gle::begin(GL_TRIANGLE_STRIP);
-            gle::attribf(x+xs/2, y+ys/2); gle::attrib(tc[0]);
-            gle::attribf(x+xs,   y+ys/2); gle::attrib(tc[1]);
-            gle::attribf(x+xs/2, y+ys);   gle::attrib(tc[3]);
-            gle::attribf(x+xs,   y+ys);   gle::attrib(tc[2]);
-            gle::end();
-        }
+        if(!vslot.renderthumbnail(x, y, xs, ys, color)) return;
             
         hudshader->set();
         if(overlaid) 

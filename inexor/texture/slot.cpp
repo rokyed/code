@@ -915,3 +915,74 @@ void VSlot::parsefromogz(stream *f, int changed)
         loopk(3) colorscale[k] = f->getlil<float>();
     }
 }
+
+bool VSlot::renderthumbnail(int x, int y, int w, int h, const vec &color)
+{
+    if(slot->sts.empty()) return false;
+    VSlot *layervslot = NULL;
+    Texture *t = NULL, *glowtex = NULL, *layertex = NULL;
+    if(slot->loaded)
+    {
+        t = slot->sts[0].t;
+        if(t == notexture) return false;
+        if(slot->texmask&(1 << TEX_GLOW)) { loopvj(slot->sts) if(slot->sts[j].type == TEX_GLOW) { glowtex = slot->sts[j].t; break; } }
+        if(layer)
+        {
+            layervslot = &lookupvslot(layer);
+            if(!layervslot->slot->sts.empty()) layertex = layervslot->slot->sts[0].t;
+        }
+    }
+    else if(slot->thumbnail && slot->thumbnail != notexture) t = slot->thumbnail;
+    else return false;
+
+    float xt = min(1.0f, t->xs / (float)t->ys), yt = min(1.0f, t->ys / (float)t->xs);
+
+    SETSHADER(hudrgb);
+    gle::defvertex(2);
+    gle::deftexcoord0();
+    vec2 tc[4] = { vec2(0, 0), vec2(1, 0), vec2(1, 1), vec2(0, 1) };
+    float xoff = offset.x, yoff = offset.y;
+
+    if(rotation)
+    {
+        if((rotation & 5) == 1) { swap(xoff, yoff); loopk(4) swap(tc[k].x, tc[k].y); }
+        if(rotation >= 2 && rotation <= 4) { xoff *= -1; loopk(4) tc[k].x *= -1; }
+        if(rotation <= 2 || rotation == 5) { yoff *= -1; loopk(4) tc[k].y *= -1; }
+    }
+
+    loopk(4) { tc[k].x = tc[k].x / xt - xoff / t->w; tc[k].y = tc[k].y / yt - yoff / t->h; }
+    if(slot->loaded) gle::color(vec(color).mul(colorscale));
+    else gle::color(color);
+    glBindTexture(GL_TEXTURE_2D, t->id);
+    gle::begin(GL_TRIANGLE_STRIP);
+    gle::attribf(x, y);         gle::attrib(tc[0]);
+    gle::attribf(x + w, y);     gle::attrib(tc[1]);
+    gle::attribf(x, y + h);     gle::attrib(tc[3]);
+    gle::attribf(x + w, y + h); gle::attrib(tc[2]);
+    gle::end();
+    if(glowtex)
+    {
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        glBindTexture(GL_TEXTURE_2D, glowtex->id);
+        gle::color(glowcolor);
+        gle::begin(GL_TRIANGLE_STRIP);
+        gle::attribf(x, y);    gle::attrib(tc[0]);
+        gle::attribf(x + w, y);    gle::attrib(tc[1]);
+        gle::attribf(x, y + h); gle::attrib(tc[3]);
+        gle::attribf(x + w, y + h); gle::attrib(tc[2]);
+        gle::end();
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+    if(layertex)
+    {
+        glBindTexture(GL_TEXTURE_2D, layertex->id);
+        gle::color(vec(color).mul(layervslot->colorscale));
+        gle::begin(GL_TRIANGLE_STRIP);
+        gle::attribf(x + w / 2, y + h / 2); gle::attrib(tc[0]);
+        gle::attribf(x + w, y + h / 2); gle::attrib(tc[1]);
+        gle::attribf(x + w / 2, y + h);   gle::attrib(tc[3]);
+        gle::attribf(x + w, y + h);   gle::attrib(tc[2]);
+        gle::end();
+    }
+    return true;
+}
