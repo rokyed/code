@@ -222,6 +222,7 @@ namespace texture {
     {
         loopi((MATF_VOLUME | MATF_INDEX) + 1) materialslots[i].reset();
     }
+    ICOMMAND(materialreset, "", (), getcurslotreg()->materialreset());
 
     void slotregistry::serializevslot(vector<uchar> &buf, int index)
     {

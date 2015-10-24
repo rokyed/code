@@ -17,14 +17,6 @@ MSlot materialslots[(MATF_VOLUME | MATF_INDEX) + 1];
 Slot dummyslot;
 VSlot dummyvslot(&dummyslot);
 
-void materialreset()
-{
-    if(!(identflags&IDF_OVERRIDDEN) && !game::allowedittoggle()) return;
-    loopi((MATF_VOLUME | MATF_INDEX) + 1) materialslots[i].reset();
-}
-
-COMMAND(materialreset, "");
-
 static int compactedvslots = 0, compactvslotsprogress = 0, clonedvslots = 0;
 static bool markingvslots = false;
 
