@@ -214,7 +214,6 @@ extern void cleanupvslots();
 extern void cleanupmaterialslots();
 
 extern void propagatevslot(VSlot *root, int changed);
-extern void texturereset(int first, int num = 0);
 
 extern VSlot *emptyvslot(Slot &owner);
 

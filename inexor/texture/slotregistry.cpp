@@ -216,6 +216,7 @@ namespace texture {
             delete vslots.pop();
         }
     }
+    ICOMMAND(texturereset, "ii", (int *first, int *last), getcurslotreg()->texturereset(*first, *last));
 
     void slotregistry::materialreset()
     {

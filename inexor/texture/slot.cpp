@@ -17,34 +17,6 @@ MSlot materialslots[(MATF_VOLUME | MATF_INDEX) + 1];
 Slot dummyslot;
 VSlot dummyvslot(&dummyslot);
 
-/// Resets all textures from the slots-stack.
-/// @param first: the texturepos from whereon you want to reset
-/// @param num: the number of slots you want to reset from thereon. All if 0
-/// @example texturereset(0, 40); resets the first 40 textures
-void texturereset(int first, int num)
-{
-    if(!(identflags&IDF_OVERRIDDEN) && !game::allowedittoggle()) return;
-    resetslotshader();
-    first = clamp(first, 0, slots.length());
-    if(!num) num = slots.length() - first;
-    num = clamp(num, 0, slots.length() - first);
-
-    loopi(num)
-    {
-        Slot *s = slots.remove(first);
-        for(VSlot *vs = s->variants; vs; vs = vs->next) vs->slot = &dummyslot;
-        delete s;
-    }
-
-    while(vslots.length())
-    {
-        VSlot *vs = vslots.last();
-        if(vs->slot != &dummyslot || vs->changed) break;
-        delete vslots.pop();
-    }
-}
-ICOMMAND(texturereset, "ii", (int *first, int *last), texturereset(*first, *last));
-
 void materialreset()
 {
     if(!(identflags&IDF_OVERRIDDEN) && !game::allowedittoggle()) return;
