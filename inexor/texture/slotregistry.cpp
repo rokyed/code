@@ -302,6 +302,12 @@ namespace texture {
 
 using namespace inexor::texture;
 
+/// Returns how many texture slots this map currently has, usefule e.g. for the texture browser.
+int numcurslots()
+{
+    return getcurslotreg()->slots.length();
+}
+ICOMMAND(getslotsnum, "", (), intret(numcurslots()));
 
 /// Checks whether a specific vslot is in the current maps slotregistry.
 bool hasslot(int index)

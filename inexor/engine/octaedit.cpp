@@ -2087,7 +2087,7 @@ void vlayer(int *n)
     if(noedit()) return;
     VSlot ds;
     ds.changed = 1<<VSLOT_LAYER;
-    if(vslots.inrange(*n))
+    if(hasvslot(*n))
     {
         ds.layer = *n;
         if(lookupvslot(ds.layer, false).changed && nompedit && multiplayer()) return;

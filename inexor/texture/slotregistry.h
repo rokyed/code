@@ -101,6 +101,8 @@ namespace texture {
 }   // namespace texture
 }   // namespace inexor
 
+extern int numcurslots();
+
 extern bool hasslot(int index);
 extern bool hasvslot(int index);
 
