@@ -82,7 +82,6 @@ namespace texture {
         /// Resets the material stack back to its initial state.
         void materialreset();
 
-
         /// Put the vslot (with the given index number) in a network package.
         void serializevslot(vector<uchar> &buf, int index);
 
@@ -101,5 +100,13 @@ namespace texture {
     extern void switchcurslotreg();
 }   // namespace texture
 }   // namespace inexor
+
+extern bool hasslot(int index);
+extern bool hasvslot(int index);
+
+extern Slot &lookupslot(int slot, bool load = true);
+extern VSlot &lookupvslot(int slot, bool load = true);
+extern MSlot &lookupmaterialslot(int slot, bool load = true);
+
 
 #endif // INEXOR_TEX_SLOTREGISTRY_H

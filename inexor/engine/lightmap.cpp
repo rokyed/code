@@ -1,6 +1,7 @@
 #include "inexor/engine/engine.h"
 #include "inexor/texture/savetexture.h"
 #include "inexor/texture/modifiers.h"
+#include "inexor/texture/slotregistry.h"
 
 #define MAXLIGHTMAPTASKS 4096
 #define LIGHTMAPBUFSIZE (2*1024*1024)

@@ -2,6 +2,7 @@
 
 #include "inexor/engine/engine.h"
 #include "inexor/texture/cubemap.h"
+#include "inexor/texture/slotregistry.h"
 
 static inline void drawtris(GLsizei numindices, const GLvoid *indices, ushort minvert, ushort maxvert)
 {

@@ -298,7 +298,60 @@ namespace texture {
 }     // namespace texture
 }     // namespace inexor
 
+using namespace inexor::texture;
 
+
+/// Checks whether a specific vslot is in the current maps slotregistry.
+bool hasslot(int index)
+{
+    return getcurslotreg()->slots.inrange(index);
+}
+
+/// Checks whether a specific vslot is in the current maps slotregistry.
+bool hasvslot(int index)
+{
+    return getcurslotreg()->vslots.inrange(index);
+}
+
+/// Get a reference to a specific slot AND load it if not specified otherwise.
+/// If it fails its a reference to a dummyslot.
+Slot &lookupslot(int index, bool load)
+{
+    vector<Slot *> &slots = getcurslotreg()->slots;
+    Slot &s = slots.inrange(index) ? *slots[index] : (slots.inrange(DEFAULT_GEOM) ? *slots[DEFAULT_GEOM] : dummyslot);
+    return s.loaded || !load ? s : s.load(true, false);
+}
+
+/// Get a reference to a specific vslot AND load it if not specified otherwise.
+/// if it fails its a reference to a dummyvslot.
+VSlot &lookupvslot(int index, bool load)
+{
+    vector<VSlot *> &vslots = getcurslotreg()->vslots;
+    vector<Slot *> &slots = getcurslotreg()->slots;
+    VSlot &s = vslots.inrange(index) && vslots[index]->slot ? *vslots[index] : 
+                    (slots.inrange(DEFAULT_GEOM) && slots[DEFAULT_GEOM]->variants ? *slots[DEFAULT_GEOM]->variants : dummyvslot);
+    if(load && !s.linked)
+    {
+        if(!s.slot->loaded) s.slot->load(true, false);
+        linkvslotshader(s);
+        s.linked = true;
+    }
+    return s;
+}
+
+/// Get a reference to a specific materialslot AND load it if not specified otherwise.
+/// TODO NO DUMMY AVAILABLE!!
+MSlot &lookupmaterialslot(int index, bool load)
+{
+    MSlot &s = getcurslotreg()->materialslots[index];
+    if(load && !s.linked)
+    {
+        if(!s.loaded) s.load(true, true);
+        linkvslotshader(s);
+        s.linked = true;
+    }
+    return s;
+}
 
 // TODO:
 // - make textures look into texturefolder by default [DONE]

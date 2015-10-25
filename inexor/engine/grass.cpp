@@ -1,4 +1,5 @@
 #include "inexor/engine/engine.h"
+#include "inexor/texture/slotregistry.h"
 
 VARP(grass, 0, 0, 1);
 VAR(dbggrass, 0, 0, 1);

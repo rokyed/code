@@ -1,5 +1,6 @@
 #include "inexor/engine/engine.h"
 #include "inexor/texture/cubemap.h"
+#include "inexor/texture/slotregistry.h"
 
 struct QuadNode
 {

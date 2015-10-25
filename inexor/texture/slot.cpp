@@ -9,6 +9,7 @@
 #include "inexor/texture/cubemap.h"
 #include "inexor/texture/slot.h"
 #include "inexor/shared/filesystem.h"
+#include "inexor/texture/slotregistry.h" // TODO remove this, needed soley bc of lookupvslot..  for the layers (in loadthumbnail)
 
 vector<VSlot *> vslots;
 vector<Slot *> slots;
@@ -566,42 +567,6 @@ void gencombinedname(vector<char> &name, int &texmask, Slot &s, Slot::Tex &t, in
         }
     }
     name.add('\0');
-}
-
-/// Get a reference to a specific materialslot AND load it if not specified otherwise.
-/// TODO NOT SAVE YET, NO DUMMY AVAILABLE!!
-MSlot &lookupmaterialslot(int index, bool load)
-{
-    MSlot &s = materialslots[index];
-    if(load && !s.linked)
-    {
-        if(!s.loaded) s.load(true, true);
-        linkvslotshader(s);
-        s.linked = true;
-    }
-    return s;
-}
-
-/// Get a reference to a specific slot AND load it if not specified otherwise.
-/// If it fails its a reference to a dummyslot.
-Slot &lookupslot(int index, bool load)
-{
-    Slot &s = slots.inrange(index) ? *slots[index] : (slots.inrange(DEFAULT_GEOM) ? *slots[DEFAULT_GEOM] : dummyslot);
-    return s.loaded || !load ? s : s.load(true, false);
-}
-
-/// Get a reference to a specific vslot AND load it if not specified otherwise.
-/// if it fails its a reference to a dummyvslot.
-VSlot &lookupvslot(int index, bool load)
-{
-    VSlot &s = vslots.inrange(index) && vslots[index]->slot ? *vslots[index] : (slots.inrange(DEFAULT_GEOM) && slots[DEFAULT_GEOM]->variants ? *slots[DEFAULT_GEOM]->variants : dummyvslot);
-    if(load && !s.linked)
-    {
-        if(!s.slot->loaded) s.slot->load(true, false);
-        linkvslotshader(s);
-        s.linked = true;
-    }
-    return s;
 }
 
 void loadlayermasks()

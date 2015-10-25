@@ -2,6 +2,7 @@
 
 #include "inexor/engine/engine.h"
 #include "inexor/shared/filesystem.h"
+#include "inexor/texture/slotregistry.h"
 
 const struct slottex
 {

@@ -1,5 +1,6 @@
 #include "inexor/engine/engine.h"
 #include "inexor/shared/filesystem.h"
+#include "inexor/texture/slotregistry.h"
 
 extern SharedVar<int> outline;
 
@@ -993,7 +994,7 @@ static void packvslots(cube &c, vector<uchar> &buf, vector<ushort> &used)
         if(vslots.inrange(index) && vslots[index]->changed && used.find(index) < 0)
         {
             used.add(index);
-            VSlot &vs = *vslots[index];
+            VSlot &vs = lookupvslot(index, false);
             vslothdr &hdr = *(vslothdr *)buf.pad(sizeof(vslothdr));
             hdr.index = index;
             hdr.slot = vs.slot->index;
@@ -2089,7 +2090,7 @@ void vlayer(int *n)
     if(vslots.inrange(*n))
     {
         ds.layer = *n;
-        if(vslots[ds.layer]->changed && nompedit && multiplayer()) return;
+        if(lookupvslot(ds.layer, false).changed && nompedit && multiplayer()) return;
     }
     editingvslot(ds.layer);
     mpeditvslot(usevdelta, ds, allfaces, sel, true);
@@ -2168,7 +2169,7 @@ int shouldpacktex(int index)
 {
     if(vslots.inrange(index))
     {
-        VSlot &vs = *vslots[index];
+        VSlot &vs = lookupvslot(index, false);
         if(vs.changed) return 0x10000 + vs.slot->index;
     }
     return 0;
