@@ -11,9 +11,12 @@
 #include "inexor/texture/slot.h"
 #include "inexor/texture/texsettings.h"
 #include "inexor/texture/compressedtex.h"
+#include "inexor/texture/slotregistry.h"
 #include <unordered_map>
 #include <map>
 #include <iterator>
+
+using namespace inexor;
 
 void setuptexcompress()
 {
@@ -512,9 +515,7 @@ void cleanuptexture(Texture *t)
 void cleanuptextures()
 {
     clearenvmaps();
-    cleanupslots();
-    cleanupvslots();
-    cleanupmaterialslots();
+    texture::getcurslotreg()->cleanup();
 
     std::map<std::string, Texture *> reloadqueue; //needed so we dont need to pass iterators, but can edit the registry.
     for(auto it = textures.begin(); it != textures.end(); ++it) reloadqueue.insert(std::make_pair(it->first, &it->second));
@@ -594,8 +595,3 @@ bool loadimage(const char *filename, ImageData &image)
     image.wrap(s);
     return true;
 }
-
-// registry. loading
-/// textureslot: texdata,  newtexture, textures.access
-// cubemap: texaccess + texdata + createcompressed
-// additional: texaccess

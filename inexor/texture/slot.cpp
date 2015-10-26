@@ -535,21 +535,6 @@ void loadlayermasks()
     loopv(slots) slots[i]->loadlayermask();
 }
 
-void cleanupslots()
-{
-    loopv(slots) slots[i]->cleanup();
-}
-
-void cleanupvslots()
-{
-    loopv(vslots) vslots[i]->cleanup();
-}
-
-void cleanupmaterialslots()
-{
-    loopi((MATF_VOLUME | MATF_INDEX) + 1) materialslots[i].cleanup();
-}
-
 void Slot::setscroll(float scrollS, float scrollT)
 {
     variants->scroll = vec2(scrollS, scrollT).div(1000.0f);

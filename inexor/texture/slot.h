@@ -209,9 +209,6 @@ struct MSlot : Slot, VSlot
 extern void loadlayermasks();
 
 extern void clearslots();
-extern void cleanupslots();
-extern void cleanupvslots();
-extern void cleanupmaterialslots();
 
 extern void propagatevslot(VSlot *root, int changed);
 
