@@ -17,14 +17,8 @@ MSlot materialslots[(MATF_VOLUME | MATF_INDEX) + 1];
 Slot dummyslot;
 VSlot dummyvslot(&dummyslot);
 
-static int compactedvslots = 0, compactvslotsprogress = 0, clonedvslots = 0;
+static int compactedvslots = 0, compactvslotsprogress = 0;
 static bool markingvslots = false;
-
-void clearslots() // TODO: remove (just these to remaining bits..)
-{
-    resetslotshader();
-    clonedvslots = 0;
-}
 
 static void assignvslot(VSlot &vs);
 

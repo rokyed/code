@@ -206,8 +206,6 @@ struct MSlot : Slot, VSlot
     }
 };
 
-extern void clearslots();
-
 extern void propagatevslot(VSlot *root, int changed);
 extern void propagatevslot(VSlot &dst, const VSlot &src, int diff, bool edit = false);
 extern void mergevslot(VSlot &dst, const VSlot &src, const VSlot &delta);

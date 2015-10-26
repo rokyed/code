@@ -1239,7 +1239,7 @@ void resetmap()
     resetblendmap();
     resetlightmaps();
     clearpvs();
-    clearslots();
+    resetslotshader();
     texture::switchcurslotreg();
     clearparticles();
     cleardecals();
