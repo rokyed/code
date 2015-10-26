@@ -50,7 +50,7 @@ void texture(char *type, char *name, int *rot, int *xoffset, int *yoffset, float
     if(tnum == TEX_DIFFUSE)
     {
         setslotshader(s);
-        VSlot &vs = matslot >= 0 ? lookupmaterialslot(matslot, false) : *emptyvslot(s);
+        VSlot &vs = matslot >= 0 ? lookupmaterialslot(matslot, false) : *getcurslotreg()->addvslot(s);
         vs.reset();
         vs.rotation = clamp(*rot, 0, 5);
         vs.offset = ivec2(*xoffset, *yoffset).max(0);

@@ -169,7 +169,7 @@ static void clampvslotoffset(VSlot &dst, Slot *slot = NULL)
     else dst.offset.max(0);
 }
 
-static void propagatevslot(VSlot &dst, const VSlot &src, int diff, bool edit = false)
+void propagatevslot(VSlot &dst, const VSlot &src, int diff, bool edit)
 {
     if(diff & (1 << VSLOT_SHPARAM)) loopv(src.params) dst.params.add(src.params[i]); //todo cleanup ?? doppelt gemoppelt..
     if(diff & (1 << VSLOT_SCALE)) dst.scale = src.scale;
@@ -253,6 +253,8 @@ void mergevslot(VSlot &dst, const VSlot &src, const VSlot &delta)
     mergevslot(dst, delta, delta.changed, src.slot);
 }
 
+/// Compare two variant slots, based on the bitmask diff which tells which params need to be taken into account.
+/// @return true if both VSlots are qual (in the params specified by diff).
 static bool comparevslot(const VSlot &dst, const VSlot &src, int diff)
 {
     if(diff & (1 << VSLOT_SHPARAM))
@@ -386,46 +388,6 @@ bool VSlot::unserialize(ucharbuf &buf, bool delta)
     }
     if(buf.overread()) return false;
     return true;
-}
-
-/// Wrapper around new VSlot to reuse unused dead vslots.
-/// @warning not threadsafe since it accesses slots and vslots globals.
-VSlot *emptyvslot(Slot &owner)
-{
-    int offset = 0;
-    loopvrev(slots) if(slots[i]->variants) { offset = slots[i]->variants->index + 1; break; }
-    for(int i = offset; i < vslots.length(); i++) if(!vslots[i]->changed) return owner.setvariantchain(vslots[i]);
-    return vslots.add(new VSlot(&owner, vslots.length()));
-}
-
-static VSlot *clonevslot(const VSlot &src, const VSlot &delta)
-{
-    VSlot *dst = vslots.add(new VSlot(src.slot, vslots.length()));
-    dst->changed = src.changed | delta.changed;
-    propagatevslot(*dst, src, ((1 << VSLOT_NUM) - 1) & ~delta.changed);
-    propagatevslot(*dst, delta, delta.changed, true);
-    return dst;
-}
-
-VARP(autocompactvslots, 0, 256, 0x10000);
-
-/// Select a VSlot beeing src but having modifications based on delta (??)
-VSlot *editvslot(const VSlot &src, const VSlot &delta)
-{
-    VSlot *exists = src.slot->findvariant(src, delta);
-    if(exists) return exists;
-    if(vslots.length() >= 0x10000)
-    {
-        compactvslots();
-        allchanged();
-        if(vslots.length() >= 0x10000) return NULL;
-    }
-    if(autocompactvslots && ++clonedvslots >= autocompactvslots)
-    {
-        compactvslots();
-        allchanged();
-    }
-    return clonevslot(src, delta);
 }
 
 static void fixinsidefaces(cube *c, const ivec &o, int size, int tex)
@@ -737,6 +699,7 @@ void Slot::loadlayermask()
     }
 }
 
+/// @see slotregistry::addvslot for param explanaition
 VSlot *Slot::findvariant(const VSlot &src, const VSlot &delta)
 {
     for(VSlot *dst = variants; dst; dst = dst->next)

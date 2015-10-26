@@ -209,10 +209,7 @@ struct MSlot : Slot, VSlot
 extern void clearslots();
 
 extern void propagatevslot(VSlot *root, int changed);
-
-extern VSlot *emptyvslot(Slot &owner);
-
-extern VSlot *editvslot(const VSlot &src, const VSlot &delta);
+extern void propagatevslot(VSlot &dst, const VSlot &src, int diff, bool edit = false);
 extern void mergevslot(VSlot &dst, const VSlot &src, const VSlot &delta);
 
 extern void compactvslots(cube *c, int n = 8);

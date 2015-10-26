@@ -20,11 +20,11 @@
 namespace inexor {
 namespace texture {
 
+    #define MAXVSLOTAMOUNT 0x10000
+
     /// A set of Slots to be bundled within a map.
     class slotregistry
     {
-    private:
-
     public:
         /// All included Slots.
         vector<Slot *>slots;
@@ -43,6 +43,15 @@ namespace texture {
 
         /// Adds a texture to the set from a json-file.
         void addslot(const char *filename);
+
+        /// Wrapper around new VSlot to reuse unused dead vslots.
+        /// @warning not threadsafe since it accesses slots and vslots globals.
+        VSlot *addvslot(Slot &owner);
+
+        /// Select a VSlot beeing src but having modifications based on delta, if none exists create (allocate) one accordingly.
+        /// @sideeffects compacts the vslots array if vslot amount exceeds allowed number.
+        /// @warning can return NULL.
+        VSlot *addvslot(const VSlot &src, const VSlot &delta);
 
         /// Loads all slots to memory.
         void load();
@@ -94,6 +103,13 @@ namespace texture {
         /// @param f (file) stream
         /// @param numvslots the number of vslots to read
         void parsefromogz(stream *f, int numvslots);
+
+      private:
+        /// Create a VSlot based on src, but whereever delta is changed from its defaults, prefer the params by delta.
+        VSlot *clonevslot(const VSlot &src, const VSlot &delta);
+
+        /// Check whether we are able to add any VSlots anymore.
+        inline bool vslotlimitreached() const;
     };
 
     extern slotregistry *getcurslotreg();

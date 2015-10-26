@@ -61,7 +61,7 @@ namespace texture {
         JSON *scale = j->getchild("scale"), *rot = j->getchild("rotation"), *offset = j->getchild("offset"),
         *scroll = j->getchild("scroll"), *alpha = j->getchild("alpha"), *color = j->getchild("color");
 
-        VSlot &vs = *emptyvslot(s);
+        VSlot &vs = *getcurslotreg()->addvslot(s);
         vs.reset();
         vs.rotation = rot ? clamp(rot->valueint, 0, 5) : 0;
         vs.scale = scale ? scale->valuefloat : 1;
@@ -124,6 +124,44 @@ namespace texture {
 
         addslot(j);
         delete j;
+    }
+    
+    // helper for addvslot, currently only used when in editmode new vslots get created.
+    inline bool slotregistry::vslotlimitreached() const
+    {
+        return vslots.length() >= MAXVSLOTAMOUNT;
+    }
+
+    // helper for addvslot
+    VSlot *slotregistry::clonevslot(const VSlot &src, const VSlot &delta)
+    {
+        VSlot *dst = vslots.add(new VSlot(src.slot, vslots.length()));
+        dst->changed = src.changed | delta.changed;
+        propagatevslot(*dst, src, ((1 << VSLOT_NUM) - 1) & ~delta.changed);
+        propagatevslot(*dst, delta, delta.changed, true);
+        return dst;
+    }
+
+    //VARP(autocompactvslots, 0, 256, 0x10000); //TODO: autocompact is not effectively used anywhere (neither in sauerbraten).. BUG!
+    VSlot *slotregistry::addvslot(const VSlot &src, const VSlot &delta)
+    {
+        VSlot *exists = src.slot->findvariant(src, delta);
+        if(exists) return exists;
+        if(vslotlimitreached()) // (autocompactvslots && ++clonedvslots >= autocompactvslots))
+        {
+            compactvslots();
+            allchanged();
+            if(vslotlimitreached()) return NULL;
+        }
+        return clonevslot(src, delta);
+    }
+
+    VSlot *slotregistry::addvslot(Slot &owner)
+    {
+        int offset = 0;
+        loopvrev(slots) if(slots[i]->variants) { offset = slots[i]->variants->index + 1; break; }
+        for(int i = offset; i < vslots.length(); i++) if(!vslots[i]->changed) return owner.setvariantchain(vslots[i]);
+        return vslots.add(new VSlot(&owner, vslots.length()));
     }
 
     void slotregistry::load()

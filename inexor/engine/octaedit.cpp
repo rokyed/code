@@ -1086,7 +1086,7 @@ static void unpackvslots(block3 &b, ucharbuf &buf)
         VSlot ds;
         if(!ds.unserialize(buf, false)) break;
         if(vs.index < 0 || vs.index == DEFAULT_SKY) continue;
-        VSlot *edit = editvslot(vs, ds);
+        VSlot *edit = getcurslotreg()->addvslot(vs, ds);
         unpackingvslots.add(vslotmap(hdr.index, edit ? edit : &vs));
     }
 
@@ -1941,9 +1941,9 @@ static VSlot *remapvslot(int index, bool delta, const VSlot &ds)
     {
         VSlot ms;
         mergevslot(ms, vs, ds);
-        edit = ms.changed ? editvslot(vs, ms) : vs.slot->variants;
+        edit = ms.changed ? getcurslotreg()->addvslot(vs, ms) : vs.slot->variants;
     }
-    else edit = ds.changed ? editvslot(vs, ds) : vs.slot->variants;
+    else edit = ds.changed ? getcurslotreg()->addvslot(vs, ds) : vs.slot->variants;
     if(!edit) edit = &vs;
     remappedvslots.add(vslotmap(vs.index, edit));
     return edit;
@@ -2162,7 +2162,7 @@ static int unpacktex(int &tex, ucharbuf &buf, bool insert = true)
     if(!ds.unserialize(buf, false)) return false;
     VSlot &vs = *lookupslot(tex & 0xFFFF, false).variants;
     if(vs.index < 0 || vs.index == DEFAULT_SKY) return false;
-    VSlot *edit = insert ? editvslot(vs, ds) : vs.slot->findvariant(vs, ds);
+    VSlot *edit = insert ? getcurslotreg()->addvslot(vs, ds) : vs.slot->findvariant(vs, ds);
     if(!edit) return false;
     tex = edit->index;
     return true;
