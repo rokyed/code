@@ -530,11 +530,6 @@ void gencombinedname(vector<char> &name, int &texmask, Slot &s, Slot::Tex &t, in
     name.add('\0');
 }
 
-void loadlayermasks()
-{
-    loopv(slots) slots[i]->loadlayermask();
-}
-
 void Slot::setscroll(float scrollS, float scrollT)
 {
     variants->scroll = vec2(scrollS, scrollT).div(1000.0f);

@@ -3,6 +3,8 @@
 #include "inexor/texture/modifiers.h"
 #include "inexor/texture/slotregistry.h"
 
+using namespace inexor;
+
 #define MAXLIGHTMAPTASKS 4096
 #define LIGHTMAPBUFSIZE (2*1024*1024)
 
@@ -2082,7 +2084,7 @@ static bool previewblends(lightmapworker *w, cube *c, const ivec &co, int size, 
 
 void previewblends(const ivec &bo, const ivec &bs)
 {
-    loadlayermasks();
+    texture::getcurslotreg()->loadlayermasks();
     if(lightmapworkers.empty()) lightmapworkers.add(new lightmapworker);
     lightmapworkers[0]->reset();
     if(previewblends(lightmapworkers[0], worldroot, ivec(0, 0, 0), worldsize/2, bo, bs))
@@ -2265,7 +2267,7 @@ void calclight(int *quality)
     renderbackground("computing lightmaps... (esc to abort)");
     mpremip(true);                                                        //merge faces and consequently reduce vertex data
     optimizeblendmap();
-    loadlayermasks();
+    texture::getcurslotreg()->loadlayermasks();
     int numthreads = lightthreads > 0 ? lightthreads : numcpus;
     if(numthreads > 1) preloadusedmapmodels(false, true);
     resetlightmaps(false);
@@ -2322,7 +2324,7 @@ void patchlight(int *quality)
         return;
     }
     renderbackground("patching lightmaps... (esc to abort)");
-    loadlayermasks();
+    texture::getcurslotreg()->loadlayermasks();
     int numthreads = lightthreads > 0 ? lightthreads : numcpus;
     if(numthreads > 1) preloadusedmapmodels(false, true);
     cleanuplightmaps();
