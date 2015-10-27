@@ -210,11 +210,6 @@ extern void propagatevslot(VSlot *root, int changed);
 extern void propagatevslot(VSlot &dst, const VSlot &src, int diff, bool edit = false);
 extern void mergevslot(VSlot &dst, const VSlot &src, const VSlot &delta);
 
-extern void compactvslots(cube *c, int n = 8);
-extern void compactvslot(int &index);
-extern void compactvslot(VSlot &vs);
-extern int compactvslots();
-
 #endif //INEXOR_TEX_SLOT_H
 
 /// TODO make loaded correctly isloaded()

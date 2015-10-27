@@ -332,6 +332,8 @@ namespace texture {
 }     // namespace texture
 }     // namespace inexor
 
+// Legacy bridge:
+
 using namespace inexor::texture;
 
 /// Returns how many texture slots this map currently has, usefule e.g. for the texture browser.
@@ -398,6 +400,144 @@ MSlot &lookupmaterialslot(int index, bool load)
     }
     return s;
 }
+
+// LEGACY "compacting" algorithm for the vslots (basicly to remove clutter, but probably can be written simpler i guess..)
+// (formerly acting on globals and now simply using the current slotregistry)
+// do not really fit the (new clean) class interface though (in its current form)
+
+static int compactedvslots = 0, compactvslotsprogress = 0;
+static bool markingvslots = false;
+
+static void assignvslot(VSlot &vs);
+
+static inline void assignvslotlayer(VSlot &vs)
+{
+    if(vs.layer && hasvslot(vs.layer))
+    {
+        VSlot &layer = lookupvslot(vs.layer, false);
+        if(layer.index < 0) assignvslot(layer);
+    }
+}
+
+/// Set the vs.index according to compactvslots global counter
+static void assignvslot(VSlot &vs)
+{
+    vs.index = compactedvslots++;
+    assignvslotlayer(vs);
+}
+
+///compacting mode: set index to compactvslots++ = vs.index, marking mode, just set vs.index
+void compactvslot(int &index)
+{
+    if(hasvslot(index))
+    {
+        VSlot &vs = lookupvslot(index, false);
+        if(vs.index < 0) assignvslot(vs);
+        if(!markingvslots) index = vs.index;
+    }
+}
+
+void compactvslot(VSlot &vs)
+{
+    if(vs.index < 0) assignvslot(vs);
+}
+
+/// Loops through all n subcubes of c, (reassigning vs.index to compactvslots++ in markmode and otherwise sets cubetexture to the new vslot) when texture was used
+void compactvslots(cube *c, int n)
+{
+    if((compactvslotsprogress++ & 0xFFF) == 0) renderprogress(min(float(compactvslotsprogress) / allocnodes, 1.0f), markingvslots ? "marking slots..." : "compacting slots...");
+    loopi(n)
+    {
+        if(c[i].children) compactvslots(c[i].children);
+        else loopj(6) if(hasvslot(c[i].texture[j]))
+        {
+            VSlot &vs = lookupvslot(c[i].texture[j], false);
+            if(vs.index < 0) assignvslot(vs);
+            if(!markingvslots) c[i].texture[j] = vs.index;
+        }
+    }
+}
+
+// reset all indicies of the vslots
+// the first indicies go to the first variants of all slots, then to all first variants layers
+int compactvslots()
+{
+    static vector<Slot *> &slots = getcurslotreg()->slots;
+    static vector<VSlot *> &vslots = getcurslotreg()->vslots;
+
+    markingvslots = false;
+    compactedvslots = 0;
+    compactvslotsprogress = 0;
+    loopv(vslots) vslots[i]->index = -1;
+    loopv(slots) slots[i]->variants->index = compactedvslots++;
+    loopv(slots) assignvslotlayer(*slots[i]->variants);
+    loopv(vslots)
+    {
+        VSlot &vs = *vslots[i];
+        if(!vs.changed && vs.index < 0) { markingvslots = true; break; }
+    }
+    compactvslots(worldroot);
+    int total = compactedvslots;
+    compacteditvslots();
+    loopv(vslots)
+    {
+        VSlot *vs = vslots[i];
+        if(vs->changed) continue;
+        while(vs->next)
+        {
+            if(vs->next->index < 0) vs->next = vs->next->next;
+            else vs = vs->next;
+        }
+    }
+    if(markingvslots)
+    {
+        markingvslots = false;
+        compactedvslots = 0;
+        compactvslotsprogress = 0;
+        int lastdiscard = 0;
+        loopv(vslots)
+        {
+            VSlot &vs = *vslots[i];
+            if(vs.changed || (vs.index < 0 && !vs.next)) vs.index = -1;
+            else
+            {
+                while(lastdiscard < i)
+                {
+                    VSlot &ds = *vslots[lastdiscard++];
+                    if(!ds.changed && ds.index < 0) ds.index = compactedvslots++;
+                }
+                vs.index = compactedvslots++;
+            }
+        }
+        compactvslots(worldroot);
+        total = compactedvslots;
+        compacteditvslots();
+    }
+    compactmruvslots();
+    loopv(vslots)
+    {
+        VSlot &vs = *vslots[i];
+        if(vs.index >= 0 && vs.layer && vslots.inrange(vs.layer)) vs.layer = vslots[vs.layer]->index;
+    }
+    loopv(vslots)
+    {
+        while(vslots[i]->index >= 0 && vslots[i]->index != i)
+            swap(vslots[i], vslots[vslots[i]->index]);
+    }
+    for(int i = compactedvslots; i < vslots.length(); i++) delete vslots[i];
+    vslots.setsize(compactedvslots);
+    return total;
+}
+
+ICOMMAND(compactvslots, "", (),
+{
+    extern SharedVar<int> nompedit;
+    if(nompedit && multiplayer()) return;
+    int oldamount = numcurvslots();
+    compactvslots();
+    conoutf("compacted virtual Slots (before: %d, now: %d)", oldamount, numcurvslots());
+    allchanged();
+});
 
 // TODO:
 // - make textures look into texturefolder by default [DONE]

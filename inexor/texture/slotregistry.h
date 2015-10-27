@@ -127,5 +127,10 @@ extern Slot &lookupslot(int slot, bool load = true);
 extern VSlot &lookupvslot(int slot, bool load = true);
 extern MSlot &lookupmaterialslot(int slot, bool load = true);
 
+// TODO refractor this:
+extern void compactvslots(cube *c, int n = 8);
+extern void compactvslot(int &index);
+extern void compactvslot(VSlot &vs);
+extern int compactvslots();
 
 #endif // INEXOR_TEX_SLOTREGISTRY_H
