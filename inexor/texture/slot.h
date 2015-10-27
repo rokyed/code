@@ -93,13 +93,13 @@ class VSlot
     void parsefromogz(stream *f, int changed);
 
     /// Save a VSlot to the Cube2 ogz file.
-    void savetoogz(stream *f, int prev);
+    void savetoogz(stream *f, int prev) const;
 
     /// Render a miniature preview image of this slot to the UI.
     /// @param x horizontal position on the screen (together with y for the vertical).
     /// @param w weight of the image (together with h beeing the height).
     /// @param color a base color to easily display that it's selected.
-    bool renderthumbnail(int x, int y, int w, int h, const vec &color);
+    bool renderthumbnail(int x, int y, int w, int h, const vec &color) const;
 };
 
 class Slot
@@ -176,7 +176,7 @@ public:
     void addvariant(VSlot *vs);
     VSlot *setvariantchain(VSlot *vs);
 
-    VSlot *findvariant(const VSlot &src, const VSlot &delta);
+    VSlot *findvariant(const VSlot &src, const VSlot &delta) const;
 
     void combinetextures(int index, Slot::Tex &t, bool msg = true, bool forceload = false);
 

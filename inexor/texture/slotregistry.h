@@ -77,7 +77,7 @@ namespace texture {
         void echo();
 
         /// Export textureset to json file.
-        void write(const char *filename);
+        void write(const char *filename) const;
 
 
         // Other:
@@ -90,12 +90,12 @@ namespace texture {
         void materialreset();
 
         /// Put the vslot (with the given index number) in a network package.
-        void serializevslot(vector<uchar> &buf, int index);
+        void serializevslot(vector<uchar> &buf, int index) const;
 
         /// Save all included virtual slots (vslots) to the old ogz Cube2 mapformat.
         /// @param f (file) stream
         /// @param numvslots the number of vslots which will be written to the file stream
-        void savetoogz(stream *f, int numvslots);
+        void savetoogz(stream *f, int numvslots) const;
 
         /// Load all vslots from an (old) ogz mapfile.
         /// @param f (file) stream

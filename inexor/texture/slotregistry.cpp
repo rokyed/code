@@ -201,13 +201,13 @@ namespace texture {
     }
     ICOMMAND(materialreset, "", (), getcurslotreg()->materialreset());
 
-    void slotregistry::serializevslot(vector<uchar> &buf, int index)
+    void slotregistry::serializevslot(vector<uchar> &buf, int index) const
     {
         if(vslots.inrange(index)) vslots[index]->serialize(buf);
         else buf.put(0xFF);
     }
 
-    void slotregistry::savetoogz(stream *f, int numvslots)
+    void slotregistry::savetoogz(stream *f, int numvslots) const
     {
         if(vslots.empty()) return;
         int *prev = new int[numvslots];

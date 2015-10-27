@@ -421,7 +421,7 @@ void Slot::loadlayermask()
 }
 
 /// @see slotregistry::addvslot for param explanaition
-VSlot *Slot::findvariant(const VSlot &src, const VSlot &delta)
+VSlot *Slot::findvariant(const VSlot &src, const VSlot &delta) const
 {
     for(VSlot *dst = variants; dst; dst = dst->next)
     {
@@ -500,7 +500,7 @@ VSlot::VSlot(Slot *slot, int index) : slot(slot), next(NULL), index(index), chan
     if(slot) slot->addvariant(this);
 }
 
-void VSlot::savetoogz(stream *f, int prev)
+void VSlot::savetoogz(stream *f, int prev) const
 {
     f->putlil<int>(changed);
     f->putlil<int>(prev);
@@ -509,7 +509,7 @@ void VSlot::savetoogz(stream *f, int prev)
         f->putlil<ushort>(params.length());
         loopv(params)
         {
-            SlotShaderParam &p = params[i];
+            const SlotShaderParam &p = params[i];
             f->putlil<ushort>(strlen(p.name));
             f->write(p.name, strlen(p.name));
             loopk(4) f->putlil<float>(p.val[k]);
@@ -736,7 +736,7 @@ void VSlot::parsejson(JSON *j)
     }
 }
 
-bool VSlot::renderthumbnail(int x, int y, int w, int h, const vec &color)
+bool VSlot::renderthumbnail(int x, int y, int w, int h, const vec &color) const
 {
     if(slot->sts.empty()) return false;
     VSlot *layervslot = NULL;
