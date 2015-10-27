@@ -20,8 +20,6 @@
 namespace inexor {
 namespace texture {
 
-    #define MAXVSLOTAMOUNT 0x10000
-
     /// A set of Slots to be bundled within a map.
     class slotregistry
     {
@@ -108,7 +106,10 @@ namespace texture {
         /// Create a VSlot based on src, but whereever delta is changed from its defaults, prefer the params by delta.
         VSlot *clonevslot(const VSlot &src, const VSlot &delta);
 
-        /// Check whether we are able to add any VSlots anymore.
+        /// Check whether we are able to add any more Slots.
+        inline bool slotlimitreached() const;
+
+        /// Check whether we are able to add any more variant Slots.
         inline bool vslotlimitreached() const;
     };
 

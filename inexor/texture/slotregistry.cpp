@@ -100,7 +100,7 @@ namespace texture {
 
     void slotregistry::addslot(JSON *j)
     {
-        if(!j || slots.length() >= 0x10000) return;
+        if(!j || slotlimitreached()) return;
 
         Slot *s = new Slot(slots.length());
         s->loaded = false;
@@ -125,8 +125,16 @@ namespace texture {
         addslot(j);
         delete j;
     }
-    
-    // helper for addvslot, currently only used when in editmode new vslots get created.
+
+    #define MAXSLOTAMOUNT 0x10000
+    #define MAXVSLOTAMOUNT 0x10000
+
+    inline bool slotregistry::slotlimitreached() const
+    {
+        return slots.length() >= MAXSLOTAMOUNT;
+    }
+
+    // helper for addvslot.
     inline bool slotregistry::vslotlimitreached() const
     {
         return vslots.length() >= MAXVSLOTAMOUNT;
