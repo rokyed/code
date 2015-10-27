@@ -249,6 +249,45 @@ bool VSlot::unserialize(ucharbuf &buf, bool delta)
     return true;
 }
 
+void VSlot::parsejson(JSON *j)
+{
+    JSON *jscale = j->getchild("scale"), *jrot = j->getchild("rotation"), *joffset = j->getchild("offset"),
+        *jscroll = j->getchild("scroll"), *jalpha = j->getchild("alpha"), *jcolor = j->getchild("color");
+
+    if(jrot) rotation = clamp(jrot->valueint, 0, 5);
+    if(jscale) scale = jscale->valuefloat;
+
+    if(joffset)
+    {
+        JSON *x = joffset->getchild("x"), *y = joffset->getchild("y");
+        if(x) offset.x = x->valueint;
+        if(y) offset.y = y->valueint;
+        offset.max(0); // TODO: isnt this behaviour a bit unintuative?
+    }
+
+    if(jscroll)
+    {
+        JSON *x = jscroll->getchild("x"), *y = jscroll->getchild("y");
+        if(x) scroll.x = x->valuefloat / 1000.0f;
+        if(y) scroll.y = y->valuefloat / 1000.0f;
+    }
+
+    if(jalpha)
+    {
+        JSON *front = jalpha->getchild("front"), *back = jalpha->getchild("back");
+        if(front) alphafront = clamp(front->valuefloat, 0.0f, 1.0f);
+        if(back) alphaback = clamp(back->valuefloat, 0.0f, 1.0f);
+    }
+
+    if(jcolor)
+    {
+        JSON *red = jcolor->getchild("red"), *green = jcolor->getchild("green"), *blue = jcolor->getchild("blue");
+        if(red) colorscale.r = clamp(red->valuefloat, 0.0f, 1.0f);
+        if(green) colorscale.g = clamp(green->valuefloat, 0.0f, 1.0f);
+        if(blue) colorscale.b = clamp(blue->valuefloat, 0.0f, 1.0f);
+    }
+}
+
 static void addglow(ImageData &c, ImageData &g, const vec &glowcolor)
 {
     if(g.bpp < 3)

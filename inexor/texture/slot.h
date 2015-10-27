@@ -84,6 +84,9 @@ class VSlot
     /// @param delta
     bool unserialize(ucharbuf &buf, bool delta);
 
+    /// Add all size/rotation/offset/scroll modifiers from a JSON file.
+    void parsejson(JSON *j);
+
     /// Old Cube2 mapformat (ogz) method to load the vslot.
     /// @param f (file) stream.
     /// @param changed a bitmask containing the actual changed values, so new defaults will be preserved.

@@ -55,49 +55,6 @@ namespace texture {
         return s.sts.length() != 0;
     }
 
-    /// Add all size/rotation/offset/scroll modifiers.
-    void addvslotparams(Slot &s, JSON *j)
-    {
-        JSON *scale = j->getchild("scale"), *rot = j->getchild("rotation"), *offset = j->getchild("offset"),
-        *scroll = j->getchild("scroll"), *alpha = j->getchild("alpha"), *color = j->getchild("color");
-
-        VSlot &vs = *getcurslotreg()->addvslot(s);
-        vs.reset();
-        vs.rotation = rot ? clamp(rot->valueint, 0, 5) : 0;
-        vs.scale = scale ? scale->valuefloat : 1;
-
-        if(offset)
-        {
-            JSON *x = offset->getchild("x"), *y = offset->getchild("y");
-            vs.offset = ivec2(x ? max(x->valueint, 0) : 0, y ? max(y->valueint, 0) : 0);
-        }
-
-        if(scroll)
-        {
-            JSON *x = scroll->getchild("x"), *y = scroll->getchild("y");
-            vs.scroll = vec2(x ? x->valuefloat / 1000.0f : 0, y ? y->valuefloat / 1000.0f : 0);
-        }
-
-        if(alpha)
-        {
-            JSON *front = alpha->getchild("front"), *back = alpha->getchild("back");
-            vs.alphafront = front ? clamp(front->valuefloat, 0.0f, 1.0f) : 0.5f; //todo
-            vs.alphaback = back ? clamp(back->valuefloat, 0.0f, 1.0f) : 0;
-        }
-
-        if(color)
-        {
-            JSON *red = color->getchild("red"), *green = color->getchild("green"), *blue = color->getchild("blue");
-            float r = red ? clamp(red->valuefloat, 0.0f, 1.0f) : 0.0f;
-            float g = green ? clamp(green->valuefloat, 0.0f, 1.0f) : 0.0f;
-            float b = blue ? clamp(blue->valuefloat, 0.0f, 1.0f) : 0.0f;
-
-            vs.colorscale = vec(r, g, b);
-        }
-
-        propagatevslot(&vs, (1 << VSLOT_NUM) - 1); // apply vslot changes
-    }
-
     void slotregistry::addslot(JSON *j)
     {
         if(!j || slotlimitreached()) return;
@@ -110,7 +67,7 @@ namespace texture {
         JSON *shad = j->getchild("shader");
         setslotshader(*s, shad); // TODO: multithread
 
-        addvslotparams(*s, j); // other parameters
+        addvslot(*s)->parsejson(j); // other vslot parameters
     }
 
     void slotregistry::addslot(const char *filename)
@@ -167,9 +124,15 @@ namespace texture {
     VSlot *slotregistry::addvslot(Slot &owner)
     {
         int offset = 0;
+        VSlot *ret = NULL;
         loopvrev(slots) if(slots[i]->variants) { offset = slots[i]->variants->index + 1; break; }
-        for(int i = offset; i < vslots.length(); i++) if(!vslots[i]->changed) return owner.setvariantchain(vslots[i]);
-        return vslots.add(new VSlot(&owner, vslots.length()));
+        for(int i = offset; i < vslots.length(); i++) if(!vslots[i]->changed) {
+            ret = owner.setvariantchain(vslots[i]); 
+            break;
+        }
+        if(!ret) ret = vslots.add(new VSlot(&owner, vslots.length()));
+        ret->reset();
+        return ret;
     }
 
     void slotregistry::load()
