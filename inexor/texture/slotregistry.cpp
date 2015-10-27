@@ -287,13 +287,7 @@ namespace texture {
     /// Echo all texture mapslots loaded.
     void debugslots()
     {
-        int numtexs = 0;
-        loopv(slots)
-        {
-            loopvk(slots[i]->sts) conoutf("%d (%d): %s", i, k, slots[i]->sts[k].name);
-            numtexs += slots[i]->sts.length();
-        }
-        conoutf("%d slots taken..", slots.length());
+        getcurslotreg()->echo();
     }
     COMMAND(debugslots, "");
 
@@ -308,6 +302,12 @@ int numcurslots()
     return getcurslotreg()->slots.length();
 }
 ICOMMAND(getslotsnum, "", (), intret(numcurslots()));
+
+/// Returns how many variant slots are globally registered for this map/slotregistry.
+int numcurvslots()
+{
+    return getcurslotreg()->vslots.length();
+}
 
 /// Checks whether a specific vslot is in the current maps slotregistry.
 bool hasslot(int index)

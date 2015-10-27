@@ -225,9 +225,6 @@ extern void compactvslot(int &index);
 extern void compactvslot(VSlot &vs);
 extern int compactvslots();
 
-extern vector<Slot *> slots;
-extern vector<VSlot *> vslots;
-
 #endif //INEXOR_TEX_SLOT_H
 
 /// TODO make loaded correctly isloaded()

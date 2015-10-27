@@ -20,12 +20,9 @@ VSlot dummyvslot(&dummyslot);
 static int compactedvslots = 0, compactvslotsprogress = 0, clonedvslots = 0;
 static bool markingvslots = false;
 
-void clearslots()
+void clearslots() // TODO: remove (just these to remaining bits..)
 {
     resetslotshader();
-    slots.deletecontents();
-    vslots.deletecontents();
-    loopi((MATF_VOLUME | MATF_INDEX) + 1) materialslots[i].reset();
     clonedvslots = 0;
 }
 
@@ -314,7 +311,7 @@ void VSlot::serialize(vector<uchar> &buf) const
     if(changed & (1 << VSLOT_LAYER))
     {
         buf.put(VSLOT_LAYER);
-        putuint(buf, vslots.inrange(layer) && !vslots[layer]->changed ? layer : 0);
+        putuint(buf, hasvslot(layer) && !lookupvslot(layer).changed ? layer : 0); // TODO Is this correct? shouldnt it be changed?
     }
     if(changed & (1 << VSLOT_ALPHA))
     {
@@ -370,7 +367,7 @@ bool VSlot::unserialize(ucharbuf &buf, bool delta)
         case VSLOT_LAYER:
         {
             int tex = getuint(buf);
-            layer = vslots.inrange(tex) ? tex : 0;
+            layer = hasvslot(tex) ? tex : 0;
             break;
         }
         case VSLOT_ALPHA:
@@ -446,7 +443,7 @@ ICOMMAND(fixinsidefaces, "i", (int *tex),
 {
     extern SharedVar<int> nompedit;
     if(noedit(true) || (nompedit && multiplayer())) return;
-    fixinsidefaces(worldroot, ivec(0, 0, 0), worldsize >> 1, *tex && vslots.inrange(*tex) ? *tex : DEFAULT_GEOM);
+    fixinsidefaces(worldroot, ivec(0, 0, 0), worldsize >> 1, *tex && hasvslot(*tex) ? *tex : DEFAULT_GEOM);
     allchanged();
 });
 

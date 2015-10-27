@@ -859,7 +859,7 @@ bool save_world(const char *mname, bool nolms)
         return false;
     }
     /// get light map data
-    int numvslots = vslots.length();
+    int numvslots = numcurvslots();
     if(!nolms && !multiplayer(false))
     {
         numvslots = compactvslots();

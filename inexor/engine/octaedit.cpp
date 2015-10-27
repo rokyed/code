@@ -2,6 +2,8 @@
 #include "inexor/shared/filesystem.h"
 #include "inexor/texture/slotregistry.h"
 
+using namespace inexor::texture;
+
 extern SharedVar<int> outline;
 
 bool boxoutline = false;
@@ -991,10 +993,11 @@ static void packvslots(cube &c, vector<uchar> &buf, vector<ushort> &used)
     else loopi(6)
     {
         ushort index = c.texture[i];
-        if(vslots.inrange(index) && vslots[index]->changed && used.find(index) < 0)
+        if(hasvslot(index) && used.find(index) < 0)
         {
-            used.add(index);
             VSlot &vs = lookupvslot(index, false);
+            if(!vs.changed) continue; //noting to send here.
+            used.add(index);
             vslothdr &hdr = *(vslothdr *)buf.pad(sizeof(vslothdr));
             hdr.index = index;
             hdr.slot = vs.slot->index;
@@ -2167,7 +2170,7 @@ static int unpacktex(int &tex, ucharbuf &buf, bool insert = true)
 
 int shouldpacktex(int index)
 {
-    if(vslots.inrange(index))
+    if(hasvslot(index))
     {
         VSlot &vs = lookupvslot(index, false);
         if(vs.changed) return 0x10000 + vs.slot->index;
@@ -2185,15 +2188,16 @@ bool mpedittex(int tex, int allfaces, selinfo &sel, ucharbuf &buf)
 
 void filltexlist()
 {
-    if(texmru.length()!=vslots.length())
+    int numvslots = numcurvslots();
+    if(texmru.length()!=numvslots)
     {
-        loopvrev(texmru) if(texmru[i]>=vslots.length())
+        loopvrev(texmru) if(texmru[i]>=numvslots)
         {
             if(curtexindex > i) curtexindex--;
             else if(curtexindex == i) curtexindex = -1;
             texmru.remove(i);
         }
-        loopv(vslots) if(texmru.find(i)<0) texmru.add(i);
+        loopi(numvslots) if(texmru.find(i)<0) texmru.add(i);
     }
 }
 
@@ -2202,9 +2206,9 @@ void compactmruvslots()
     remappedvslots.setsize(0);
     loopvrev(texmru)
     {
-        if(vslots.inrange(texmru[i]))
+        if(hasvslot(texmru[i]))
         {
-            VSlot &vs = *vslots[texmru[i]];
+            VSlot &vs = lookupvslot(texmru[i], false);
             if(vs.index >= 0)
             {
                 texmru[i] = vs.index;
@@ -2215,13 +2219,13 @@ void compactmruvslots()
         else if(curtexindex == i) curtexindex = -1;
         texmru.remove(i);
     }
-    if(vslots.inrange(lasttex))
+    if(hasvslot(lasttex))
     {
-        VSlot &vs = *vslots[lasttex];
+        VSlot &vs = lookupvslot(lasttex, false);
         lasttex = vs.index >= 0 ? vs.index : 0;
     }
     else lasttex = 0;
-    reptex = vslots.inrange(reptex) ? vslots[reptex]->index : -1;
+    reptex = hasvslot(reptex) ? lookupvslot(reptex, false).index : -1;
 }
 
 void edittex(int i, bool save = true)
@@ -2290,7 +2294,7 @@ COMMANDN(edittex, edittex_, "i");
 COMMAND(gettex, "");
 COMMAND(getcurtex, "");
 COMMAND(getseltex, "");
-ICOMMAND(getreptex, "", (), { if(!noedit()) intret(vslots.inrange(reptex) ? reptex : -1); });
+ICOMMAND(getreptex, "", (), { if(!noedit()) intret(hasvslot(reptex) ? reptex : -1); });
 COMMAND(gettexname, "ii");
 
 void replacetexcube(cube &c, int oldtex, int newtex)
@@ -2558,7 +2562,7 @@ struct texturegui : g3d_callback
 
     void gui(g3d_gui &g, bool firstpass)
     {
-        int origtab = menutab, numtabs = max((slots.length() + texguiwidth*texguiheight - 1)/(texguiwidth*texguiheight), 1);
+        int origtab = menutab, numtabs = max((numcurslots() + texguiwidth*texguiheight - 1)/(texguiwidth*texguiheight), 1);
         g.start(menustart, 0.04f, &menutab);
         loopi(numtabs)
         {
@@ -2571,7 +2575,7 @@ struct texturegui : g3d_callback
                 {
                     extern VSlot dummyvslot;
                     int ti = (i*texguiheight+h)*texguiwidth+w;
-                    if(ti<slots.length())
+                    if(ti<numcurslots())
                     {
                         Slot &slot = lookupslot(ti, false);
                         VSlot &vslot = *slot.variants;
@@ -2608,7 +2612,7 @@ struct texturegui : g3d_callback
         if(on != menuon && (menuon = on))
         {
             if(menustart <= lasttexmillis)
-                menutab = 1+clamp(lookupvslot(lasttex, false).slot->index, 0, slots.length()-1)/(texguiwidth*texguiheight);
+                menutab = 1+clamp(lookupvslot(lasttex, false).slot->index, 0, numcurslots()-1)/(texguiwidth*texguiheight);
             menupos = menuinfrontofplayer();
             menustart = starttime();
         }
