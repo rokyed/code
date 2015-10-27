@@ -137,159 +137,6 @@ static bool comparevslot(const VSlot &dst, const VSlot &src, int diff)
     return true;
 }
 
-void VSlot::serialize(vector<uchar> &buf) const
-{
-    if(changed & (1 << VSLOT_SHPARAM))
-    {
-        loopv(params)
-        {
-            const SlotShaderParam &p = params[i];
-            buf.put(VSLOT_SHPARAM);
-            sendstring(p.name, buf);
-            loopj(4) putfloat(buf, p.val[j]);
-        }
-    }
-    if(changed & (1 << VSLOT_SCALE))
-    {
-        buf.put(VSLOT_SCALE);
-        putfloat(buf, scale);
-    }
-    if(changed & (1 << VSLOT_ROTATION))
-    {
-        buf.put(VSLOT_ROTATION);
-        putfloat(buf, rotation);
-    }
-    if(changed & (1 << VSLOT_OFFSET))
-    {
-        buf.put(VSLOT_OFFSET);
-        putint(buf, offset.x);
-        putint(buf, offset.y);
-    }
-    if(changed & (1 << VSLOT_SCROLL))
-    {
-        buf.put(VSLOT_SCROLL);
-        putfloat(buf, scroll.x);
-        putfloat(buf, scroll.y);
-    }
-    if(changed & (1 << VSLOT_LAYER))
-    {
-        buf.put(VSLOT_LAYER);
-        putuint(buf, hasvslot(layer) && !lookupvslot(layer).changed ? layer : 0); // TODO Is this correct? shouldnt it be changed?
-    }
-    if(changed & (1 << VSLOT_ALPHA))
-    {
-        buf.put(VSLOT_ALPHA);
-        putfloat(buf, alphafront);
-        putfloat(buf, alphaback);
-    }
-    if(changed & (1 << VSLOT_COLOR))
-    {
-        buf.put(VSLOT_COLOR);
-        putfloat(buf, colorscale.r);
-        putfloat(buf, colorscale.g);
-        putfloat(buf, colorscale.b);
-    }
-    buf.put(0xFF);
-}
-
-bool VSlot::unserialize(ucharbuf &buf, bool delta)
-{
-    while(buf.remaining())
-    {
-        int changed = buf.get();
-        if(changed >= 0x80) break;
-        switch(changed)
-        {
-        case VSLOT_SHPARAM:
-        {
-            string name;
-            getstring(name, buf);
-            SlotShaderParam p = { name[0] ? getshaderparamname(name) : NULL, -1,{ 0, 0, 0, 0 } };
-            loopi(4) p.val[i] = getfloat(buf);
-            if(p.name) params.add(p);
-            break;
-        }
-        case VSLOT_SCALE:
-            scale = getfloat(buf);
-            if(scale <= 0) scale = 1;
-            else if(!delta) scale = clamp(scale, 1 / 8.0f, 8.0f);
-            break;
-        case VSLOT_ROTATION:
-            rotation = getint(buf);
-            if(!delta) rotation = clamp(rotation, 0, 5);
-            break;
-        case VSLOT_OFFSET:
-            offset.x = getint(buf);
-            offset.y = getint(buf);
-            if(!delta) offset.max(0);
-            break;
-        case VSLOT_SCROLL:
-            scroll.x = getfloat(buf);
-            scroll.y = getfloat(buf);
-            break;
-        case VSLOT_LAYER:
-        {
-            int tex = getuint(buf);
-            layer = hasvslot(tex) ? tex : 0;
-            break;
-        }
-        case VSLOT_ALPHA:
-            alphafront = clamp(getfloat(buf), 0.0f, 1.0f);
-            alphaback = clamp(getfloat(buf), 0.0f, 1.0f);
-            break;
-        case VSLOT_COLOR:
-            colorscale.r = clamp(getfloat(buf), 0.0f, 2.0f);
-            colorscale.g = clamp(getfloat(buf), 0.0f, 2.0f);
-            colorscale.b = clamp(getfloat(buf), 0.0f, 2.0f);
-            break;
-        default:
-            return false;
-        }
-        changed |= 1 << changed;
-    }
-    if(buf.overread()) return false;
-    return true;
-}
-
-void VSlot::parsejson(JSON *j)
-{
-    JSON *jscale = j->getchild("scale"), *jrot = j->getchild("rotation"), *joffset = j->getchild("offset"),
-        *jscroll = j->getchild("scroll"), *jalpha = j->getchild("alpha"), *jcolor = j->getchild("color");
-
-    if(jrot) rotation = clamp(jrot->valueint, 0, 5);
-    if(jscale) scale = jscale->valuefloat;
-
-    if(joffset)
-    {
-        JSON *x = joffset->getchild("x"), *y = joffset->getchild("y");
-        if(x) offset.x = x->valueint;
-        if(y) offset.y = y->valueint;
-        offset.max(0); // TODO: isnt this behaviour a bit unintuative?
-    }
-
-    if(jscroll)
-    {
-        JSON *x = jscroll->getchild("x"), *y = jscroll->getchild("y");
-        if(x) scroll.x = x->valuefloat / 1000.0f;
-        if(y) scroll.y = y->valuefloat / 1000.0f;
-    }
-
-    if(jalpha)
-    {
-        JSON *front = jalpha->getchild("front"), *back = jalpha->getchild("back");
-        if(front) alphafront = clamp(front->valuefloat, 0.0f, 1.0f);
-        if(back) alphaback = clamp(back->valuefloat, 0.0f, 1.0f);
-    }
-
-    if(jcolor)
-    {
-        JSON *red = jcolor->getchild("red"), *green = jcolor->getchild("green"), *blue = jcolor->getchild("blue");
-        if(red) colorscale.r = clamp(red->valuefloat, 0.0f, 1.0f);
-        if(green) colorscale.g = clamp(green->valuefloat, 0.0f, 1.0f);
-        if(blue) colorscale.b = clamp(blue->valuefloat, 0.0f, 1.0f);
-    }
-}
-
 static void addglow(ImageData &c, ImageData &g, const vec &glowcolor)
 {
     if(g.bpp < 3)
@@ -409,50 +256,6 @@ Slot::Slot(int index, JSON *j) : Slot(index)
         nformatstring(autograss, MAXSTRLEN, "<premul>%s", autograss); // prefix
     }
 }
-
-void Slot::setscroll(float scrollS, float scrollT)
-{
-    variants->scroll = vec2(scrollS, scrollT).div(1000.0f);
-    propagatevslot(variants, 1 << VSLOT_SCROLL);
-}
-
-void Slot::setoffset(int xoffset, int yoffset)
-{
-    variants->offset = ivec2(xoffset, yoffset).max(0);
-    propagatevslot(variants, 1 << VSLOT_OFFSET);
-}
-
-void Slot::setrotate(int rot)
-{
-    variants->rotation = clamp(rot, 0, 5);
-    propagatevslot(variants, 1 << VSLOT_ROTATION);
-}
-
-void Slot::setscale(float scale)
-{
-    variants->scale = scale <= 0 ? 1 : scale;
-    propagatevslot(variants, 1 << VSLOT_SCALE);
-}
-
-void Slot::setalpha(float front, float back)
-{
-    variants->alphafront = clamp(front, 0.0f, 1.0f);
-    variants->alphaback = clamp(back, 0.0f, 1.0f);
-    propagatevslot(variants, 1 << VSLOT_ALPHA);
-}
-
-void Slot::setcolor(float r, float g, float b)
-{
-    variants->colorscale = vec(r, g, b).clamp(0.0f, 1.0f);
-    propagatevslot(variants, 1 << VSLOT_COLOR);
-}
-
-VSlot::VSlot(Slot *slot, int index) : slot(slot), next(NULL), index(index), changed(0)
-{
-    reset();
-    if(slot) slot->addvariant(this);
-}
-
 
 void Slot::addtexture(int type, const char *filename, const char *configdir)
 {
@@ -654,6 +457,48 @@ VSlot *Slot::setvariantchain(VSlot *vs)
     return vs;
 }
 
+void Slot::setscroll(float scrollS, float scrollT)
+{
+    variants->scroll = vec2(scrollS, scrollT).div(1000.0f);
+    propagatevslot(variants, 1 << VSLOT_SCROLL);
+}
+
+void Slot::setoffset(int xoffset, int yoffset)
+{
+    variants->offset = ivec2(xoffset, yoffset).max(0);
+    propagatevslot(variants, 1 << VSLOT_OFFSET);
+}
+
+void Slot::setrotate(int rot)
+{
+    variants->rotation = clamp(rot, 0, 5);
+    propagatevslot(variants, 1 << VSLOT_ROTATION);
+}
+
+void Slot::setscale(float scale)
+{
+    variants->scale = scale <= 0 ? 1 : scale;
+    propagatevslot(variants, 1 << VSLOT_SCALE);
+}
+
+void Slot::setalpha(float front, float back)
+{
+    variants->alphafront = clamp(front, 0.0f, 1.0f);
+    variants->alphaback = clamp(back, 0.0f, 1.0f);
+    propagatevslot(variants, 1 << VSLOT_ALPHA);
+}
+
+void Slot::setcolor(float r, float g, float b)
+{
+    variants->colorscale = vec(r, g, b).clamp(0.0f, 1.0f);
+    propagatevslot(variants, 1 << VSLOT_COLOR);
+}
+
+VSlot::VSlot(Slot *slot, int index) : slot(slot), next(NULL), index(index), changed(0)
+{
+    reset();
+    if(slot) slot->addvariant(this);
+}
 
 void VSlot::savetoogz(stream *f, int prev)
 {
@@ -735,6 +580,159 @@ void VSlot::parsefromogz(stream *f, int changed)
     if(changed & (1 << VSLOT_COLOR))
     {
         loopk(3) colorscale[k] = f->getlil<float>();
+    }
+}
+
+void VSlot::serialize(vector<uchar> &buf) const
+{
+    if(changed & (1 << VSLOT_SHPARAM))
+    {
+        loopv(params)
+        {
+            const SlotShaderParam &p = params[i];
+            buf.put(VSLOT_SHPARAM);
+            sendstring(p.name, buf);
+            loopj(4) putfloat(buf, p.val[j]);
+        }
+    }
+    if(changed & (1 << VSLOT_SCALE))
+    {
+        buf.put(VSLOT_SCALE);
+        putfloat(buf, scale);
+    }
+    if(changed & (1 << VSLOT_ROTATION))
+    {
+        buf.put(VSLOT_ROTATION);
+        putfloat(buf, rotation);
+    }
+    if(changed & (1 << VSLOT_OFFSET))
+    {
+        buf.put(VSLOT_OFFSET);
+        putint(buf, offset.x);
+        putint(buf, offset.y);
+    }
+    if(changed & (1 << VSLOT_SCROLL))
+    {
+        buf.put(VSLOT_SCROLL);
+        putfloat(buf, scroll.x);
+        putfloat(buf, scroll.y);
+    }
+    if(changed & (1 << VSLOT_LAYER))
+    {
+        buf.put(VSLOT_LAYER);
+        putuint(buf, hasvslot(layer) && !lookupvslot(layer).changed ? layer : 0); // TODO Is this correct? shouldnt it be changed?
+    }
+    if(changed & (1 << VSLOT_ALPHA))
+    {
+        buf.put(VSLOT_ALPHA);
+        putfloat(buf, alphafront);
+        putfloat(buf, alphaback);
+    }
+    if(changed & (1 << VSLOT_COLOR))
+    {
+        buf.put(VSLOT_COLOR);
+        putfloat(buf, colorscale.r);
+        putfloat(buf, colorscale.g);
+        putfloat(buf, colorscale.b);
+    }
+    buf.put(0xFF);
+}
+
+bool VSlot::unserialize(ucharbuf &buf, bool delta)
+{
+    while(buf.remaining())
+    {
+        int changed = buf.get();
+        if(changed >= 0x80) break;
+        switch(changed)
+        {
+        case VSLOT_SHPARAM:
+        {
+            string name;
+            getstring(name, buf);
+            SlotShaderParam p = { name[0] ? getshaderparamname(name) : NULL, -1,{ 0, 0, 0, 0 } };
+            loopi(4) p.val[i] = getfloat(buf);
+            if(p.name) params.add(p);
+            break;
+        }
+        case VSLOT_SCALE:
+            scale = getfloat(buf);
+            if(scale <= 0) scale = 1;
+            else if(!delta) scale = clamp(scale, 1 / 8.0f, 8.0f);
+            break;
+        case VSLOT_ROTATION:
+            rotation = getint(buf);
+            if(!delta) rotation = clamp(rotation, 0, 5);
+            break;
+        case VSLOT_OFFSET:
+            offset.x = getint(buf);
+            offset.y = getint(buf);
+            if(!delta) offset.max(0);
+            break;
+        case VSLOT_SCROLL:
+            scroll.x = getfloat(buf);
+            scroll.y = getfloat(buf);
+            break;
+        case VSLOT_LAYER:
+        {
+            int tex = getuint(buf);
+            layer = hasvslot(tex) ? tex : 0;
+            break;
+        }
+        case VSLOT_ALPHA:
+            alphafront = clamp(getfloat(buf), 0.0f, 1.0f);
+            alphaback = clamp(getfloat(buf), 0.0f, 1.0f);
+            break;
+        case VSLOT_COLOR:
+            colorscale.r = clamp(getfloat(buf), 0.0f, 2.0f);
+            colorscale.g = clamp(getfloat(buf), 0.0f, 2.0f);
+            colorscale.b = clamp(getfloat(buf), 0.0f, 2.0f);
+            break;
+        default:
+            return false;
+        }
+        changed |= 1 << changed;
+    }
+    if(buf.overread()) return false;
+    return true;
+}
+
+void VSlot::parsejson(JSON *j)
+{
+    JSON *jscale = j->getchild("scale"), *jrot = j->getchild("rotation"), *joffset = j->getchild("offset"),
+        *jscroll = j->getchild("scroll"), *jalpha = j->getchild("alpha"), *jcolor = j->getchild("color");
+
+    if(jrot) rotation = clamp(jrot->valueint, 0, 5);
+    if(jscale) scale = jscale->valuefloat;
+
+    if(joffset)
+    {
+        JSON *x = joffset->getchild("x"), *y = joffset->getchild("y");
+        if(x) offset.x = x->valueint;
+        if(y) offset.y = y->valueint;
+        offset.max(0); // TODO: isnt this behaviour a bit unintuative?
+    }
+
+    if(jscroll)
+    {
+        JSON *x = jscroll->getchild("x"), *y = jscroll->getchild("y");
+        if(x) scroll.x = x->valuefloat / 1000.0f;
+        if(y) scroll.y = y->valuefloat / 1000.0f;
+    }
+
+    if(jalpha)
+    {
+        JSON *front = jalpha->getchild("front"), *back = jalpha->getchild("back");
+        if(front) alphafront = clamp(front->valuefloat, 0.0f, 1.0f);
+        if(back) alphaback = clamp(back->valuefloat, 0.0f, 1.0f);
+    }
+
+    if(jcolor)
+    {
+        JSON *red = jcolor->getchild("red"), *green = jcolor->getchild("green"), *blue = jcolor->getchild("blue");
+        if(red) colorscale.r = clamp(red->valuefloat, 0.0f, 1.0f);
+        if(green) colorscale.g = clamp(green->valuefloat, 0.0f, 1.0f);
+        if(blue) colorscale.b = clamp(blue->valuefloat, 0.0f, 1.0f);
     }
 }
 
