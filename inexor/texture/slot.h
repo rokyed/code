@@ -128,9 +128,10 @@ public:
         }
     }
 
+    /// Find a texture in the sts array, depending on type (beeing one of TEX_DIFFUSE to TEX_NUM).
     Tex *findtexture(int type)
     {
-        loopv(sts) if((1 << sts[i].type)&(1 << type) && sts[i].combined<0) return &sts[i]; //masks are matching, TODO really necessary if combined not allowed?
+        loopv(sts) if((1 << sts[i].type)&(1 << type)) return &sts[i];
         return NULL;
     }
 

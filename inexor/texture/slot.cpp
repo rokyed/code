@@ -588,9 +588,9 @@ void gencombinedname(vector<char> &name, int &texmask, Slot &s, Slot::Tex &t, in
         case TEX_DIFFUSE:
         case TEX_NORMAL:
         {
-            int lookuptype = t.type == TEX_DIFFUSE ? (1 << TEX_SPEC) : (1 << TEX_DEPTH);
+            int lookuptype = t.type == TEX_DIFFUSE ? TEX_SPEC : TEX_DEPTH;
             Slot::Tex *t = s.findtexture(lookuptype);
-            if(!t) break;
+            if(!t || t->combined >= 0) break; //no specific texture found or its already combined.
             texmask |= 1 << t->type;
             t->combined = index;
             addname(name, s, *t, true);
