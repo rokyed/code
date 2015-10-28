@@ -97,17 +97,17 @@ namespace texture {
 
     void slotregistry::addslot(JSON *j)
     {
-        if(!j || texs.length() >= 0x10000) return;
+        if(!j || slots.length() >= 0x10000) return;
 
-        Slot &s = *texs.add(new texentry(new Slot(texs.length())))->slot;
-        s.loaded = false;
+        Slot *s = new Slot(slots.length());
+        s->loaded = false;
 
-        if(!addimagefiles(s, j)) return; // no textures found
+        if(!addimagefiles(*s, j)) return; // no textures found
 
         JSON *shad = j->getchild("shader");
-        setslotshader(s, shad); // TODO: multithread
+        setslotshader(*s, shad); // TODO: multithread
 
-        addvslotparams(s, j); // other parameters
+        addvslotparams(*s, j); // other parameters
     }
 
     void slotregistry::addslot(const char *filename)
@@ -119,7 +119,7 @@ namespace texture {
             return;
         }
 
-        addtexture(j);
+        addslot(j);
         delete j;
     }
 
@@ -226,7 +226,7 @@ namespace texture {
 
         if(!files.length()) return;
         slotregistry *t = new slotregistry();
-        loopv(files) t->addtexture(files[i]);
+        loopv(files) t->addslot(files[i]);
 
         t->checkload();
         t->load();
