@@ -37,7 +37,7 @@ namespace texture {
             st.type = i;
             st.combined = -1;
             st.t = NULL;
-            filesystem::getmedianame(st.name, name, DIR_TEXTURE, sub);
+            filesystem::getmedianame(st.name, MAXSTRLEN, name, DIR_TEXTURE, sub);
             path(st.name);
         }
 
@@ -45,7 +45,7 @@ namespace texture {
         if(grass && grass->valuestring)
         {
             s.autograss = new string;
-            filesystem::getmedianame(s.autograss, grass->valuestring, DIR_TEXTURE, grass);
+            filesystem::getmedianame(s.autograss, MAXSTRLEN, grass->valuestring, DIR_TEXTURE, grass);
             nformatstring(s.autograss, MAXSTRLEN, "<premul>%s", s.autograss); // prefix
         }
 
@@ -154,7 +154,7 @@ namespace texture {
     slotregistry::slotregistry(const char *name, bool load)
     {
         string fname;
-        filesystem::getmedianame(fname, name, DIR_TEXTURE);
+        filesystem::getmedianame(fname, MAXSTRLEN, name, DIR_TEXTURE);
         JSON *j = loadjson(fname);
         if(!j) { conoutf("could not load %s slotset", name); return; }
         slotregistry *t = new slotregistry(j);

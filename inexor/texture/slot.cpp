@@ -459,7 +459,7 @@ VSlot *Slot::findvariant(const VSlot &src, const VSlot &delta)
     return NULL;
 }
 
-VSlot::VSlot(Slot *slot, int index) : VSlot(Slot *slot = NULL, int index = -1) : slot(slot), next(NULL), index(index), changed(0)
+VSlot::VSlot(Slot *slot, int index) : slot(slot), next(NULL), index(index), changed(0)
 {
     reset();
     if(slot) slot->addvariant(this);
@@ -625,7 +625,7 @@ void gencombinedname(vector<char> &name, int &texmask, Slot &s, Slot::Tex &t, in
 
 /// Combine and load texture data to be ready for sending it to the gpu.
 /// @param msg show progress bar.
-void texcombine(Slot &s, int index, Slot::Tex &t, bool msg = true, bool forceload = false)
+void Slot::combinetextures(int index, Slot::Tex &t, bool msg, bool forceload)
 {
     vector<char> key;
     int texmask = 0; // receive control mask, todo check neccessarity
