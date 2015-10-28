@@ -1,6 +1,6 @@
 /// @file management of texture slots as visible ingame.
-/// each texture slot can have multiple texture frames, of which currently only the first is used
-/// additional frames can be used for various shaders
+/// each texture slot can have multiple textures.
+/// additional textures can be used for various shaders.
 
 #include "inexor/engine/engine.h"
 #include "inexor/texture/texture.h"
@@ -196,7 +196,9 @@ ICOMMAND(compactvslots, "", (),
 {
     extern SharedVar<int> nompedit;
     if(nompedit && multiplayer()) return;
+    int oldamount = vslots.length();
     compactvslots();
+    conoutf("compacted virtual Slots (before: %d, now: %d)", oldamount, vslots.length());
     allchanged();
 });
 
@@ -319,7 +321,7 @@ static bool comparevslot(const VSlot &dst, const VSlot &src, int diff)
     return true;
 }
 
-///Pack a virtual Slot after it has been modified to broadcasting it to the other clients.
+///Pack a virtual Slot after it has been modified for broadcasting it to the other clients.
 void packvslot(vector<uchar> &buf, const VSlot &src)
 {
     if(src.changed & (1 << VSLOT_SHPARAM))
@@ -478,6 +480,8 @@ VSlot *Slot::setvariantchain(VSlot *vs)
     return vs;
 }
 
+/// Wrapper around new VSlot to reuse unused dead vslots.
+/// @warning not threadsafe since it accesses slots and vslots globals.
 VSlot *emptyvslot(Slot &owner)
 {
     int offset = 0;
@@ -624,6 +628,8 @@ void gencombinedname(vector<char> &name, int &texmask, Slot &s, Slot::Tex &t, in
 }
 
 /// Combine and load texture data to be ready for sending it to the gpu.
+/// Combination is used to merge the diffuse and the specularity map into one texture (spec as alpha)
+/// and to merge the normal info and the depth info into another (depth as alpha)
 /// @param msg show progress bar.
 void Slot::combinetextures(int index, Slot::Tex &t, bool msg, bool forceload)
 {

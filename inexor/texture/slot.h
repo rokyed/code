@@ -1,11 +1,14 @@
 /// @file management of texture slots as visible ingame.
-/// each texture slot can have multiple texture frames, of which currently only the first is used
-/// additional frames can be used for various shaders
+/// each texture slot can have multiple textures.
+/// additional textures can be used for various shaders.
+/// It is organized in two structures: virtual Slots and normal Slots.
+/// Each Slot can have a node-chain of numerous virtual Slots which contain differing shader stuff,
+/// like scale, color, rotation.. So a bunch of textures (a Slot) can easily be varying ingame.
 
 #ifndef INEXOR_TEX_SLOT_H
 #define INEXOR_TEX_SLOT_H
 
-struct Slot;
+class Slot;
 
 enum
 {
@@ -20,13 +23,20 @@ enum
     VSLOT_NUM
 };
 
-struct VSlot
+/// A virtual Slot
+/// @see slot.h file description for more info
+class VSlot
 {
+  public:
+    /// The Slot this VSlot derived from.
     Slot *slot;
+    /// The next VSlot in the variant chain of the Slot.
     VSlot *next;
     int index, changed;
     vector<SlotShaderParam> params;
     bool linked;
+
+    // The actual params this VSlot provides:
     float scale;
     int rotation;
     ivec2 offset;
@@ -61,8 +71,12 @@ struct VSlot
     }
 };
 
-struct Slot
+class Slot
 {
+public:
+    /// bitmask containing which textures are already loaded.
+    int loaded = 0;
+
     struct Tex
     {
         int type;
@@ -70,13 +84,13 @@ struct Slot
         string name;
         int combined;
     };
-
     int index;
     vector<Tex> sts;
     Shader *shader;
     vector<SlotShaderParam> params;
+
+    // All virtual Slots deriving from this slot in a node chain.
     VSlot *variants;
-    bool loaded;
     uint texmask;
     char *autograss;
     Texture *grasstex, *thumbnail;
@@ -92,7 +106,7 @@ struct Slot
         sts.shrink(0);
         shader = NULL;
         params.shrink(0);
-        loaded = false;
+        loaded = 0;
         texmask = 0;
         DELETEA(autograss);
         grasstex = NULL;
@@ -105,7 +119,7 @@ struct Slot
 
     void cleanup()
     {
-        loaded = false;
+        loaded = 0;
         grasstex = NULL;
         thumbnail = NULL;
         loopv(sts)
@@ -185,3 +199,6 @@ extern vector<Slot *> slots;
 extern vector<VSlot *> vslots;
 
 #endif //INEXOR_TEX_SLOT_H
+
+/// TODO make loaded correctly isloaded()
+/// make emptyvslot obsolete by providing a better cleaning algorithm

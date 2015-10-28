@@ -106,8 +106,8 @@ enum
 
 extern SharedVar<int> shaderdetail;
 
-struct Slot;
-struct VSlot;
+class Slot;
+class VSlot;
 
 struct UniformLoc
 {
