@@ -693,8 +693,29 @@ void linkslotshaders()
     }
 }
 
+Slot &Slot::load(bool msg, bool forceload)
+{
+    linkslotshader(*this);
+    loopv(sts)
+    {
+        Slot::Tex &t = sts[i];
+        if(t.combined >= 0) continue;
+        switch(t.type)
+        {
+        case TEX_ENVMAP:
+            t.t = cubemapload(t.name);
+            break;
 
-/// Generate a preview image of specific slot for the texture browser.
+        default:
+            texcombine(s, i, t, msg, forceload);
+            break;
+        }
+    }
+    loaded = true;
+    return *this;
+}
+
+/// Generate a preview image of this slot for the texture browser.
 
 Texture *Slot::loadthumbnail()
 {

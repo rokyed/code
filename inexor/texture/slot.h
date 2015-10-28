@@ -120,27 +120,7 @@ struct Slot
         }
     }
 
-    void load(bool msg, bool forceload)
-    {
-        linkslotshader(*this);
-        loopv(sts)
-        {
-            Slot::Tex &t = sts[i];
-            if(t.combined >= 0) continue;
-            switch(t.type)
-            {
-            case TEX_ENVMAP:
-                t.t = cubemapload(t.name);
-                break;
-
-            default:
-                texcombine(s, i, t, msg, forceload);
-                break;
-            }
-        }
-        loaded = true;
-    }
-
+    Slot &load(bool msg, bool forceload);
     Texture *loadthumbnail();
 };
 
@@ -187,7 +167,6 @@ extern Slot &lookupslot(int slot, bool load = true);
 extern VSlot &lookupvslot(int slot, bool load = true);
 extern VSlot *emptyvslot(Slot &owner);
 
-extern VSlot *findvslot(Slot &slot, const VSlot &src, const VSlot &delta);
 extern VSlot *editvslot(const VSlot &src, const VSlot &delta);
 extern void mergevslot(VSlot &dst, const VSlot &src, const VSlot &delta);
 
