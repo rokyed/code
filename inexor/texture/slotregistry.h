@@ -28,6 +28,12 @@ namespace texture {
         /// All included Slots.
         vector<Slot *>slots;
 
+        /// All child vslots (derived from slots).
+        vector<VSlot *>vslots;
+
+        slotregistry(JSON *j = NULL);
+        slotregistry(const char *filename, bool load);
+
         /// Adds a texture to the set from a JSON (Object).
         void addslot(JSON *j);
 
@@ -47,9 +53,6 @@ namespace texture {
         /// Export textureset to json file.
         void write(const char *filename);
     };
-
-    extern slotregistry *newslotregistry(JSON *parent);
-    extern bool loadset(const char *name);
 
 }   // namespace texture
 }   // namespace inexor

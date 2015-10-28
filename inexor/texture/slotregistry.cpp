@@ -132,12 +132,12 @@ namespace texture {
     }
 
     /// Creates a slotregistry with all textures from a "textures" child of given JSON structure.
-    /// @sideeffects allocates memory for a new slotregistry
-    slotregistry *newslotregistry(JSON *parent)
+    /// @sideeffects allocates memory for a new slotset
+    slotregistry::slotregistry(JSON *parent)
     {
-        if(!parent) return NULL;
+        if(!parent) return;
         JSON *j = parent->getchild("textures");
-        if(!j) return NULL;
+        if(!j) {
             conoutf("no child entry found for textures");
             return;
         }
@@ -146,29 +146,25 @@ namespace texture {
         {
             const char *name = j->getchildstring(i);
             defformatstring(fn, "%s", name);
-            if(name[0]!='/') formatstring(fn, "%s/%s", parentdir(j->currentfile), name); //relative path to current folder
-            t->addtexture(fn);
+            if(name[0] != '/') formatstring(fn, "%s", makerelpath(parentdir(j->currentfile), name)); //relative path to current folder
+            addslot(fn);
         }
-        return t;
     }
 
-    bool loadset(const char *name)
+    slotregistry::slotregistry(const char *name, bool load)
     {
         string fname;
         filesystem::getmedianame(fname, name, DIR_TEXTURE);
         JSON *j = loadjson(fname);
-        if(!j) { conoutf("could not load %s slotregistry", name); return false; }
-        slotregistry *t = newslotregistry(j);
+        if(!j) { conoutf("could not load %s slotset", name); return; }
+        slotregistry *t = new slotregistry(j);
 
         delete j;
 
-        t->mount();
-        //delete t;
-        return true;
+        if(load) t->load();
     }
-    COMMAND(loadset, "s");
 
-    /// Scan Texturedir for slotregistrys and load those sets.
+    /// Scan Texturedir for slotsets and load those sets.
     void scantexturedir()
     {
         vector<char *> files;
@@ -179,10 +175,8 @@ namespace texture {
         slotregistry *t = new slotregistry();
         loopv(files) t->addslot(files[i]);
 
-        t->checkload();
         t->load();
-        t->registerload();
-        t->mount();
+        // t->mount();
     }
     COMMAND(scantexturedir, "");
 
