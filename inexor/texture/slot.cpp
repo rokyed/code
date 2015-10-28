@@ -11,6 +11,8 @@
 #include "inexor/shared/filesystem.h"
 #include "inexor/texture/slotregistry.h" // TODO remove this, needed soley bc of lookupvslot..  for the layers (in loadthumbnail)
 
+using namespace inexor;
+
 Slot dummyslot;
 VSlot dummyvslot(&dummyslot);
 
@@ -369,6 +371,43 @@ void gencombinedname(vector<char> &name, int &texmask, Slot &s, Slot::Tex &t, in
         }
     }
     name.add('\0');
+}
+
+struct jsontextype {
+    const char *name;
+    int type;
+} jsontextypes[TEX_NUM] = {
+    { "diffuse", TEX_DIFFUSE },
+    { "other", TEX_UNKNOWN },
+    { "decal", TEX_DECAL },
+    { "normal", TEX_NORMAL },
+    { "glow", TEX_GLOW },
+    { "spec", TEX_SPEC },
+    { "depth", TEX_DEPTH },
+    { "envmap", TEX_ENVMAP }
+}; //todo: int gettype() function and const char *getjsontex to not iterate over TEX_NUM
+
+// TODO we dont want all 8 kinds of textures to be createable from the json..
+Slot::Slot(int index, JSON *j) : Slot(index)
+{
+    loopi(TEX_NUM) //check for all 8 kind of textures
+    {
+        JSON *sub = j->getchild(jsontextypes[i].name);
+        //if(i == TEX_DIFFUSE && !sub) return false; else // no diffuse texture: other stuff wont work?
+        if(!sub) continue;
+        char *name = sub->valuestring;
+        if(!name) continue;
+        texmask |= 1 << i;
+        addtexture(i, name, parentdir(j->currentfile));
+    }
+
+    JSON *grass = j->getchild("grass"); // seperate entry, not in sts
+    if(grass && grass->valuestring)
+    {
+        autograss = new string;
+        filesystem::getmedianame(autograss, MAXSTRLEN, grass->valuestring, DIR_TEXTURE, grass);
+        nformatstring(autograss, MAXSTRLEN, "<premul>%s", autograss); // prefix
+    }
 }
 
 void Slot::setscroll(float scrollS, float scrollT)

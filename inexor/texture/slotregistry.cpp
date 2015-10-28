@@ -24,45 +24,13 @@ namespace texture {
         return currentslotreg;
     }
 
-    struct jsontextype {
-        const char *name;
-        int type;
-    } jsontextypes[TEX_NUM] = {
-        { "diffuse", TEX_DIFFUSE },
-        { "other", TEX_UNKNOWN },
-        { "decal", TEX_DECAL },
-        { "normal", TEX_NORMAL },
-        { "glow", TEX_GLOW },
-        { "spec", TEX_SPEC },
-        { "depth", TEX_DEPTH },
-        { "envmap", TEX_ENVMAP }
-    }; //todo: int gettype() function and const char *getjsontex to not iterate over TEX_NUM
-
-    /// Add all texture entries to the Slottexture.
-    /// @return true on success.
-    bool addimagefiles(Slot &s, JSON *j)
-    {
-        loopi(TEX_NUM) //check for all 8 kind of textures
-        {
-            JSON *sub = j->getchild(jsontextypes[i].name);
-            //if(i == TEX_DIFFUSE && !sub) return false; else // no diffuse texture: other stuff wont work?
-            if(!sub) continue;
-            char *name = sub->valuestring;
-            if(!name) continue;
-            s.texmask |= 1 << i;
-            s.addtexture(i, name, parentdir(j->currentfile));
-        }
-        return s.sts.length() != 0;
-    }
-
     void slotregistry::addslot(JSON *j)
     {
         if(!j || slotlimitreached()) return;
 
-        Slot *s = new Slot(slots.length());
-        s->loaded = false;
+        Slot *s = new Slot(slots.length(), j);
 
-        if(!addimagefiles(*s, j)) return; // no textures found
+        if(s->sts.empty()) return; // no textures found
 
         JSON *shad = j->getchild("shader");
         setslotshader(*s, shad); // TODO: multithread
@@ -521,15 +489,3 @@ ICOMMAND(compactvslots, "", (),
 // - statistik erstellen -> sortieren
 // - alle texturen -> map texturen -> map json
 // - import command für "#arg1" :
-
-
-// LATER:
-//// GRASS
-//JSON *grass = j->getchild("grass"); // seperate entry, not in sts
-//if(grass && grass->valuestring)
-//{
-//    s.autograss = new string;
-//    filesystem::getmedianame(s.autograss, MAXSTRLEN, grass->valuestring, DIR_TEXTURE, grass);
-//    nformatstring(s.autograss, MAXSTRLEN, "<premul>%s", s.autograss); // prefix
-//}
-////

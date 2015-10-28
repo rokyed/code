@@ -132,6 +132,9 @@ public:
 
     Slot(int index = -1) : index(index), variants(NULL), autograss(NULL), layermaskname(NULL), layermask(NULL) { reset(); }
 
+    /// Constructor which adds all texture entries to the slottexture, taken from the json-file given.
+    Slot(int index, JSON *j);
+
     void reset()
     {
         sts.shrink(0);
