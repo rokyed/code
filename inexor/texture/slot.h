@@ -140,6 +140,8 @@ struct Slot
         }
         loaded = true;
     }
+
+    Texture *loadthumbnail();
 };
 
 inline void VSlot::addvariant(Slot *slot)
