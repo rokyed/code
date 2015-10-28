@@ -75,39 +75,69 @@ void autograss(char *name)
 }
 COMMAND(autograss, "s");
 
+/// Set the texture scrolling of the specified Slot to the given amount of x and y.
+void slotscroll(int slotid, float scrollS, float scrollT)
+{
+    if(slots.empty() || !slots.inrange(slotid)) return;
+    Slot &s = *slots[slotid];
+    s.variants->scroll = vec2(scrollS, scrollT).div(1000.0f);
+    propagatevslot(s.variants, 1 << VSLOT_SCROLL);
+}
+
 void texscroll(float *scrollS, float *scrollT)
 {
     if(slots.empty()) return;
-    Slot &s = *slots.last();
-    s.variants->scroll = vec2(*scrollS, *scrollT).div(1000.0f);
-    propagatevslot(s.variants, 1 << VSLOT_SCROLL);
+    slotscroll(slots.last()->index, *scrollS, *scrollT);
 }
 COMMAND(texscroll, "ff");
+
+/// Shift the texture by a given percentage to x or y for given Slot.
+void slotoffset(int slotid, int xoffset, int yoffset)
+{
+    if(slots.empty() || !slots.inrange(slotid)) return;
+    Slot &s = *slots[slotid];
+    s.variants->offset = ivec2(xoffset, yoffset).max(0);
+    propagatevslot(s.variants, 1 << VSLOT_OFFSET);
+}
 
 void texoffset_(int *xoffset, int *yoffset)
 {
     if(slots.empty()) return;
-    Slot &s = *slots.last();
-    s.variants->offset = ivec2(*xoffset, *yoffset).max(0);
-    propagatevslot(s.variants, 1 << VSLOT_OFFSET);
+    slotoffset(slots.last()->index, *xoffset, *yoffset);
+
 }
 COMMANDN(texoffset, texoffset_, "ii");
+
+/// Rotate the given Slotid around, just 90degree possible atm.
+/// @param rot param for the rotation between 0 and 3 (0 or 4 beeing standard)
+void slotrotate(int slotid, int rot)
+{
+    if(slots.empty() || !slots.inrange(slotid)) return;
+    Slot &s = *slots[slotid];
+    s.variants->rotation = clamp(rot, 0, 5);
+    propagatevslot(s.variants, 1 << VSLOT_ROTATION);
+}
 
 void texrotate_(int *rot)
 {
     if(slots.empty()) return;
-    Slot &s = *slots.last();
-    s.variants->rotation = clamp(*rot, 0, 5);
-    propagatevslot(s.variants, 1 << VSLOT_ROTATION);
+    slotrotate(slots.last()->index, *rot);
 }
 COMMANDN(texrotate, texrotate_, "i");
+
+/// Scale the texture by the given amount for the given Slot, will be clamped to poweroftwo values.
+void slotscale(int slotid, float scale)
+{
+    if(slots.empty() || !slots.inrange(slotid)) return;
+    Slot &s = *slots[slotid];
+    s.variants->scale = scale <= 0 ? 1 : scale;
+    propagatevslot(s.variants, 1 << VSLOT_SCALE);
+}
 
 void texscale(float *scale)
 {
     if(slots.empty()) return;
-    Slot &s = *slots.last();
-    s.variants->scale = *scale <= 0 ? 1 : *scale;
-    propagatevslot(s.variants, 1 << VSLOT_SCALE);
+    slotscale(slots.last()->index, *scale);
 }
 COMMAND(texscale, "f");
 
@@ -123,21 +153,41 @@ void texlayer(int *layer, char *name, int *mode, float *scale)
 }
 COMMAND(texlayer, "isif");
 
+/// Set the transparency of given slot to given amount.
+void slotalpha(int slotid, float front, float back)
+{
+    if(slots.empty() || !slots.inrange(slotid)) return;
+    Slot &s = *slots[slotid];
+    s.variants->alphafront = clamp(front, 0.0f, 1.0f);
+    s.variants->alphaback = clamp(back, 0.0f, 1.0f);
+    propagatevslot(s.variants, 1 << VSLOT_ALPHA);
+}
+
 void texalpha(float *front, float *back)
 {
     if(slots.empty()) return;
-    Slot &s = *slots.last();
-    s.variants->alphafront = clamp(*front, 0.0f, 1.0f);
-    s.variants->alphaback = clamp(*back, 0.0f, 1.0f);
-    propagatevslot(s.variants, 1 << VSLOT_ALPHA);
+    slotalpha(slots.last()->index, *front, *back);
 }
 COMMAND(texalpha, "ff");
+
+/// Colorify the given slot with the given red green blue amount.
+/// param r floatvalue between 0 and 1, giving the red amount.
+void slotcolor(int slotid, float r, float g, float b)
+{
+    if(slots.empty() || !slots.inrange(slotid)) return;
+    Slot &s = *slots[slotid];
+    s.variants->colorscale = vec(r, g, b).clamp(0.0f, 1.0f);
+    propagatevslot(s.variants, 1 << VSLOT_COLOR);
+}
 
 void texcolor(float *r, float *g, float *b)
 {
     if(slots.empty()) return;
-    Slot &s = *slots.last();
-    s.variants->colorscale = vec(clamp(*r, 0.0f, 1.0f), clamp(*g, 0.0f, 1.0f), clamp(*b, 0.0f, 1.0f));
-    propagatevslot(s.variants, 1 << VSLOT_COLOR);
+    slotcolor(slots.last()->index, *r, *g, *b);
 }
 COMMAND(texcolor, "fff");
+
+// TODO: replace slotid with reference to slot
+// TODO: new arrangement for  createvariant, maybe own function where necessary?
+// TODO: colorscale globally or sth? at least done properly with shaders?
+// TODO: nice way to merge some propagetevslot calls?
