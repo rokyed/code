@@ -128,6 +128,12 @@ public:
         }
     }
 
+    Tex *findtexture(int type)
+    {
+        loopv(sts) if((1 << sts[i].type)&(1 << type) && sts[i].combined<0) return &sts[i]; //masks are matching, TODO really necessary if no combined allowed?
+        return NULL;
+    }
+
     void addtexture(int type, const char *filename, const char *configdir);
 
     void addvariant(VSlot *vs);
