@@ -130,17 +130,9 @@ public:
         }
     }
 
+    void addtexture(int type, const char *filename, const char *configdir);
 
-    inline void addvariant(VSlot *vs)
-    {
-        if(!variants) variants = vs;
-        else
-        {
-            VSlot *prev = variants;
-            while(prev->next) prev = prev->next;
-            prev->next = vs;
-        }
-    }
+    void addvariant(VSlot *vs);
     VSlot *setvariantchain(VSlot *vs);
 
     VSlot *findvariant(const VSlot &src, const VSlot &delta);

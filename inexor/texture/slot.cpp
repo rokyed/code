@@ -8,12 +8,31 @@
 #include "inexor/texture/modifiers.h"
 #include "inexor/texture/cubemap.h"
 #include "inexor/texture/slot.h"
+#include "inexor/shared/filesystem.h"
 
 vector<VSlot *> vslots;
 vector<Slot *> slots;
 MSlot materialslots[(MATF_VOLUME | MATF_INDEX) + 1];
 Slot dummyslot;
 VSlot dummyvslot(&dummyslot);
+
+/// Some textures get merged/"combined" internally before sending it to the gpu to save memory.
+/// Those are currently the spec + depthmap and the normal
+int inflictedtexture(int changedtex)
+{
+
+}
+
+void Slot::addtexture(int type, const char *filename, const char *configdir)
+{
+    Slot::Tex &st = sts.add();
+    st.type = type;
+    st.combined = -1; // we have to combine them in a seperate step..
+    st.t = NULL;
+    inexor::filesystem::getmedianame(st.name, MAXSTRLEN, filename, DIR_TEXTURE);
+    path(st.name);
+    loaded = false;
+}
 
 /// Resolves a missing part of the texturestack so following textures wont be effected ingame.
 void rewireslots(int first, int num)
@@ -447,6 +466,18 @@ bool unpackvslot(ucharbuf &buf, VSlot &dst, bool delta)
     }
     if(buf.overread()) return false;
     return true;
+}
+
+
+inline void Slot::addvariant(VSlot *vs)
+{
+    if(!variants) variants = vs;
+    else
+    {
+        VSlot *prev = variants;
+        while(prev->next) prev = prev->next;
+        prev->next = vs;
+    }
 }
 
 VSlot *Slot::findvariant(const VSlot &src, const VSlot &delta)

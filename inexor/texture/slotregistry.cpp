@@ -33,22 +33,8 @@ namespace texture {
             char *name = sub->valuestring;
             if(!name) continue;
             s.texmask |= 1 << i;
-            Slot::Tex &st = s.sts.add();
-            st.type = i;
-            st.combined = -1;
-            st.t = NULL;
-            filesystem::getmedianame(st.name, MAXSTRLEN, name, DIR_TEXTURE, sub);
-            path(st.name);
+            s.addtexture(i, name, parentdir(j->currentfile));
         }
-
-        JSON *grass = j->getchild("grass"); // seperate entry, not in sts
-        if(grass && grass->valuestring)
-        {
-            s.autograss = new string;
-            filesystem::getmedianame(s.autograss, MAXSTRLEN, grass->valuestring, DIR_TEXTURE, grass);
-            nformatstring(s.autograss, MAXSTRLEN, "<premul>%s", s.autograss); // prefix
-        }
-
         return s.sts.length() != 0;
     }
 
@@ -194,3 +180,15 @@ namespace texture {
 // - statistik erstellen -> sortieren
 // - alle texturen -> map texturen -> map json
 // - import command für "#arg1" :
+
+
+// LATER:
+//// GRASS
+//JSON *grass = j->getchild("grass"); // seperate entry, not in sts
+//if(grass && grass->valuestring)
+//{
+//    s.autograss = new string;
+//    filesystem::getmedianame(s.autograss, MAXSTRLEN, grass->valuestring, DIR_TEXTURE, grass);
+//    nformatstring(s.autograss, MAXSTRLEN, "<premul>%s", s.autograss); // prefix
+//}
+////
