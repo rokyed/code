@@ -630,7 +630,7 @@ void texcombine(Slot &s, int index, Slot::Tex &t, bool msg = true, bool forceloa
     vector<char> key;
     int texmask = 0; // receive control mask, todo check neccessarity
 
-    gencombinedname(key, texmask, s, t, index, forceload);
+    gencombinedname(key, texmask, *this, t, index, forceload);
 
     t.t = gettexture(key.getbuf()); //todo check if working
     if(t.t) return;
@@ -641,9 +641,9 @@ void texcombine(Slot &s, int index, Slot::Tex &t, bool msg = true, bool forceloa
     {
         case TEX_DIFFUSE:
         case TEX_NORMAL:
-            if(!ts.compressed) loopv(s.sts)
+            if(!ts.compressed) loopv(sts)
             {
-                Slot::Tex &a = s.sts[i];
+                Slot::Tex &a = sts[i];
                 if(a.combined != index) continue;
                 ImageData as;
                 if(!texturedata(as, NULL, &a, msg)) continue;
@@ -715,7 +715,7 @@ Slot &Slot::load(bool msg, bool forceload)
             break;
 
         default:
-            texcombine(s, i, t, msg, forceload);
+            combinetextures(i, t, msg, forceload);
             break;
         }
     }
@@ -724,7 +724,6 @@ Slot &Slot::load(bool msg, bool forceload)
 }
 
 /// Generate a preview image of this slot for the texture browser.
-
 Texture *Slot::loadthumbnail()
 {
     if(thumbnail) return thumbnail;
