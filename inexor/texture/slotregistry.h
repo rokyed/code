@@ -34,32 +34,18 @@ namespace texture {
         /// Adds a texture to the set from a json-file.
         void addslot(const char *filename);
 
-        /// Checks if textures may do not need to be loaded since they are already stored somewhere
-        void checkload();
-
-        /// Loads all textures to memory.
-        /// This function is threadsafe.
-        /// @usage 1. checkload (not threaded) 2. load (threaded) 3. registerload (not threaded)
+        /// Loads all slots to memory.
         void load();
 
-        /// Add this slotregistry to the current texture stack of ingame visible textures.
-        /// @param initial if true this slotregistry becomes the first and only one.
-        void mount(bool initial);
-
-        /// Mounts remaining textures.
-        /// You need to use this after adding textures to a mounted set.
-        void mountremaining();
-
-        /// Removes this slotregistry from the current stack of ingame visible textures.
-        /// Attention: all following slots will be change its position and hence this has an visual impact ingame! TODO!!
-        void unmount();
-
-        void echoall()
+        void echo()
         {
             loopv(slots) {
                 loopvk(slots[i]->sts) conoutf("tex %d.%d: %s", i, k, slots[i]->sts[k].name);
             }
         }
+
+        /// Export textureset to json file.
+        void write(const char *filename);
     };
 
     extern slotregistry *newslotregistry(JSON *parent);

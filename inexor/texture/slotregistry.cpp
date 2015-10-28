@@ -123,60 +123,12 @@ namespace texture {
         delete j;
     }
 
-    void slotregistry::checkload()
-    {
-        loopv(texs)
-        {
-            texentry *t = texs[i];
-            int diff = t->slot->texmask & ~t->loadmask; // All textures which havent been loaded yet
-            if(!diff) continue;
-            loopk(TEX_NUM)
-            {
-                if(k >= t->slot->sts.length()) break; // out of range
-                if(!(diff & (1 << k))) continue; // not in diff
-                Slot::Tex &curimg = t->slot->sts[k];
-                curimg.t = gettexture(curimg.name);
-                if(curimg.t) t->loadmask |= 1 << k; //save to loadmask on success
-            }
-        }
-    }
-
     void slotregistry::load()
     {
-        loopv(texs)
-        {
-            texentry *t = texs[i];
-            t->slot->load(true, false); //conterminates any threadsafety effords so far.
-            loopk(TEX_NUM)
-            {
-                if(k >= t->slot->sts.length()) break; // out of range
-                if(t->needregister & (1 << k)) registertexture(t->slot->sts[k].name);
-            }
-        }
-    }
-
-    void slotregistry::mount(bool initial = false)
-    {
-        if(initial) texturereset(0);
-        loopv(texs)
-        {
-            slots.add(texs[i]->slot);
-            texs[i]->mounted = true;
-        }
-    }
-
-    void slotregistry::unmount()
-    {
-        if(!texs[0]) return;
-        int start = 0;
         loopv(slots)
         {
-            if(slots[i] == texs[0]->slot) start = i;
+            slots[i]->load(true, false);
         }
-
-        texturereset(start, texs.length());
-
-        loopv(texs) texs[i]->mounted = false;
     }
 
     /// Creates a slotregistry with all textures from a "textures" child of given JSON structure.
@@ -186,7 +138,9 @@ namespace texture {
         if(!parent) return NULL;
         JSON *j = parent->getchild("textures");
         if(!j) return NULL;
-        slotregistry *t = new slotregistry();
+            conoutf("no child entry found for textures");
+            return;
+        }
 
         loopi(j->numchilds())
         {
@@ -207,10 +161,7 @@ namespace texture {
         slotregistry *t = newslotregistry(j);
 
         delete j;
-        t->echoall();
-        t->checkload();
-        t->load();
-        t->registerload();
+
         t->mount();
         //delete t;
         return true;
