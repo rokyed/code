@@ -390,25 +390,6 @@ bool VSlot::unserialize(ucharbuf &buf, bool delta)
     return true;
 }
 
-static void fixinsidefaces(cube *c, const ivec &o, int size, int tex)
-{
-    loopi(8)
-    {
-        ivec co(i, o, size);
-        if(c[i].children) fixinsidefaces(c[i].children, co, size>>1, tex);
-        else loopj(6) if(!visibletris(c[i], j, co, size))
-            c[i].texture[j] = tex;
-    }
-}
-
-ICOMMAND(fixinsidefaces, "i", (int *tex),
-{
-    extern SharedVar<int> nompedit;
-    if(noedit(true) || (nompedit && multiplayer())) return;
-    fixinsidefaces(worldroot, ivec(0, 0, 0), worldsize >> 1, *tex && hasvslot(*tex) ? *tex : DEFAULT_GEOM);
-    allchanged();
-});
-
 static void addglow(ImageData &c, ImageData &g, const vec &glowcolor)
 {
     if(g.bpp < 3)
