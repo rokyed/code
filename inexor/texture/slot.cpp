@@ -880,3 +880,87 @@ VSlot *Slot::setvariantchain(VSlot *vs)
     }
     return vs;
 }
+
+
+void VSlot::savetoogz(stream *f, int prev)
+{
+    f->putlil<int>(changed);
+    f->putlil<int>(prev);
+    if(changed & (1 << VSLOT_SHPARAM))
+    {
+        f->putlil<ushort>(params.length());
+        loopv(params)
+        {
+            SlotShaderParam &p = params[i];
+            f->putlil<ushort>(strlen(p.name));
+            f->write(p.name, strlen(p.name));
+            loopk(4) f->putlil<float>(p.val[k]);
+        }
+    }
+    if(changed & (1 << VSLOT_SCALE)) f->putlil<float>(scale);
+    if(changed & (1 << VSLOT_ROTATION)) f->putlil<int>(rotation);
+    if(changed & (1 << VSLOT_OFFSET))
+    {
+        f->putlil<int>(offset.x);
+        f->putlil<int>(offset.y);
+    }
+    if(changed & (1 << VSLOT_SCROLL))
+    {
+        f->putlil<float>(scroll.x);
+        f->putlil<float>(scroll.y);
+    }
+    if(changed & (1 << VSLOT_LAYER)) f->putlil<int>(layer);
+    if(changed & (1 << VSLOT_ALPHA))
+    {
+        f->putlil<float>(alphafront);
+        f->putlil<float>(alphaback);
+    }
+    if(changed & (1 << VSLOT_COLOR))
+    {
+        loopk(3) f->putlil<float>(colorscale[k]);
+    }
+}
+
+
+void VSlot::parsefromogz(stream *f, int changed)
+{
+    this->changed = changed;
+    if(changed & (1 << VSLOT_SHPARAM))
+    {
+        int numparams = f->getlil<ushort>();
+        string name;
+        loopi(numparams)
+        {
+            SlotShaderParam &p = params.add();
+            int nlen = f->getlil<ushort>();
+            f->read(name, min(nlen, MAXSTRLEN - 1));
+            name[min(nlen, MAXSTRLEN - 1)] = '\0';
+            if(nlen >= MAXSTRLEN) f->seek(nlen - (MAXSTRLEN - 1), SEEK_CUR);
+            p.name = getshaderparamname(name);
+            p.loc = -1;
+            loopk(4) p.val[k] = f->getlil<float>();
+        }
+    }
+    if(changed & (1 << VSLOT_SCALE)) scale = f->getlil<float>();
+    if(changed & (1 << VSLOT_ROTATION)) rotation = f->getlil<int>();
+    if(changed & (1 << VSLOT_OFFSET))
+    {
+        offset.x = f->getlil<int>();
+        offset.y = f->getlil<int>();
+    }
+    if(changed & (1 << VSLOT_SCROLL))
+    {
+        scroll.x = f->getlil<float>();
+        scroll.y = f->getlil<float>();
+    }
+    if(changed & (1 << VSLOT_LAYER)) layer = f->getlil<int>();
+    if(changed & (1 << VSLOT_ALPHA))
+    {
+        alphafront = f->getlil<float>();
+        alphaback = f->getlil<float>();
+    }
+    if(changed & (1 << VSLOT_COLOR))
+    {
+        loopk(3) colorscale[k] = f->getlil<float>();
+    }
+}

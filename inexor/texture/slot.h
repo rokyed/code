@@ -23,16 +23,23 @@ enum
     VSLOT_NUM
 };
 
-/// A virtual Slot
+/// A virtual Slot (the ones you see in the texture browser)
 /// @see slot.h file description for more info
 class VSlot
 {
   public:
     /// The Slot this VSlot derived from.
     Slot *slot;
+
     /// The next VSlot in the variant chain of the Slot.
     VSlot *next;
-    int index, changed;
+
+    /// Id of this slot in the current slotregistry.
+    int index;
+
+    /// A bitmask containing which values differ from the default ones.
+    int changed;
+
     vector<SlotShaderParam> params;
     bool linked;
 
@@ -67,6 +74,14 @@ class VSlot
     {
         linked = false;
     }
+
+    /// Old Cube2 mapformat (ogz) method to load the vslot.
+    /// @param f (file) stream.
+    /// @param changed a bitmask containing the actual changed values, so new defaults will be preserved.
+    void parsefromogz(stream *f, int changed);
+
+    /// Save a VSlot to the Cube2 ogz file.
+    void savetoogz(stream *f, int prev);
 };
 
 class Slot

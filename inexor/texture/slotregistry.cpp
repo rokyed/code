@@ -222,6 +222,60 @@ namespace texture {
         loopi((MATF_VOLUME | MATF_INDEX) + 1) materialslots[i].reset();
     }
 
+    void slotregistry::savetoogz(stream *f, int numvslots)
+    {
+        if(vslots.empty()) return;
+        int *prev = new int[numvslots];
+        memset(prev, -1, numvslots*sizeof(int));
+        loopi(numvslots)
+        {
+            VSlot *vs = vslots[i];
+            if(vs->changed) continue;
+            for(;;)
+            {
+                VSlot *cur = vs;
+                do vs = vs->next; while(vs && vs->index >= numvslots);
+                if(!vs) break;
+                prev[vs->index] = cur->index;
+            }
+        }
+        int lastroot = 0;
+        loopi(numvslots)
+        {
+            VSlot &vs = *vslots[i];
+            if(!vs.changed) continue;
+            if(lastroot < i) f->putlil<int>(-(i - lastroot));
+            vs.savetoogz(f, prev[i]);
+            lastroot = i + 1;
+        }
+        if(lastroot < numvslots) f->putlil<int>(-(numvslots - lastroot));
+        delete[] prev;
+    }
+
+    void slotregistry::parsefromogz(stream *f, int numvslots)
+    {
+        int *prev = new int[numvslots];
+        memset(prev, -1, numvslots*sizeof(int));
+        while(numvslots > 0)
+        {
+            int changed = f->getlil<int>();
+            if(changed < 0)
+            {
+                loopi(-changed) vslots.add(new VSlot(NULL, vslots.length()));
+                numvslots += changed;
+            }
+            else
+            {
+                prev[vslots.length()] = f->getlil<int>();
+                VSlot *vs = vslots.add(new VSlot(NULL, vslots.length()));
+                vs->parsefromogz(f, changed);
+                numvslots--;
+            }
+        }
+        loopv(vslots) if(vslots.inrange(prev[i])) vslots[prev[i]]->next = vslots[i];
+        delete[] prev;
+    }
+
     /// Echo all texture mapslots loaded.
     void debugslots()
     {

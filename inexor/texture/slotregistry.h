@@ -80,6 +80,16 @@ namespace texture {
 
         /// Resets the material stack back to its initial state.
         void materialreset();
+
+        /// Save all included virtual slots (vslots) to the old ogz Cube2 mapformat.
+        /// @param f (file) stream
+        /// @param numvslots the number of vslots which will be written to the file stream
+        void savetoogz(stream *f, int numvslots);
+
+        /// Load all vslots from an (old) ogz mapfile.
+        /// @param f (file) stream
+        /// @param numvslots the number of vslots to read
+        void parsefromogz(stream *f, int numvslots);
     };
 
     extern slotregistry *getcurslotreg();
