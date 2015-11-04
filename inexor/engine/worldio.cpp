@@ -1,7 +1,7 @@
 // worldio.cpp: loading & saving of maps and savegames
 
 #include "inexor/engine/engine.h"
-#include "inexor/shared/filesystem.h"
+#include "inexor/filesystem/mediadirs.h"
 #ifndef STANDALONE
 #include "inexor/texture/slotregistry.h"
 #endif

@@ -1,7 +1,7 @@
 // sound.cpp: basic positional sound using sdl_mixer
 
 #include "inexor/engine/engine.h"
-#include "inexor/shared/filesystem.h"
+#include "inexor/filesystem/mediadirs.h"
 #include "SDL_mixer.h"
 
 #define MAXVOL MIX_MAX_VOLUME

@@ -8,8 +8,8 @@
 #include "inexor/texture/modifiers.h"
 #include "inexor/texture/cubemap.h"
 #include "inexor/texture/slot.h"
-#include "inexor/shared/filesystem.h"
-#include "inexor/texture/slotregistry.h" // TODO remove this, needed soley bc of lookupvslot..  for the layers (in loadthumbnail)
+#include "inexor/filesystem/mediadirs.h"
+#include "inexor/texture/slotregistry.h"
 
 using namespace inexor;
 

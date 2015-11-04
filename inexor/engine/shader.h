@@ -3,6 +3,8 @@
 #ifndef INEXOR_SHADER_H
 #define INEXOR_SHADER_H
 
+#include "inexor/filesystem/json.h"
+
 struct GlobalShaderParamState
 {
     const char *name;

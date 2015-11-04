@@ -1,4 +1,4 @@
-#include "inexor/shared/filesystem.h"
+#include "inexor/filesystem/mediadirs.h"
 
 enum
 {

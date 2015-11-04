@@ -1,7 +1,7 @@
 /// game initialisation & main loop
 
 #include "inexor/engine/engine.h"
-#include "inexor/shared/filesystem.h"
+#include "inexor/filesystem/mediadirs.h"
 #include "inexor/ui/ui.h"
 #include "inexor/util/Subsystem.h"
 

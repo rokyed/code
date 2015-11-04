@@ -1,7 +1,7 @@
 /// @file Legacy texture slot loading.
 
 #include "inexor/engine/engine.h"
-#include "inexor/shared/filesystem.h"
+#include "inexor/filesystem/mediadirs.h"
 #include "inexor/texture/slotregistry.h"
 
 using namespace inexor::texture;

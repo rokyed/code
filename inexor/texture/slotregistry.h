@@ -16,6 +16,7 @@
 #define INEXOR_TEX_SLOTREGISTRY_H
 
 #include "inexor/engine/engine.h"
+#include "inexor/filesystem/json.h"
 
 namespace inexor {
 namespace texture {

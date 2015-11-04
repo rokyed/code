@@ -55,7 +55,6 @@
 #include "inexor/shared/geom.h"
 #include "inexor/shared/ents.h"
 #include "inexor/shared/command.h"
-#include "inexor/shared/json.h"
 
 #ifndef STANDALONE
 #include "inexor/engine/glexts.h"

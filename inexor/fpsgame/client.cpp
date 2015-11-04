@@ -4,8 +4,7 @@
 /// implementation of many cube script get functions
 
 #include "inexor/fpsgame/game.h"
-#include "inexor/shared/filesystem.h"
-#include "inexor/engine/engine.h" // TODO: refractor (we do this currently bc of VSLOT dependency)
+#include "inexor/filesystem/mediadirs.h"
 #include "inexor/texture/slotregistry.h"
 
 namespace game

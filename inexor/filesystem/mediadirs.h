@@ -4,6 +4,7 @@
 #define I_FILESYSTEM_H
 
 #include "inexor/shared/cube.h"
+#include "inexor/filesystem/json.h"
 
 enum {
     DIR_MEDIA,

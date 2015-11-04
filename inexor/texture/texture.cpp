@@ -2,7 +2,7 @@
 
 #include "inexor/engine/engine.h"
 //#include "SDL_image.h"
-#include "inexor/shared/filesystem.h"
+#include "inexor/filesystem/mediadirs.h"
 #include "inexor/texture/texture.h"
 #include "inexor/texture/modifiers.h"
 #include "inexor/texture/SDL_loading.h"

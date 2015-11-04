@@ -1,7 +1,7 @@
 /// @file Slotsets are used to load and organize texture-slots chunk wise.
 ///
 
-#include "inexor/shared/filesystem.h"
+#include "inexor/filesystem/mediadirs.h"
 #include "inexor/texture/slotregistry.h"
 
 namespace inexor {

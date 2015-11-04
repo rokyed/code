@@ -3,7 +3,7 @@
 #include "inexor/texture/cubemap.h"
 #include "inexor/texture/modifiers.h"
 #include "inexor/texture/format.h"
-#include "inexor/shared/filesystem.h"
+#include "inexor/filesystem/mediadirs.h"
 
 void forcecubemapload(GLuint tex)
 {
