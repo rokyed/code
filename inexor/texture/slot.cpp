@@ -454,7 +454,7 @@ VSlot *Slot::setvariantchain(VSlot *vs)
         vs->linked = false;
         vs = vs->next;
     }
-    return vs;
+    return variants;
 }
 
 void Slot::setscroll(float scrollS, float scrollT)

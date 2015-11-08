@@ -95,7 +95,8 @@ namespace texture {
         VSlot *ret = NULL;
         loopvrev(slots) if(slots[i]->variants) { offset = slots[i]->variants->index + 1; break; }
         for(int i = offset; i < vslots.length(); i++) if(!vslots[i]->changed) {
-            ret = owner.setvariantchain(vslots[i]); 
+            owner.setvariantchain(vslots[i]); 
+            ret = vslots[i];
             break;
         }
         if(!ret) ret = vslots.add(new VSlot(&owner, vslots.length()));
