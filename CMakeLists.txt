@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.7)
+cmake_minimum_required(VERSION 2.8.12)
 
 include(inexor/functions.cmake)
 
@@ -12,16 +12,23 @@ if(NOT DEFINED CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug CACHE INTERN "")
 endif()
 
-# Set a default toolchain file
+
+message(STATUS "CMAKE_VERSION = ${CMAKE_VERSION}")
 message(STATUS "CMAKE_GENERATOR = ${CMAKE_GENERATOR}")
 
+# Set a default toolchain file
 string(TOLOWER "${CMAKE_GENERATOR}" GEN)
 if(GEN MATCHES ".*visual studio.*")
   set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/inexor/platform/vs.cmake)
 elseif(GEN MATCHES ".*mingw.*" OR MINGW)
   set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/inexor/platform/mingw.cmake)
 else()
-  set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/inexor/platform/linux.cmake)
+  message(STATUS "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME} ${CMAKE_GENERATOR_PLATFORM}")
+  if(APPLE)
+    set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/inexor/platform/osx.cmake)
+  else()
+    set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/inexor/platform/linux.cmake)
+  endif()
 endif()
 
 message(STATUS "Using Toolchain File ${CMAKE_TOOLCHAIN_FILE}")
@@ -120,10 +127,10 @@ if(OS_LINUX OR (OS_WINDOWS AND NOT MSVC))
     # -Wl,--gc-sections               = Remove unused code resulting from -fdata-sections and -function-sections
     set(I_LINKER_FLAGS_RELEASE    "-Wl,-O1 -Wl,--as-needed -Wl,--gc-sections")
 
-    if (OS_WINDOWS)
+    if (OS_WINDOWS OR CMAKE_COMPILER_IS_GNUCXX)
       # GCC 5.1 Introduces a new C++11 ABI; make sure we use
       # the old one for compatibility with older compilers and
-      # for compatibility with our precompiled libs
+      # for compatibility with our precompiled libs (read: protobuf)
       # TODO: Make configurable
       set(I_CXX_COMPILER_FLAGS "${I_CXX_COMPILER_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
     endif()
@@ -165,7 +172,7 @@ if(OS_MACOSX)
     # -std=c++11                    = Use the C++11 language standard including
     # -Wno-narrowing                  = Don't warn about type narrowing
     # -Wsign-compare                  = Warn about mixed signed/unsigned type comparisons
-    set(I_CXX_COMPILER_FLAGS      "-fno-threadsafe-statics -fobjc-call-cxx-cdtors -Wno-narrowing -Wsign-compare -std=c++11")
+    set(I_CXX_COMPILER_FLAGS      "-fno-threadsafe-statics -fobjc-call-cxx-cdtors -Wno-narrowing -Wsign-compare -std=c++11 -stdlib=libc++")
     # -O0                             = No optimization
     # -g                              = Generate debug information
     # -D_DEBUG                        = Debug build
@@ -175,9 +182,9 @@ if(OS_MACOSX)
     # -Wl,-search_paths_first         = Search for static or shared library versions in the same pass
     # -Wl,-ObjC                       = Support creation of creation of ObjC static libraries
     # -Wl,-pie                        = Generate position-independent code suitable for executables only
-    set(I_LINKER_FLAGS            "-Wl,-search_paths_first -Wl,-ObjC -Wl,-pie")
+    set(I_LINKER_FLAGS            "-Wl,-search_paths_first -Wl,-ObjC -Wl,-pie -v")
     # -Wl,-dead_strip                 = Strip dead code
-    set(I_LINKER_FLAGS_RELEASE    "-Wl,-dead_strip")
+    set(I_LINKER_FLAGS_RELEASE    "-Wl,-dead_strip -v")
 
     # Standard libraries.
     set(I_STANDARD_LIBS "-framework Cocoa" "-framework AppKit")
@@ -192,7 +199,7 @@ if(OS_MACOSX)
     endforeach()
 
     # Target SDK.
-    set(I_TARGET_SDK               "10.6")
+    set(I_TARGET_SDK               "10.7")
     set(I_COMPILER_FLAGS           "${I_COMPILER_FLAGS} -mmacosx-version-min=${I_TARGET_SDK}")
     set(CMAKE_OSX_DEPLOYMENT_TARGET  ${I_TARGET_SDK})
 
@@ -313,7 +320,7 @@ message(STATUS "EXE_LINKER_FLAGS_RELEASE:       ${CMAKE_EXE_LINKER_FLAGS_RELEASE
 # Set output path for the compiled executable
 set(EXE_DIR "${PROJECT_SOURCE_DIR}/${EXE_SUB_DIR}")
 
-set(INSTALL_RESOURCES_DIR   ${BUILD_INSTALL_DIR}/resources  CACHE INTERNAL "")
+set(INSTALL_RESOURCES_DIR "${PROJECT_SOURCE_DIR}/bin/all")
 
 message(STATUS "Generating Project-Files to ${CMAKE_CURRENT_BINARY_DIR}")
 message(STATUS " - Resulting Executable goes to ${EXE_DIR}")
@@ -321,6 +328,8 @@ message(STATUS " - Resulting Executable goes to ${EXE_DIR}")
 add_subdirectory(inexor)
 
 install(FILES ${INSTALL_SHARED_LIBS} ${INSTALL_EXES} DESTINATION ${EXE_DIR})
+message(STATUS "INSTALL_RESOURCES       = ${INSTALL_RESOURCES}")
+install(FILES ${INSTALL_RESOURCES} DESTINATION ${INSTALL_RESOURCES_DIR})
 
 # shipped portable stuff on win (dirty but temporarily)
 if(OS_WINDOWS)
