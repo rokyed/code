@@ -19,6 +19,7 @@ add_subdirectory(net) # net module, asio lib
 add_subdirectory(rpc) # rpc module, protobuf lib
 add_subdirectory(ui)
 add_subdirectory(crashreporter)
+add_subdirectory(shader)
 
 # Actual targets
 opt_subdir(client on)

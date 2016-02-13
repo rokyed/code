@@ -291,3 +291,19 @@ endfunction()
 function(config_boost_asio)
   config_asio(${ARGN})
 endfunction()
+
+#### Boost Wave
+find_libs(BOOST_WAVE_LIBS boost_wave)
+find_path(BOOST_WAVE_INCLUDE_DIRS boost/wave.hpp)
+
+function(config_boost_wave targ)
+  message(STATUS "Configuring ${targ} with Boost Wave")
+  if (";${ARGN};" MATCHES ";NOLINK;")
+    set(NOLINK "NOLINK")
+  endif()
+
+  ## config_boost_system(${targ} ${NOLINK})
+## serialisation, core, spirit, filesystem?
+  include_directories(${BOOST_WAVE_INCLUDE_DIRS})
+  target_link_libs(${targ} ${BOOST_WAVE_LIBS} ${NOLINK})
+endfunction()

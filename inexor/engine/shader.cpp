@@ -1489,3 +1489,34 @@ void setblurshader(int pass, int size, int radius, float *weights, float *offset
     LOCALPARAMV(offsets, scaledoffsets, 8);
 }
 
+#include <string>
+#include <vector>
+
+namespace inexor {
+namespace shader {
+extern std::string preprocessShader(const std::string &filename, const std::string &source); // , const std::vector<std::string> &includepaths);
+}
+}
+
+void testpreprocessor()
+{
+    const char *filename = "shader_preprocessor_test.frag";
+    const char *outputfile = "shader_preprocessor_test_output.frag";
+
+    const char *found = findfile(filename, "");
+    char *buf = loadfile(found, NULL);
+    if(!buf) {
+        conoutf("file couldn't be found: %s", found);  return;
+    }
+    std::string parsed = inexor::shader::preprocessShader(filename, buf);
+    conoutf("parsed: %s", parsed.c_str());
+    stream *f = openfile(outputfile, "w");
+    if(!f) {
+        conoutf("could not write the shader preprocessor output to file %s", outputfile);
+        return;
+    }
+    f->write(parsed.c_str(), parsed.length());
+    delete f;
+}
+
+COMMAND(testpreprocessor, "");
