@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 
+namespace inexor {
+namespace shader {
+
 /// An uniform 
 struct ShaderParameter
 {
@@ -34,11 +37,11 @@ struct Shader
     /// The name of the shader used to access it.. TODO move to hashtable?
     std::string name;
 
-    /// One of the above defined types,
+    /// One of the above defined types, TODO, no types needed yet.
     int type;
 
     /// The raw input code strings of the shader (already preprocessed).
-    std::string source_vertex, source_frag;
+    std::string source_vertex, source_fragment;
 
     /// The OpenGL ID of this shader.
     GLuint program;
@@ -52,11 +55,17 @@ struct Shader
     /// The OpenGL ID of the object files (intermediates of the build, unlinked binary).
     GLuint vsobj, psobj;
 
-    ///// All coreshaders get compiled on mapload/startup, others just on use.
-    //bool coreshader;
+    /// Main constructor from the given source.
+    /// @note Does not build the shader, so calling build() is needed in order to use() it.
+    bool parse(const char *source_vert, const char *source_frag);
 
-    //bool used;
+    bool build(bool forcerebuild = false);
 
-    bool compile();
+    void use();
 
 };
+
+extern Shader *testshader;
+
+} // namespace shader
+} // namespace inexor
