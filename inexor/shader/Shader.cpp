@@ -1,9 +1,30 @@
 
 #include "inexor/shader/Shader.hpp"
 #include "inexor/engine/glexts.hpp"
+#include "inexor/engine/engine.hpp"
 
 namespace inexor {
 namespace shader {
+
+static void showglslinfo(GLenum type, GLuint obj, const char *name)
+{
+    GLint length = 0;
+    if(type) glGetShaderiv_(obj, GL_INFO_LOG_LENGTH, &length);
+    else glGetProgramiv_(obj, GL_INFO_LOG_LENGTH, &length);
+    if(length > 1)
+    {
+        conoutf(CON_ERROR, "GLSL ERROR (%s:%s)", type == GL_VERTEX_SHADER ? "VS" : (type == GL_FRAGMENT_SHADER ? "FS" : "PROG"), name);
+        FILE *l = getlogfile(); // temporary code until we get easylogging
+        if(l)
+        {
+            GLchar *log = new GLchar[length];
+            if(type) glGetShaderInfoLog_(obj, length, &length, log);
+            else glGetProgramInfoLog_(obj, length, &length, log);
+            fprintf(l, "%s\n", log);
+            delete[] log;
+        }
+    }
+}
 
 static void compile_shader_source(GLenum type, GLuint &obj, std::string source, const char *name, bool msg = true)
 {
@@ -16,11 +37,11 @@ static void compile_shader_source(GLenum type, GLuint &obj, std::string source, 
     glGetShaderiv_(obj, GL_COMPILE_STATUS, &success);
     if(!success)
     {
-        //if(msg) showglslinfo(type, obj, name, parts, numparts);
+        if(msg) showglslinfo(type, obj, name);
         glDeleteShader_(obj);
         obj = 0;
     }
-    //else if(dbgshader > 1 && msg) showglslinfo(type, obj, name, parts, numparts);
+    //else if(dbgshader > 1 && msg) showglslinfo(type, obj, name);
 }
 
 bool link_shader(Shader &s, bool msg = true)
@@ -40,7 +61,7 @@ bool link_shader(Shader &s, bool msg = true)
     {
         if(s.program)
         {
-            //if(msg) showglslinfo(GL_FALSE, s.program, s.name);
+            if(msg) showglslinfo(GL_FALSE, s.program, s.name.c_str());
             glDeleteProgram_(s.program);
             s.program = 0;
         }
@@ -49,7 +70,7 @@ bool link_shader(Shader &s, bool msg = true)
     return true;
 }
 
-bool Shader::parse(const char *source_vert, const char *source_frag)
+bool Shader::parse(const std::string &source_vert, const std::string &source_frag)
 {
     source_vertex = source_vert;
     source_fragment = source_frag;
@@ -59,7 +80,7 @@ bool Shader::parse(const char *source_vert, const char *source_frag)
 bool Shader::build(bool forcerebuild)
 {
     if(!forcerebuild && program) return true;
-    if(source_fragment.empty() && source_vertex.empty()) return false; //true ? TODO: verify our preprocessor also checks for emptyness.
+    if(source_fragment.empty() && source_vertex.empty()) return false; //TODO: verify our preprocessor also checks for emptyness.
 
     if(forcerebuild && program)
     {
@@ -70,7 +91,9 @@ bool Shader::build(bool forcerebuild)
     compile_shader_source(GL_VERTEX_SHADER, vsobj, source_vertex, name.c_str()); //dbgshader || !variantshader);
     compile_shader_source(GL_FRAGMENT_SHADER, psobj, source_fragment, name.c_str());// dbgshader || !variantshader);
     link_shader(*this); // , !variantshader);
-    return program != 0;
+
+    isbuilt = program != 0;
+    return isbuilt;
 }
 
 void Shader::use()
