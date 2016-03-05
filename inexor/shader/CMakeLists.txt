@@ -1,5 +1,3 @@
-message(STATUS "Detecting Protobuf...")
-
 
 declare_module(shader .)
 add_lib(shader)
