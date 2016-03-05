@@ -104,4 +104,4 @@ void Shader::use()
 Shader *testshader = nullptr;
 
 } // namespace shader
-} // namespace shader
+} // namespace inexor

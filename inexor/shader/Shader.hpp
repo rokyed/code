@@ -57,7 +57,7 @@ struct Shader
     GLuint vsobj, psobj;
 
     /// Main constructor, does not give a working shader, you need to parse() the source, build() and use() it.
-    Shader(std::string &shadername) : name(shadername) {}
+    Shader(std::string shadername) : name(shadername) {}
 
     /// Parse the specific input source strings for the shader.
     /// Note, we do expect the source to be ........................................................
