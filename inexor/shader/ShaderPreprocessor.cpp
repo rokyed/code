@@ -30,6 +30,7 @@ using namespace inexor::shader; // we need to operate in GLOBAL SCOPE for BOOST_
 
 // Errors: wrong shift operator
 //         boost fusion adapt struct not in main scope
+//         boost fusion adapt struct does NOT work with "using" instances -> always state the full name inside!
 //         vector instead of list (use lists!)
 //         list<string()> instead of list<string>()
 //         ';' instead of lit(';')
@@ -44,7 +45,7 @@ struct glsl_variable
 {
     string datatype;
     string varname;
-    //optional<string> defaultvalue;
+    optional<string> defaultvalue;
 };
 
 struct structure
@@ -58,15 +59,15 @@ struct structure
 
 BOOST_FUSION_ADAPT_STRUCT(
     glsl_variable,
-    (string, datatype)
-    (string, varname)
-    //(optional<string>, defaultvalue)
+    (std::string, datatype)
+    (std::string, varname)
+    (boost::optional<std::string>, defaultvalue)
 )                 // Note where commas are and where not!
 
 BOOST_FUSION_ADAPT_STRUCT(
     structure,
-    (string, structname)
-    (list<glsl_variable>, variables)
+    (std::string, structname)
+    (std::list<inexor::shader::glsl_variable>, variables)
 )
 
 namespace inexor {
@@ -87,7 +88,7 @@ struct employee_parser : qi::grammar<Iterator, structure(), ascii::space_type>
 
         identifier %= lexeme[+(char_("a-zA-Z_0-9"))]; // some concentated (see lexeme[..]) string with (min. 1 see "+(..)") of the allowed chars.
         variable %= (identifier >> identifier         // datatype variablename
-                        //>> -(lit('=') >> identifier)  // an optional (see "-(..)"default value
+                        >> -(lit('=') >> identifier)  // an optional (see "-(..)"default value
                         >> lit(';'));
 
         start %=
@@ -119,6 +120,18 @@ void parseuniformstruct(string source) // , vector<ShaderParameter> &uniforms)
     {
         char *r = "hellokitty";
         const char *da = emp.structname.c_str();
+        if(emp.variables.size())
+        {
+            for(auto it = emp.variables.begin(); it != emp.variables.end(); ++it)
+            {
+                glsl_variable der = *it;
+                da = der.datatype.c_str();
+                da = der.varname.c_str();
+                std::string *optionales = der.defaultvalue.get_ptr();
+                if(optionales) da = optionales->c_str();
+            }
+
+        }
     }
     else
     {
