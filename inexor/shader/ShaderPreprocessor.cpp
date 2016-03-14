@@ -26,14 +26,15 @@ using namespace std;
 using namespace inexor::shader; // we need to operate in GLOBAL SCOPE for BOOST_FUSION_ADAPT_STRUCT (which gives a list of tupels for a struct)
 
 /// We use boost spirit qi for our parsing, since its by far the most evolved parsing writing tool atm (speed-wise, usability-wise).
-/// Its syntax is inspired by the PEG (Parsing expression grammar) and may (or may not) need some further readup in the (very good) docs/tutorials.
+/// Its syntax is inspired by the PEG (Parsing expression grammar) and may (or may not) need some further readup in the (very good) docs/tutorials
+/// (however, it's hard stuff, be prepared).
 
-// Errors: wrong shift operator
+// Errors: wrong shift operator (qi uses >> (!))
 //         boost fusion adapt struct not in main scope
 //         boost fusion adapt struct does NOT work with "using" instances -> always state the full name inside!
 //         vector instead of list (use lists!)
 //         list<string()> instead of list<string>()
-//         ';' instead of lit(';')
+//         ';' instead of lit(';') (better use a lit too much than one too less)
 
 // every entry is:
 // SPECIFIER(e.g.const) DATATYPE|DATATYPESIZE|[ARRAYSIZE] VARIABLENAME ;
@@ -73,31 +74,43 @@ BOOST_FUSION_ADAPT_STRUCT(
 namespace inexor {
 namespace shader {
 
+// *space Variabletype *space variablename *space ('=' *space initvaluecontainingspaces *space);
+
 template <typename Iterator>
-struct employee_parser : qi::grammar<Iterator, structure(), ascii::space_type>
+struct glsl_parser : qi::grammar<Iterator, structure(), ascii::space_type>
 {
-    qi::rule<Iterator, structure(), ascii::space_type> start;
+    qi::rule<Iterator, structure(), ascii::space_type> structurerule;
     qi::rule<Iterator, string(), ascii::space_type> identifier;
+    qi::rule < Iterator, string(), ascii::space_type> default_value_identifier; // This contains brackets, commata and semicolons as well,
+                                                                                // since you want: vec2 a = vec2(1.0, 2.0);
     qi::rule<Iterator, glsl_variable(), ascii::space_type> variable;
 
-    employee_parser() : employee_parser::base_type(start)
+    glsl_parser() : glsl_parser::base_type(structurerule) // "(structurerule)" sets the starting rule for our grammar.
     {
-        using qi::lit;
-        using qi::lexeme;
-        using ascii::char_;
+        using qi::lit;      // attribute is inhibited (so we don't need those encapsulated values backed by the struct we parse into)
+        using qi::lexeme;   // working on a single word
+        using ascii::char_; // wrapper for a single char, to retain its attribute (so the output data struct gets filled with those)
+        using ascii::alnum; // alphanumerical: normal letters (abcd..) + nums
+        using ascii::blank; // space, tab, newline, ..
 
-        identifier %= lexeme[+(char_("a-zA-Z_0-9"))]; // some concentated (see lexeme[..]) string with (min. 1 see "+(..)") of the allowed chars.
-        variable %= (identifier >> identifier         // datatype variablename
-                        >> -(lit('=') >> identifier)  // an optional (see "-(..)"default value
+        identifier %= lexeme[+(char_("a-zA-Z_0-9") | char_('[') | char_(']'))]; // some concentated (see lexeme[..]) string with min. 1 (see "+(..)") of the allowed chars.
+
+        default_value_identifier %= lexeme[+(alnum | char_('_') | char_('{') | char_('}')
+                                             | char_('[') | char_(']') | char_('(') | char_(')')
+                                             | char_('-') | char_('.') | char_(',') | blank)]; // some more allowed chars in this string here.
+
+        // a variable looks like that:
+        // type variablename (+ optionally: "= defaultvalue") ;
+        variable %= (identifier >> identifier
+                        >> -(lit('=') >> default_value_identifier)  // the optional (see "-(..)") default value
                         >> lit(';'));
 
-        start %=
+        structurerule %=
             lit("struct")
             >> identifier
             >> lit('{')
             >> *(variable)
-            >> lit('}') >> lit(';')
-            ;
+            >> lit('}') >> lit(';');
     }
 };
 }
@@ -106,9 +119,9 @@ void parseuniformstruct(string source) // , vector<ShaderParameter> &uniforms)
 {
     using boost::spirit::ascii::space;
     typedef std::string::const_iterator iterator_type;
-    typedef inexor::shader::employee_parser<iterator_type> employee_parser;
+    typedef inexor::shader::glsl_parser<iterator_type> glsl_parser;
 
-    employee_parser g; // Our grammar
+    glsl_parser g; // Our grammar
     iterator_type iter = source.begin(); //remember our starting iterator.
     iterator_type end = source.end();
 
