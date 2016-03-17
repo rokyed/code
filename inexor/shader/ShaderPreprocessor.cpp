@@ -9,6 +9,7 @@
 #include <boost/spirit/include/phoenix_fusion.hpp>
 #include <boost/spirit/include/phoenix_stl.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
+#include <boost/variant/recursive_variant.hpp>
 
 #include "inexor/shader/ShaderPreprocessor.hpp"
 
@@ -35,6 +36,8 @@ using namespace inexor::shader; // we need to operate in GLOBAL SCOPE for BOOST_
 //         vector instead of list (use lists!)
 //         list<string()> instead of list<string>()
 //         ';' instead of lit(';') (better use a lit too much than one too less)
+//         order of commands inside grammer did not match order of corresponding data struct entries
+//                                (e.g. "variant<typeA, typeB>" vs. "(sthtotypeB | sthtotypeA)")
 
 // every entry is:
 // SPECIFIER(e.g.const) DATATYPE|DATATYPESIZE|[ARRAYSIZE] VARIABLENAME ;
@@ -42,14 +45,20 @@ using namespace inexor::shader; // we need to operate in GLOBAL SCOPE for BOOST_
 namespace inexor {
 namespace shader {
 
+struct glsl_structure;
+
+/// A datatype can be a struct as well again.
+/// struct ParentStruct { Struct Childstruct{ } TheFirstChild; };
+typedef variant < recursive_wrapper<glsl_structure>, string> variabledatatype;
+
 struct glsl_variable
 {
-    string datatype;
+    variabledatatype datatype;
     string varname;
     optional<string> defaultvalue;
 };
 
-struct structure
+struct glsl_structure
 {
     string structname;
     list<glsl_variable> variables;
@@ -58,15 +67,16 @@ struct structure
 }
 }
 
+// Tell fusion about our data structures. 
 BOOST_FUSION_ADAPT_STRUCT(
     glsl_variable,
-    (std::string, datatype)
+    (inexor::shader::variabledatatype, datatype)
     (std::string, varname)
     (boost::optional<std::string>, defaultvalue)
-)                 // Note where commas are and where not!
+)                 // Note the commata
 
 BOOST_FUSION_ADAPT_STRUCT(
-    structure,
+    glsl_structure,
     (std::string, structname)
     (std::list<inexor::shader::glsl_variable>, variables)
 )
@@ -77,15 +87,15 @@ namespace shader {
 // *space Variabletype *space variablename *space ('=' *space initvaluecontainingspaces *space);
 
 template <typename Iterator>
-struct glsl_parser : qi::grammar<Iterator, structure(), ascii::space_type>
+struct glsl_parser : qi::grammar<Iterator, glsl_structure(), ascii::space_type>
 {
-    qi::rule<Iterator, structure(), ascii::space_type> structurerule;
+    qi::rule<Iterator, glsl_structure(), ascii::space_type> structure;
     qi::rule<Iterator, string(), ascii::space_type> identifier;
     qi::rule < Iterator, string(), ascii::space_type> default_value_identifier; // This contains brackets, commata and semicolons as well,
                                                                                 // since you want: vec2 a = vec2(1.0, 2.0);
     qi::rule<Iterator, glsl_variable(), ascii::space_type> variable;
 
-    glsl_parser() : glsl_parser::base_type(structurerule) // "(structurerule)" sets the starting rule for our grammar.
+    glsl_parser() : glsl_parser::base_type(structure) // "(structurerule)" sets the starting rule for our grammar.
     {
         using qi::lit;      // attribute is inhibited (so we don't need those encapsulated values backed by the struct we parse into)
         using qi::lexeme;   // working on a single word
@@ -101,16 +111,21 @@ struct glsl_parser : qi::grammar<Iterator, structure(), ascii::space_type>
 
         // a variable looks like that:
         // type variablename (+ optionally: "= defaultvalue") ;
-        variable %= (identifier >> identifier
+        variable %= ((structure | identifier) >> identifier
                         >> -(lit('=') >> default_value_identifier)  // the optional (see "-(..)") default value
                         >> lit(';'));
 
-        structurerule %=
+        structure %=
             lit("struct")
             >> identifier
             >> lit('{')
             >> *(variable)
-            >> lit('}') >> lit(';');
+            >> lit('}'); // >> lit(';');
+
+        //uniform %= lit("uniform") >> variable;
+        //attribute %= lit("in")
+            //unused code: anything not struct, uniform, or attribute
+            // attribute: not inside brackets, mainly () //and {}
     }
 };
 }
@@ -125,7 +140,7 @@ void parseuniformstruct(string source) // , vector<ShaderParameter> &uniforms)
     iterator_type iter = source.begin(); //remember our starting iterator.
     iterator_type end = source.end();
 
-    inexor::shader::structure emp;
+    glsl_structure emp;
 
     bool r = phrase_parse(iter, end, g, space, emp);
 
@@ -138,7 +153,7 @@ void parseuniformstruct(string source) // , vector<ShaderParameter> &uniforms)
             for(auto it = emp.variables.begin(); it != emp.variables.end(); ++it)
             {
                 glsl_variable der = *it;
-                da = der.datatype.c_str();
+                //da = der.datatype.c_str();
                 da = der.varname.c_str();
                 std::string *optionales = der.defaultvalue.get_ptr();
                 if(optionales) da = optionales->c_str();
