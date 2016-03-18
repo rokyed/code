@@ -24,14 +24,14 @@ namespace qi = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
 
 using namespace std;
-using namespace inexor::shader; // we need to operate in GLOBAL SCOPE for BOOST_FUSION_ADAPT_STRUCT (which gives a list of tupels for a struct)
+using namespace inexor::shader;
 
 /// We use boost spirit qi for our parsing, since its by far the most evolved parsing writing tool atm (speed-wise, usability-wise).
-/// Its syntax is inspired by the PEG (Parsing expression grammar) and may (or may not) need some further readup in the (very good) docs/tutorials
-/// (however, it's hard stuff, be prepared).
+/// Its syntax is inspired by the PEG (Parsing expression grammar) and may (or may not) need some further readup in the (very good) docs/tutorials.
+/// However it might seem like hard stuff at first, be prepared.
 
 // Errors: wrong shift operator (qi uses >> (!))
-//         boost fusion adapt struct not in main scope
+//         boost fusion adapt struct not in global scope
 //         boost fusion adapt struct does NOT work with "using" instances -> always state the full name inside!
 //         vector instead of list (use lists!)
 //         list<string()> instead of list<string>()
@@ -85,7 +85,38 @@ namespace inexor {
 namespace shader {
 
 // *space Variabletype *space variablename *space ('=' *space initvaluecontainingspaces *space);
+/*template <typename Iterator>
+struct skipper : qi::grammar<Iterator>
+{
+    skipper() : skipper::base_type(start)
+    {
+        qi::char_type char_;
+        ascii::space_type space;
 
+        start =
+            space                               // tab/space/cr/lf
+            | *(char_ - "struct")
+            ;
+    }
+
+    qi::rule<Iterator> start;
+}; */
+template <typename Iterator>
+struct skipper : qi::grammar<Iterator>
+{
+    skipper() : skipper::base_type(start)
+    {
+        qi::char_type char_;
+        ascii::space_type space;
+
+        start =
+            space                               // tab/space/cr/lf
+            | "/*" >> *(char_ - "*/") >> "*/"     // C-style comments
+            ;
+    }
+
+    qi::rule<Iterator> start;
+};
 template <typename Iterator>
 struct glsl_parser : qi::grammar<Iterator, glsl_structure(), ascii::space_type>
 {
@@ -94,8 +125,11 @@ struct glsl_parser : qi::grammar<Iterator, glsl_structure(), ascii::space_type>
     qi::rule < Iterator, string(), ascii::space_type> default_value_identifier; // This contains brackets, commata and semicolons as well,
                                                                                 // since you want: vec2 a = vec2(1.0, 2.0);
     qi::rule<Iterator, glsl_variable(), ascii::space_type> variable;
+    qi::rule<Iterator, void(), ascii::space_type> nothinginteresting;
+    qi::rule<Iterator, glsl_structure(), ascii::space_type> fullparse;
 
-    glsl_parser() : glsl_parser::base_type(structure) // "(structurerule)" sets the starting rule for our grammar.
+    /// Constructor.  "base_type(fullparse)" points it to the starting rule of our grammar.
+    glsl_parser() : glsl_parser::base_type(fullparse)
     {
         using qi::lit;      // attribute is inhibited (so we don't need those encapsulated values backed by the struct we parse into)
         using qi::lexeme;   // working on a single word
@@ -105,9 +139,7 @@ struct glsl_parser : qi::grammar<Iterator, glsl_structure(), ascii::space_type>
 
         identifier %= lexeme[+(char_("a-zA-Z_0-9") | char_('[') | char_(']'))]; // some concentated (see lexeme[..]) string with min. 1 (see "+(..)") of the allowed chars.
 
-        default_value_identifier %= lexeme[+(alnum | char_('_') | char_('{') | char_('}')
-                                             | char_('[') | char_(']') | char_('(') | char_(')')
-                                             | char_('-') | char_('.') | char_(',') | blank)]; // some more allowed chars in this string here.
+        default_value_identifier %= lexeme[+(char_ - char_(';'))];  // all chars allowed in this string here, just ';' disallowed so we escape this parser somewhen.
 
         // a variable looks like that:
         // type variablename (+ optionally: "= defaultvalue") ;
@@ -120,12 +152,24 @@ struct glsl_parser : qi::grammar<Iterator, glsl_structure(), ascii::space_type>
             >> identifier
             >> lit('{')
             >> *(variable)
-            >> lit('}'); // >> lit(';');
+            >> lit('}'); // we omit the ';' bc a struct is actually just a variable again!
+
+        // difference '=' and '%=' for rules: no attribute for '=' so you don't parse it into anything (except you do it manually, see docs).
+
+                // all chars get passed until one of the keywords occur.
+        nothinginteresting = lexeme[*char_] - lit("uniform") - lit("in") - lit("out") - lit("struct");
+
+        //curlybracketthing = '{' >> *(bracketthing|curlybracketthing|char_-'}') >> '}'
+        //bracketthing = '(' >> *(bracketthing|curlybracketthing|char_-')') >> ')'
+        //otherstuff = bracketthing | nothinginteresting;
 
         //uniform %= lit("uniform") >> variable;
-        //attribute %= lit("in")
-            //unused code: anything not struct, uniform, or attribute
-            // attribute: not inside brackets, mainly () //and {}
+        //in %= lit("in") >> variable;
+        //out %= lit("out") >> variable;
+        //attributeyo %= otherstuff >> uniform | attribute | struct | inout >> otherstuff;
+
+        fullparse %= structure; // lit(*(lexeme[*char_] - lit("struct"))) >> structure;
+
     }
 };
 }
@@ -140,20 +184,19 @@ void parseuniformstruct(string source) // , vector<ShaderParameter> &uniforms)
     iterator_type iter = source.begin(); //remember our starting iterator.
     iterator_type end = source.end();
 
-    glsl_structure emp;
+    glsl_structure emp; // where our data goes into.
 
     bool r = phrase_parse(iter, end, g, space, emp);
 
     if(r && iter == end)
-    {
-        char *r = "hellokitty";
+    { //just some stuff so my debugger prints the content:
         const char *da = emp.structname.c_str();
         if(emp.variables.size())
         {
             for(auto it = emp.variables.begin(); it != emp.variables.end(); ++it)
             {
                 glsl_variable der = *it;
-                //da = der.datatype.c_str();
+                string *b = get<string>(&der.datatype);
                 da = der.varname.c_str();
                 std::string *optionales = der.defaultvalue.get_ptr();
                 if(optionales) da = optionales->c_str();
@@ -161,11 +204,8 @@ void parseuniformstruct(string source) // , vector<ShaderParameter> &uniforms)
 
         }
     }
-    else
-    {
-
-    }
 }
+
 namespace inexor {
 namespace shader {
 /// The GLSLPreprocessingHooks class is used to modify the boost::wave preprocessor to work
