@@ -1,5 +1,7 @@
 #include "shader_preprocessor_globals.frag"
 
+#version 120
+
 attribute vec4 vvertex, vcolor;
 attribute vec2 vtexcoord0;
 uniform mat4 hudmatrix;

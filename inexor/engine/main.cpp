@@ -235,7 +235,7 @@ void restorebackground()
 }
 
 
-
+#include "inexor/shader/Shader.hpp"
 /// Render a textured quad of the given dimensions.
 /// Difference to screenquad is the ability to change the start position (with x and y -> lower left corner of the quad)
 void bgquad(float x, float y, float w, float h)
@@ -247,7 +247,34 @@ void bgquad(float x, float y, float w, float h)
     gle::attribf(x+w, y+h); gle::attribf(1, 1);
     gle::end();
 }
+bool firsttime = true;
+void rendershadertest()
+{
+    if(!inexor::shader::testshader) nullshader->set();
+    else
+    {
+        if(firsttime) {
+            conoutf("first time we use this shader!!");
+            firsttime = false;
+        }
+        inexor::shader::testshader->use();
+    }
 
+    glColor3f(0, 0, 1);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, screenw, screenh, 0, -1, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glBegin(GL_TRIANGLE_STRIP);
+    glTexCoord2f(0, 0);  glVertex2f(screenw/2, screenh/2);
+    glTexCoord2f(1, 0);  glVertex2f(screenw, screenh/2);
+    glTexCoord2f(0, 1);  glVertex2f(screenw/2, screenh);
+    glTexCoord2f(1, 1);  glVertex2f(screenw, screenh);
+    glEnd();
+}
 /// render map loading progress screen (and background) including map name and game mode info
 void renderbackground(const char *caption, Texture *mapshot, const char *mapname, const char *mapinfo, bool restore, bool force)
 {
@@ -384,6 +411,7 @@ void renderbackground(const char *caption, Texture *mapshot, const char *mapname
             }
         }
         glDisable(GL_BLEND);
+        rendershadertest();
         if(!restore) swapbuffers(false);
     }
 

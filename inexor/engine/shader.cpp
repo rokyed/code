@@ -1489,34 +1489,62 @@ void setblurshader(int pass, int size, int radius, float *weights, float *offset
     LOCALPARAMV(offsets, scaledoffsets, 8);
 }
 
-#include <string>
-#include <vector>
-
-namespace inexor {
-namespace shader {
-extern std::string preprocessShader(const std::string &filename, const std::string &source); // , const std::vector<std::string> &includepaths);
-}
-}
-
+#include "inexor/shader/ShaderPreprocessor.hpp"
+#include "inexor/shader/Shader.hpp"
+GLint shdrloctest = -1;
 void testpreprocessor()
 {
-    const char *filename = "shader_preprocessor_test.frag";
+    const char *vertexfile =   "shader_pass_through.vert";
+    const char *fragmentfile = "shader_pass_through.frag";//"shader_preprocessor_test.frag";
     const char *outputfile = "shader_preprocessor_test_output.frag";
 
-    const char *found = findfile(filename, "");
-    char *buf = loadfile(found, NULL);
-    if(!buf) {
-        conoutf("file couldn't be found: %s", found);  return;
-    }
-    std::string parsed = inexor::shader::preprocessShader(filename, buf);
-    conoutf("parsed: %s", parsed.c_str());
+    const char *foundvert = findfile(vertexfile, "");
+    std::string bufvert = loadfile(foundvert, NULL);
+    if(bufvert.empty()) { conoutf("vertex file not found: %s", foundvert); return; }
+
+    const char *foundfrag = findfile(fragmentfile, "");
+    std::string buffrag = loadfile(foundfrag, NULL);
+    if(buffrag.empty()) { conoutf("fragment file not found: %s", foundfrag);  return; }
+
+    std::string parsed_vert = inexor::shader::preprocessShader(vertexfile, bufvert);
+    std::string parsed_frag = inexor::shader::preprocessShader(fragmentfile, buffrag);
+
+    conoutf("parsed: %s", parsed_frag.c_str());
+
+    // save fragment for debug purpose
     stream *f = openfile(outputfile, "w");
     if(!f) {
         conoutf("could not write the shader preprocessor output to file %s", outputfile);
         return;
     }
-    f->write(parsed.c_str(), parsed.length());
+    f->write(parsed_frag.c_str(), parsed_frag.length());
     delete f;
+
+    // set testshader
+    inexor::shader::testshader = new inexor::shader::Shader("testshader");
+    inexor::shader::testshader->parse(parsed_vert, parsed_frag);
+    if(!inexor::shader::testshader->build(true)) conoutf("shader building failed");;
+
+    inexor::shader::testshader->use();
+    shdrloctest = glGetUniformLocation_(inexor::shader::testshader->program, "materialsettings.redchannel.r");
+    conoutf("uniform location is %d", shdrloctest);
+
+    glUseProgram_(0);
 }
 
 COMMAND(testpreprocessor, "");
+FVARFP(testlocation, 0.0, 0.5, 1.0, if(shdrloctest != -1) {
+    inexor::shader::testshader->use();
+    glUniform1f_(shdrloctest, *testlocation); conoutf("updated uniform to %f", *testlocation);
+    glUseProgram_(0);
+});
+
+void testuniformscanner()
+{
+    const char *file = "uniformtest.frag";
+    const char *foundfile = findfile(file, "");
+    std::string buf = loadfile(foundfile, NULL);
+    if(buf.empty()) { conoutf("test file not found: %s", foundfile);  return; }
+    parseuniformstruct(buf);
+}
+COMMAND(testuniformscanner, "");
