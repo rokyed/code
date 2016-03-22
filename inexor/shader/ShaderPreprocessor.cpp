@@ -30,7 +30,8 @@ using namespace inexor::shader;
 /// Its syntax is inspired by the PEG (Parsing expression grammar) and may (or may not) need some further readup in the (very good) docs/tutorials.
 /// However it might seem like hard stuff at first, be prepared.
 
-// Errors: wrong shift operator (qi uses >> (!))
+// Errors: 
+//         wrong shift operator (qi uses >>) !!
 //         boost fusion adapt struct not in global scope
 //         boost fusion adapt struct does NOT work with "using" instances -> always state the full name inside!
 //         vector instead of list (use lists!)
@@ -84,91 +85,74 @@ BOOST_FUSION_ADAPT_STRUCT(
 namespace inexor {
 namespace shader {
 
-// *space Variabletype *space variablename *space ('=' *space initvaluecontainingspaces *space);
-/*template <typename Iterator>
-struct skipper : qi::grammar<Iterator>
-{
-    skipper() : skipper::base_type(start)
-    {
-        qi::char_type char_;
-        ascii::space_type space;
-
-        start =
-            space                               // tab/space/cr/lf
-            | *(char_ - "struct")
-            ;
-    }
-
-    qi::rule<Iterator> start;
-}; */
 template <typename Iterator>
-struct skipper : qi::grammar<Iterator>
+struct glsl_parser : qi::grammar<Iterator, list<glsl_structure>(), ascii::space_type>
 {
-    skipper() : skipper::base_type(start)
-    {
-        qi::char_type char_;
-        ascii::space_type space;
+    // the second param is the data structure we parse into.
+    // the third param (e.g. "ascii::space_type" for space/tab/newline/..) is our skipper: 
+    //     that means everytime a space (or tab/newline..) occurs in our string, we just fast forward to the next non-space thing. Used to simplify our parser.
+    qi::rule<Iterator, string(),         ascii::space_type> identifier;
+    qi::rule<Iterator, string(),         ascii::space_type> default_value_identifier;
 
-        start =
-            space                               // tab/space/cr/lf
-            | "/*" >> *(char_ - "*/") >> "*/"     // C-style comments
-            ;
-    }
-
-    qi::rule<Iterator> start;
-};
-template <typename Iterator>
-struct glsl_parser : qi::grammar<Iterator, glsl_structure(), ascii::space_type>
-{
+    qi::rule<Iterator, glsl_variable(),  ascii::space_type> variable;
     qi::rule<Iterator, glsl_structure(), ascii::space_type> structure;
-    qi::rule<Iterator, string(), ascii::space_type> identifier;
-    qi::rule < Iterator, string(), ascii::space_type> default_value_identifier; // This contains brackets, commata and semicolons as well,
-                                                                                // since you want: vec2 a = vec2(1.0, 2.0);
-    qi::rule<Iterator, glsl_variable(), ascii::space_type> variable;
-    qi::rule<Iterator, void(), ascii::space_type> nothinginteresting;
-    qi::rule<Iterator, glsl_structure(), ascii::space_type> fullparse;
+
+    qi::rule<Iterator, void()> keywords;
+    qi::rule<Iterator, void()> bracketthing;
+    qi::rule<Iterator, void()> nothinginteresting;
+    qi::rule<Iterator, list<glsl_structure>(), ascii::space_type> fullparse;
 
     /// Constructor.  "base_type(fullparse)" points it to the starting rule of our grammar.
     glsl_parser() : glsl_parser::base_type(fullparse)
     {
         using qi::lit;      // attribute is inhibited (so we don't need those encapsulated values backed by the struct we parse into)
-        using qi::lexeme;   // working on a single word
+        using qi::lexeme;   // stop the skipper for that subsequence. In our case (since all our rules skip spaces) its used somewhat like "working on a single word".
         using ascii::char_; // wrapper for a single char, to retain its attribute (so the output data struct gets filled with those)
         using ascii::alnum; // alphanumerical: normal letters (abcd..) + nums
-        using ascii::blank; // space, tab, newline, ..
+        using ascii::space; // space, tab, newline, ..
 
         identifier %= lexeme[+(char_("a-zA-Z_0-9") | char_('[') | char_(']'))]; // some concentated (see lexeme[..]) string with min. 1 (see "+(..)") of the allowed chars.
 
         default_value_identifier %= lexeme[+(char_ - char_(';'))];  // all chars allowed in this string here, just ';' disallowed so we escape this parser somewhen.
-
-        // a variable looks like that:
-        // type variablename (+ optionally: "= defaultvalue") ;
-        variable %= ((structure | identifier) >> identifier
-                        >> -(lit('=') >> default_value_identifier)  // the optional (see "-(..)") default value
-                        >> lit(';'));
 
         structure %=
             lit("struct")
             >> identifier
             >> lit('{')
             >> *(variable)
-            >> lit('}'); // we omit the ';' bc a struct is actually just a variable again!
+            >> lit('}');                                     // we omit the ">> ';'" bc a struct is actually just a variable again!
 
-        // difference '=' and '%=' for rules: no attribute for '=' so you don't parse it into anything (except you do it manually, see docs).
+        variable %= 
+                ((structure | identifier)                    // the type of the variable (which can also be a struct)
+                 >> identifier                               // the variablename
+                 >> -(lit('=') >> default_value_identifier)  // the optional (see "-(..)") default value. ("-" only means "this expect when that other occurs" when you have
+                 >> lit(';'));                               //                                           something beforehand. If it's ">> -" it means "optionally").
 
-                // all chars get passed until one of the keywords occur.
-        nothinginteresting = lexeme[*char_] - lit("uniform") - lit("in") - lit("out") - lit("struct");
+        // difference '=' and '%=' for rules: no attribute for '=' so you don't parse it into anything, you just aknowledge it (except you do it manually, see docs).
 
-        //curlybracketthing = '{' >> *(bracketthing|curlybracketthing|char_-'}') >> '}'
-        //bracketthing = '(' >> *(bracketthing|curlybracketthing|char_-')') >> ')'
-        //otherstuff = bracketthing | nothinginteresting;
+        // we explicitly control that our keywords do not occur inside a string (we **match** for at least one trailing and leading space/tab/newline/..,
+        // therefore we have no skipper, see declaration)
+        keywords = +space >> (lit("uniform") | lit("in") | lit("out") | lit("struct")) >> +space;
+
+        // 'in' and 'out' are used in function parameter declarations as well ("void update(in vec3 oldcolor, out vec3 newcolor);").
+        //  So we need to skip brackets (we otherglobalstuff stops when it finds an opening bracket, but since brackets can be recursive, we must determine where it ends).
+        bracketthing =
+            lit('(') 
+            >> *(char_ - lit(')') -lit('('))                  // parse chars until either this bracket closes or another opening bracket occurs.
+            >> -(bracketthing >> *(char_ - lit(')')))         // in case its been an opening bracket be recursive (and parse anything trailing)(line is optional, see ">> -")
+            >> lit(')');
+
+        // all chars get passed until one of the keywords occurs (or the bracket case appears):
+        // Note that you may expect it to be *(char_) - lit("uniform") as "a string which just shouldnt match the other one". However due to the nature of parsers
+        // (left to right reading) that wouldn't ever exit the *(char_). Qis answer is some magic: the righthand type does not need to 'match' the type of the lefthand side!
+        // So *(char_ - "string") does work, although one is a string, one is a char.
+        nothinginteresting = *(char_ - keywords - lit('(') >> -bracketthing);
 
         //uniform %= lit("uniform") >> variable;
         //in %= lit("in") >> variable;
         //out %= lit("out") >> variable;
-        //attributeyo %= otherstuff >> uniform | attribute | struct | inout >> otherstuff;
 
-        fullparse %= structure; // lit(*(lexeme[*char_] - lit("struct"))) >> structure;
+        fullparse %= nothinginteresting >> *(structure >> nothinginteresting);
 
     }
 };
@@ -184,25 +168,29 @@ void parseuniformstruct(string source) // , vector<ShaderParameter> &uniforms)
     iterator_type iter = source.begin(); //remember our starting iterator.
     iterator_type end = source.end();
 
-    glsl_structure emp; // where our data goes into.
+    list<glsl_structure> emps; // where our data goes into.
 
-    bool r = phrase_parse(iter, end, g, space, emp);
+    bool r = phrase_parse(iter, end, g, space, emps);
 
     if(r && iter == end)
     { //just some stuff so my debugger prints the content:
-        const char *da = emp.structname.c_str();
-        if(emp.variables.size())
+        for(auto curstr = emps.begin(); curstr != emps.end(); ++curstr)
         {
-            for(auto it = emp.variables.begin(); it != emp.variables.end(); ++it)
+            glsl_structure &emp = *curstr;
+            const char *da = emp.structname.c_str();
+            if(emp.variables.size())
             {
-                glsl_variable der = *it;
-                string *b = get<string>(&der.datatype);
-                da = der.varname.c_str();
-                std::string *optionales = der.defaultvalue.get_ptr();
-                if(optionales) da = optionales->c_str();
+                for(auto it = emp.variables.begin(); it != emp.variables.end(); ++it)
+                {
+                    glsl_variable der = *it;
+                    string *b = get<string>(&der.datatype);
+                    da = der.varname.c_str();
+                    std::string *optionales = der.defaultvalue.get_ptr();
+                    if(optionales) da = optionales->c_str();
+                }
             }
-
         }
+
     }
 }
 
