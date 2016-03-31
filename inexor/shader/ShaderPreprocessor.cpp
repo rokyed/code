@@ -65,6 +65,12 @@ struct glsl_structure
     list<glsl_variable> variables;
 };
 
+struct glsl_allinfo
+{
+    vector<glsl_structure> structures;
+    vector<glsl_variable> uniforms;
+};
+
 }
 }
 
@@ -82,11 +88,17 @@ BOOST_FUSION_ADAPT_STRUCT(
     (std::list<inexor::shader::glsl_variable>, variables)
 )
 
+BOOST_FUSION_ADAPT_STRUCT(
+    glsl_allinfo,
+    (std::vector<inexor::shader::glsl_structure>, structures)
+    (std::vector<inexor::shader::glsl_variable>, uniforms)
+)
+//TODO: test ohne zuvorigen text (startline struct ..., ohne blank)
 namespace inexor {
 namespace shader {
 
 template <typename Iterator>
-struct glsl_parser : qi::grammar<Iterator, list<glsl_structure>(), ascii::space_type>
+struct glsl_parser : qi::grammar<Iterator, glsl_allinfo(), ascii::space_type>
 {
     // the second param is the data structure we parse into.
     // the third param (e.g. "ascii::space_type" for space/tab/newline/..) is our skipper: 
@@ -94,13 +106,13 @@ struct glsl_parser : qi::grammar<Iterator, list<glsl_structure>(), ascii::space_
     qi::rule<Iterator, string(),         ascii::space_type> identifier;
     qi::rule<Iterator, string(),         ascii::space_type> default_value_identifier;
 
-    qi::rule<Iterator, glsl_variable(),  ascii::space_type> variable;
+    qi::rule<Iterator, glsl_variable(),  ascii::space_type> variable, uniform, in, out;
     qi::rule<Iterator, glsl_structure(), ascii::space_type> structure;
 
     qi::rule<Iterator, void()> keywords;
     qi::rule<Iterator, void()> bracketthing;
     qi::rule<Iterator, void()> nothinginteresting;
-    qi::rule<Iterator, list<glsl_structure>(), ascii::space_type> fullparse;
+    qi::rule<Iterator, glsl_allinfo(), ascii::space_type> fullparse;
 
     /// Constructor.  "base_type(fullparse)" points it to the starting rule of our grammar.
     glsl_parser() : glsl_parser::base_type(fullparse)
@@ -110,6 +122,8 @@ struct glsl_parser : qi::grammar<Iterator, list<glsl_structure>(), ascii::space_
         using ascii::char_; // wrapper for a single char, to retain its attribute (so the output data struct gets filled with those)
         using ascii::alnum; // alphanumerical: normal letters (abcd..) + nums
         using ascii::space; // space, tab, newline, ..
+
+
 
         identifier %= lexeme[+(char_("a-zA-Z_0-9") | char_('[') | char_(']'))]; // some concentated (see lexeme[..]) string with min. 1 (see "+(..)") of the allowed chars.
 
@@ -148,12 +162,25 @@ struct glsl_parser : qi::grammar<Iterator, list<glsl_structure>(), ascii::space_
         // So *(char_ - "string") does work, although one is a string, one is a char.
         nothinginteresting = *(char_ - keywords - lit('(') >> -bracketthing);
 
-        //uniform %= lit("uniform") >> variable;
-        //in %= lit("in") >> variable;
-        //out %= lit("out") >> variable;
+        uniform %= lit("uniform") >> variable;
 
-        fullparse %= nothinginteresting >> *(structure >> nothinginteresting);
 
+        // Instead of automatically putting stuff into a struct by matching the result of the rule with the given data struct we provide,
+        // we use the overloaded [] operator here to push it to the output struct manually.
+        // We use phoenix stuff, since we got different data types, so we use placeholders used instead of normal functions and variables (although that may sound unnecessary
+        // at first sight, this makes the whole design of spirit possible).
+        using qi::_1;             // placeholder for the first data structure we pass to our grammar.
+        using qi::_val;           // placeholder for the result of the preceding rule (e.g. in char_ [ _val ]; the _val will be the parsed char).
+        using phoenix::push_back;
+        using phoenix::at_c;      // thats just for accessing the variable, but since were dealing with different types this is used for that placeholder stuff instead of plain []
+
+        fullparse = nothinginteresting
+                     >> *(
+                             (structure        [push_back(at_c<0>(_val), _1)]  // put it inside the "structures" list (the first in the list of tupels in the struct see at_c<0>)
+                              | uniform        [push_back(at_c<1>(_val), _1)]  // same but in the second list: "uniforms"
+                              )
+                              >> nothinginteresting)
+                          ;
     }
 };
 }
@@ -168,13 +195,13 @@ void parseuniformstruct(string source) // , vector<ShaderParameter> &uniforms)
     iterator_type iter = source.begin(); //remember our starting iterator.
     iterator_type end = source.end();
 
-    list<glsl_structure> emps; // where our data goes into.
+    glsl_allinfo emps; // where our data goes into.
 
     bool r = phrase_parse(iter, end, g, space, emps);
 
     if(r && iter == end)
     { //just some stuff so my debugger prints the content:
-        for(auto curstr = emps.begin(); curstr != emps.end(); ++curstr)
+        for(auto curstr = emps.structures.begin(); curstr != emps.structures.end(); ++curstr)
         {
             glsl_structure &emp = *curstr;
             const char *da = emp.structname.c_str();
