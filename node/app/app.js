@@ -42,6 +42,7 @@ var bunyan = require('bunyan');
 
 // Application level dependencies
 var EvalCubescript = require('./rpc.js');
+var InexorTree = require('./tree.js');
 
 streams = [
     {
