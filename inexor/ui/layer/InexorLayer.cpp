@@ -1,6 +1,10 @@
 #include <iostream>
 
-#include "inexor/ui/InexorLayer.hpp"
+#include "inexor/ui/layer/InexorLayer.hpp"
+
+namespace inexor {
+namespace ui {
+namespace layer {
 
 InexorLayer::InexorLayer(std::string name, int x, int y, int width, int height, std::string url)
     : name(name),
@@ -179,4 +183,8 @@ bool InexorLayer::OnConsoleMessage(CefRefPtr<CefBrowser> browser, const CefStrin
     CEF_REQUIRE_UI_THREAD();
     spdlog::get("global")->debug("status: {0} ({1}): {2}", source.ToString(), line, message.ToString());
     return true;
+}
+
+}
+}
 }
