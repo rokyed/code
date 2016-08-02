@@ -1,4 +1,4 @@
-
+#include <algorithm>
 #include <vector>
 #include <string>
 #include <unordered_set>
@@ -174,6 +174,21 @@ TemplateData fill_templatedata(vector<ShTreeNode> &tree, const string &ns)
     }
     tmpldata["shared_vars"] = sharedvars;
 
+    TemplateData new_list{TemplateData::Type::List};
+    std::vector<std::string> all_new;
+    for(auto node : tree)
+    {
+        all_new.push_back(node.get_name_cpp_full());
+    }
+    std::sort(all_new.begin(), all_new.end());
+
+    for(auto it : all_new)
+    {
+        TemplateData curvariable{TemplateData::Type::Object};
+        curvariable["n"] = it;
+        new_list << curvariable;
+    }
+    tmpldata["vergleich_liste_neu"] = new_list;
     return tmpldata;
 }
 
