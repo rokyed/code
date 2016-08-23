@@ -93,10 +93,6 @@ set(MSVC_LINKER_FLAGS            "-MANIFEST:NO -SAFESEH:NO -DEBUG ")
 # /LTCG                                 = Link-time Code Generation: further optimisations in the linker stage.
 set(MSVC_LINKER_FLAGS_RELEASE    "-LTCG -OPT:REF -OPT:ICF -INCREMENTAL:NO")
 
-# Add the library path as well
-foreach(dir ${CMAKE_LIBRARY_PATH}) # We need to do this seperately since LIBPATH does not accept more than one dir at once
-  set(MSVC_EXE_LINKER_FLAGS "${MSVC_EXE_LINKER_FLAGS} -LIBPATH:${dir}")
-endforeach()
 
 
 # Just merge compiler/linker flags (specific to the used compiler)
