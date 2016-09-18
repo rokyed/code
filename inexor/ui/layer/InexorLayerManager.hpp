@@ -4,9 +4,13 @@
 #include <list>
 
 #include "include/cef_app.h"
+#include "include/base/cef_bind.h"
+#include "include/wrapper/cef_closure_task.h"
+//#include "include/cef_task.h"
 #include "inexor/ui/context/InexorContextProvider.hpp"
 #include "inexor/ui/layer/InexorLayer.hpp"
 #include "inexor/ui/layer/InexorLayerProvider.hpp"
+#include "inexor/util/Logging.hpp"
 
 namespace inexor {
 namespace ui {
