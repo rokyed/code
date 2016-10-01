@@ -6,14 +6,31 @@
 #ifndef INEXOR_SERVER_DATA_STRUCTURES_H_
 #define INEXOR_SERVER_DATA_STRUCTURES_H_
 
+#include "inexor/fpsgame/game.hpp"
+
 namespace inexor {
 namespace server {
 
-    struct server_entity            // server side version of "entity" type
+    /**
+     * server side version of "entity" type
+     */
+    struct server_entity
     {
         int type;
         int spawntime;
         bool spawned;
+    };
+
+    /**
+     *
+     */
+    struct hitinfo
+    {
+        int target;
+        int lifesequence;
+        int rays;
+        float dist;
+        vec dir;
     };
 
 }

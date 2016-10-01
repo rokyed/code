@@ -1,4 +1,3 @@
-#include "inexor/fpsgame/game.hpp"
 #include "inexor/util/random.hpp"
 #include "inexor/util/Logging.hpp"
 
@@ -27,8 +26,6 @@ extern ENetAddress masteraddress;
 
 namespace server
 {
-
-
     static const int DEATHMILLIS = 300;
 
     struct clientinfo;
@@ -49,15 +46,6 @@ namespace server
         int millis;
 
         bool flush(clientinfo *ci, int fmillis);
-    };
-
-    struct hitinfo
-    {
-        int target;
-        int lifesequence;
-        int rays;
-        float dist;
-        vec dir;
     };
 
     struct shotevent : timedevent
