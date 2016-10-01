@@ -26,8 +26,6 @@ extern ENetAddress masteraddress;
 
 namespace server
 {
-    static const int DEATHMILLIS = 300;
-
     struct clientinfo;
     int gamemode = 0;
 
@@ -342,12 +340,6 @@ namespace server
         }
     };
 
-    struct ban
-    {
-        int time, expire;
-        uint ip;
-    };
-
     namespace aiman
     {
         extern void removeai(clientinfo *ci);
@@ -574,13 +566,6 @@ namespace server
     COMMAND(maprotationreset, "");
     COMMANDN(maprotation, addmaprotations, "ss2V");
 
-    struct demofile
-    {
-        string info;
-        uchar *data;
-        int len;
-    };
-
     vector<demofile> demos;
 
     bool demonextmatch = false;
@@ -609,20 +594,6 @@ namespace server
     SVAR(servermotd, "");
     VAR(spectatemodifiedmap, 0, 1, 1);
 
-    struct teamkillkick
-    {
-        int modes, limit, ban;
-
-        bool match(int mode) const
-        {
-            return (modes&(1<<(mode-STARTGAMEMODE)))!=0;
-        }
-
-        bool includes(const teamkillkick &tk) const
-        {
-            return tk.modes != modes && (tk.modes & modes) == tk.modes;
-        }
-    };
     vector<teamkillkick> teamkillkicks;
 
     void teamkillkickreset()
@@ -644,11 +615,6 @@ namespace server
     COMMAND(teamkillkickreset, "");
     COMMANDN(teamkillkick, addteamkillkick, "sii");
 
-    struct teamkillinfo
-    {
-        uint ip;
-        int teamkills;
-    };
     vector<teamkillinfo> teamkills;
     bool shouldcheckteamkills = false;
 
@@ -982,15 +948,6 @@ namespace server
             }
         }
     }
-
-    struct teamrank
-    {
-        const char *name;
-        float rank;
-        int clients;
-
-        teamrank(const char *name) : name(name), rank(0), clients(0) {}
-    };
 
     const char *chooseworstteam(const char *suggest = NULL, clientinfo *exclude = NULL)
     {
@@ -1512,33 +1469,6 @@ namespace server
         if(sc) sc->save(ci->state);
     }
 
-    /// MSG filter works as a firewall
-    /// it allowes only certain messages for certain things, see checktype
-    /// -1 will become 1 in the switchcase below, its a hack to not misinterpretate the different cases as messages 
-    static struct msgfilter
-    {
-        uchar msgmask[NUMMSG];
-
-        msgfilter(int msg, ...)
-        {
-            memset(msgmask, 0, sizeof(msgmask));
-            va_list msgs;
-            va_start(msgs, msg);
-            for(uchar val = 1; msg < NUMMSG; msg = va_arg(msgs, int))
-            {
-                if(msg < 0) val = uchar(-msg);
-                else msgmask[msg] = val;
-            }
-            va_end(msgs);
-        }
-
-        uchar operator[](int msg) const { return msg >= 0 && msg < NUMMSG ? msgmask[msg] : 0; }
-    } msgfilter(-1, N_CONNECT, N_SERVINFO, N_INITCLIENT, N_WELCOME, N_MAPCHANGE, N_SERVMSG, N_DAMAGE, N_HITPUSH, N_SHOTFX, N_EXPLODEFX, N_DIED, N_SPAWNSTATE, N_FORCEDEATH, N_TEAMINFO, N_ITEMACC, N_ITEMSPAWN, N_TIMEUP, N_CDIS, N_CURRENTMASTER, N_PONG, N_RESUME, N_BASESCORE, N_BASEINFO, N_BASEREGEN, N_ANNOUNCE, N_SENDDEMOLIST, N_SENDDEMO, N_DEMOPLAYBACK, N_SENDMAP, N_DROPFLAG, N_SCOREFLAG, N_RETURNFLAG, N_RESETFLAG, N_INVISFLAG, N_CLIENT, N_AUTHCHAL, N_INITAI, N_EXPIRETOKENS, N_DROPTOKENS, N_STEALTOKENS, N_DEMOPACKET,
-                -2, N_REMIP, N_NEWMAP, N_GETMAP, N_SENDMAP, N_CLIPBOARD,
-                -3, N_EDITENT, N_EDITF, N_EDITT, N_EDITM, N_FLIP, N_COPY, N_PASTE, N_ROTATE, N_REPLACE, N_DELCUBE, N_EDITVAR, N_EDITVSLOT, N_UNDO, N_REDO,
-                -4, N_POS, NUMMSG),
-      connectfilter(-1, N_CONNECT, -2, N_AUTHANS, -3, N_PING, NUMMSG);
-
     int checktype(int type, clientinfo *ci)
     {
         if(ci)
@@ -1571,17 +1501,6 @@ namespace server
         return type;
     }
 
-    struct worldstate
-    {
-        int uses, len;
-        uchar *data;
-
-        worldstate() : uses(0), len(0), data(NULL) {}
-
-        void setup(int n) { len = n; data = new uchar[n]; }
-        void cleanup() { DELETEA(data); len = 0; }
-        bool contains(const uchar *p) const { return p >= data && p < &data[len]; }
-    };
     vector<worldstate> worldstates;
     bool reliablemessages = false;
 
@@ -2553,16 +2472,6 @@ namespace server
         sendf(-1, 1, "ri3", N_SPECTATOR, ci->clientnum, 1);
     }
 
-    struct crcinfo
-    {
-        int crc, matches;
-
-        crcinfo() {}
-        crcinfo(int crc, int matches) : crc(crc), matches(matches) {}
-
-        static bool compare(const crcinfo &x, const crcinfo &y) { return x.matches > y.matches; }
-    };
-
     VAR(modifiedmapspectator, 0, 1, 2);
 
     void checkmaps(int req = -1)
@@ -2767,8 +2676,7 @@ namespace server
         loopv(clients) if(clients[i]->authreq == id) return clients[i];
         return NULL;
     }
-
-
+    
     void authfailed(clientinfo *ci)
     {
         if(!ci) return;
