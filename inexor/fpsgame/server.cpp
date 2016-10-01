@@ -2,6 +2,11 @@
 #include "inexor/util/random.hpp"
 #include "inexor/util/Logging.hpp"
 
+// new game server
+#include "inexor/server/server.hpp"
+using namespace inexor::server;
+
+
 namespace game
 {
     void parseoptions(vector<const char *> &args)
@@ -19,14 +24,10 @@ namespace game
 
 extern ENetAddress masteraddress;
 
+
 namespace server
 {
-    struct server_entity            // server side version of "entity" type
-    {
-        int type;
-        int spawntime;
-        bool spawned;
-    };
+
 
     static const int DEATHMILLIS = 300;
 
