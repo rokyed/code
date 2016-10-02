@@ -175,7 +175,10 @@ namespace game
     int lastping = 0;
 
     bool connected = false, remote = false, demoplayback = false, gamepaused = false, teamspersisted = false;
-    int sessionid = 0, mastermode = MM_OPEN, gamespeed = 100;
+    int sessionid = 0, mastermode = MM_OPEN;
+
+    extern int gamespeed;
+    
     string servinfo = "", servauth = "", connectpass = "";
 
     /// push dead bodies (?)
@@ -1007,14 +1010,14 @@ namespace game
     ICOMMAND(gamespeed, "iN$", (int *val, int *numargs, ident *id),
     {
         if(*numargs > 0) changegamespeed(clampvar(id, *val, 10, 1000));
-        else if(*numargs < 0) intret(gamespeed);
-        else printvar(id, gamespeed);
+        else if(*numargs < 0) intret(inexor::server::gamespeed);
+        else printvar(id, inexor::server::gamespeed);
     });
 
 	/// scale time with gametime
     int scaletime(int t) 
 	{
-		return t*gamespeed;
+		return t*inexor::server::gamespeed;
 	}
 
     /// collect client to server messages conveniently
@@ -1125,7 +1128,7 @@ namespace game
         sendcrc = senditemstoserver = false;
         demoplayback = false;
         gamepaused = false;
-        gamespeed = 100;
+        inexor::server::gamespeed = 100;
         clearclients(false);
         if(cleanup)
         {
@@ -1546,7 +1549,7 @@ namespace game
             {
                 int val = clamp(getint(p), 10, 1000), cn = getint(p);
                 fpsent *a = cn >= 0 ? getclient(cn) : NULL;
-                if(!demopacket) gamespeed = val;
+                if(!demopacket) inexor::server::gamespeed = val;
                 extern SharedVar<int> slowmosp;
                 if(m_sp && slowmosp) break;
                 if(a) spdlog::get("gameplay")->info() << colorname(a) << " set gamespeed to " << val;

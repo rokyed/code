@@ -1,5 +1,6 @@
 // creation of scoreboard
 #include "inexor/fpsgame/game.hpp"
+#include "inexor/server/server_data_structures.hpp"
 
 namespace game
 {
@@ -152,7 +153,7 @@ namespace game
         const char *mname = getclientmap();
         g.text(mname[0] ? mname : "[new map]", 0xFFFF80);
         extern int gamespeed;
-        if(gamespeed != 100) { g.separator(); g.textf("%d.%02dx", 0xFFFF80, NULL, gamespeed/100, gamespeed%100); }
+        if(inexor::server::gamespeed != 100) { g.separator(); g.textf("%d.%02dx", 0xFFFF80, NULL, inexor::server::gamespeed/100, inexor::server::gamespeed%100); }
         if(m_timed && mname[0] && (maplimit >= 0 || intermission))
         {
             g.separator();

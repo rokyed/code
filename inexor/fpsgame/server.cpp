@@ -5,7 +5,6 @@
 #include "inexor/server/server.hpp"
 using namespace inexor::server;
 
-
 namespace game
 {
     void parseoptions(vector<const char *> &args)
@@ -23,22 +22,8 @@ namespace game
 
 extern ENetAddress masteraddress;
 
-
 namespace server
 {
-    struct clientinfo;
-    int gamemode = 0;
-
-    struct gameevent
-    {
-        virtual ~gameevent() {}
-
-        virtual bool flush(clientinfo *ci, int fmillis);
-        virtual void process(clientinfo *ci) {}
-
-        virtual bool keepable() const { return false; }
-    };
-
     struct timedevent : gameevent
     {
         int millis;
@@ -77,268 +62,7 @@ namespace server
         void process(clientinfo *ci);
     };
 
-    struct gamestate : fpsstate
-    {
-        vec o;
-        int state, editstate;
-        int lastdeath, deadflush, lastspawn, lifesequence;
-        int lastshot;
-        projectilestate<8> rockets, grenades, bombs;
-        int frags, flags, deaths, teamkills, 
-            shotdamage, //all damage your shots could have made
-            damage, tokens;
-        int lasttimeplayed, timeplayed;
-        float effectiveness;
 
-        gamestate() : state(CS_DEAD), editstate(CS_DEAD), lifesequence(0) {}
-
-        bool isalive(int gamemillis)
-        {
-            return state==CS_ALIVE || (state==CS_DEAD && gamemillis - lastdeath <= DEATHMILLIS);
-        }
-
-        bool waitexpired(int gamemillis)
-        {
-            return gamemillis - lastshot >= gunwait;
-        }
-
-        void reset()
-        {
-            if(state!=CS_SPECTATOR) state = editstate = CS_DEAD;
-            maxhealth = 100;
-            rockets.reset();
-            grenades.reset();
-            bombs.reset();
-
-            timeplayed = 0;
-            effectiveness = 0;
-            frags = flags = deaths = teamkills = shotdamage = damage = tokens = 0;
-
-            lastdeath = 0;
-
-            respawn();
-        }
-
-        void respawn()
-        {
-            fpsstate::respawn();
-            o = vec(-1e10f, -1e10f, -1e10f);
-            deadflush = 0;
-            lastspawn = -1;
-            lastshot = 0;
-            tokens = 0;
-        }
-
-        void reassign()
-        {
-            respawn();
-            rockets.reset();
-            grenades.reset();
-            bombs.reset();
-        }
-
-        void setbackupweapon(int weapon)
-        {
-        	fpsstate::backupweapon = weapon;
-        }
-
-    };
-
-    struct savedscore
-    {
-        uint ip;
-        string name;
-        int maxhealth, frags, flags, deaths, teamkills, shotdamage, damage;
-        int timeplayed;
-        float effectiveness;
-        int bombradius;
-        int bombdelay;
-
-        void save(gamestate &gs)
-        {
-            maxhealth = gs.maxhealth;
-            frags = gs.frags;
-            flags = gs.flags;
-            deaths = gs.deaths;
-            teamkills = gs.teamkills;
-            shotdamage = gs.shotdamage;
-            damage = gs.damage;
-            timeplayed = gs.timeplayed;
-            effectiveness = gs.effectiveness;
-            bombradius = gs.bombradius;
-            bombdelay = gs.bombdelay;
-        }
-
-        void restore(gamestate &gs)
-        {
-            if(gs.health==gs.maxhealth) gs.health = maxhealth;
-            gs.maxhealth = maxhealth;
-            gs.frags = frags;
-            gs.flags = flags;
-            gs.deaths = deaths;
-            gs.teamkills = teamkills;
-            gs.shotdamage = shotdamage;
-            gs.damage = damage;
-            gs.timeplayed = timeplayed;
-            gs.effectiveness = effectiveness;
-            gs.bombradius = bombradius;
-            gs.bombdelay = bombdelay;
-        }
-    };
-
-    extern int gamemillis, nextexceeded;
-
-    struct clientinfo
-    {
-        int clientnum, ownernum, connectmillis, sessionid, overflow;
-        string name, tag, team, mapvote;
-        int playermodel;
-        int fov;
-        int modevote;
-        int privilege;
-        bool connected, local, timesync;
-        int gameoffset, lastevent, pushed, exceeded;
-        gamestate state;
-        vector<gameevent *> events;
-        vector<uchar> position, messages;
-        uchar *wsdata;
-        int wslen;
-        vector<clientinfo *> bots;
-        int ping, aireinit;
-        string clientmap;
-        int mapcrc;
-        bool warned, gameclip;
-        ENetPacket *getdemo, *getmap, *clipboard;
-        int lastclipboard, needclipboard;
-        int connectauth;
-        uint authreq;
-        string authname, authdesc;
-        void *authchallenge;
-        int authkickvictim;
-        char *authkickreason;
-
-        clientinfo() : getdemo(NULL), getmap(NULL), clipboard(NULL), authchallenge(NULL), authkickreason(NULL) { reset(); }
-        ~clientinfo() { events.deletecontents(); cleanclipboard(); cleanauth(); }
-
-        void addevent(gameevent *e)
-        {
-            if(state.state==CS_SPECTATOR || events.length()>100) delete e;
-            else events.add(e);
-        }
-
-        enum
-        {
-            PUSHMILLIS = 3000
-        };
-
-        int calcpushrange()
-        {
-            ENetPeer *peer = getclientpeer(ownernum);
-            return PUSHMILLIS + (peer ? peer->roundTripTime + peer->roundTripTimeVariance : ENET_PEER_DEFAULT_ROUND_TRIP_TIME);
-        }
-
-        bool checkpushed(int millis, int range)
-        {
-            return millis >= pushed - range && millis <= pushed + range;
-        }
-
-        void scheduleexceeded()
-        {
-            if(state.state!=CS_ALIVE || !exceeded) return;
-            int range = calcpushrange();
-            if(!nextexceeded || exceeded + range < nextexceeded) nextexceeded = exceeded + range;
-        }
-
-        void setexceeded()
-        {
-            if(state.state==CS_ALIVE && !exceeded && !checkpushed(gamemillis, calcpushrange())) exceeded = gamemillis;
-            scheduleexceeded(); 
-        }
-            
-        void setpushed()
-        {
-            pushed = max(pushed, gamemillis);
-            if(exceeded && checkpushed(exceeded, calcpushrange())) exceeded = 0;
-        }
-        
-        bool checkexceeded()
-        {
-            return state.state==CS_ALIVE && exceeded && gamemillis > exceeded + calcpushrange();
-        }
-
-        void mapchange()
-        {
-            mapvote[0] = 0;
-            modevote = INT_MAX;
-            state.reset();
-            events.deletecontents();
-            overflow = 0;
-            timesync = false;
-            lastevent = 0;
-            exceeded = 0;
-            pushed = 0;
-            clientmap[0] = '\0';
-            mapcrc = 0;
-            warned = false;
-            gameclip = false;
-        }
-
-        void reassign()
-        {
-            state.reassign();
-            events.deletecontents();
-            timesync = false;
-            lastevent = 0;
-        }
-
-        void cleanclipboard(bool fullclean = true)
-        {
-            if(clipboard) { if(--clipboard->referenceCount <= 0) enet_packet_destroy(clipboard); clipboard = NULL; }
-            if(fullclean) lastclipboard = 0;
-        }
-
-        void cleanauthkick()
-        {
-            authkickvictim = -1;
-            DELETEA(authkickreason);
-        }
-
-        void cleanauth(bool full = true)
-        {
-            authreq = 0;
-            if(authchallenge) { freechallenge(authchallenge); authchallenge = NULL; }
-            if(full) cleanauthkick();
-        }
-
-        void reset()
-        {
-            name[0] = team[0] = tag[0] = 0;
-            playermodel = -1;
-            fov = 100;
-            privilege = PRIV_NONE;
-            connected = local = false;
-            connectauth = 0;
-            position.setsize(0);
-            messages.setsize(0);
-            ping = 0;
-            aireinit = 0;
-            needclipboard = 0;
-            cleanclipboard();
-            cleanauth();
-            mapchange();
-        }
-
-        int geteventmillis(int servmillis, int clientmillis)
-        {
-            if(!timesync || (events.empty() && state.waitexpired(servmillis)))
-            {
-                timesync = true;
-                gameoffset = servmillis - clientmillis;
-                return servmillis;
-            }
-            else return gameoffset + clientmillis;
-        }
-    };
 
     namespace aiman
     {
@@ -354,24 +78,10 @@ namespace server
         extern void changeteam(clientinfo *ci);
     }
 
-    #define MM_MODE 0xF
-    #define MM_AUTOAPPROVE 0x1000
-    #define MM_PRIVSERV (MM_MODE | MM_AUTOAPPROVE)
-    #define MM_PUBSERV ((1<<MM_OPEN) | (1<<MM_VETO))
-    #define MM_COOPSERV (MM_AUTOAPPROVE | MM_PUBSERV | (1<<MM_LOCKED))
 
-    bool notgotitems = true;        // true when map has changed and waiting for clients to send item
-    int gamemillis = 0, gamelimit = 0, nextexceeded = 0, gamespeed = 100;
     bool gamepaused = false, teamspersisted = false, shouldstep = true;
 
-    string smapname = "";
-    int interm = 0;
-    enet_uint32 lastsend = 0;
     int mastermode = MM_OPEN, mastermask = MM_PRIVSERV;
-    stream *mapdata = NULL;
-
-    vector<uint> allowedips;
-    vector<ban> bannedips;
 
     void addban(uint ip, int expire)
     {
@@ -424,7 +134,6 @@ namespace server
     };
     int maprotation::exclude = 0;
     vector<maprotation> maprotations;
-    int curmaprotation = 0;
 
     VAR(lockmaprotation, 0, 0, 2);
 
@@ -566,11 +275,7 @@ namespace server
     COMMAND(maprotationreset, "");
     COMMANDN(maprotation, addmaprotations, "ss2V");
 
-    vector<demofile> demos;
-
-    bool demonextmatch = false;
-    stream *demotmp = NULL, *demorecord = NULL, *demoplayback = NULL;
-    int nextplayback = 0, demomillis = 0;
+    stream *demoplayback = NULL;
 
     VAR(maxdemos, 0, 5, 25);
     VAR(maxdemosize, 0, 16, 31);
@@ -615,8 +320,6 @@ namespace server
     COMMAND(teamkillkickreset, "");
     COMMANDN(teamkillkick, addteamkillkick, "sii");
 
-    vector<teamkillinfo> teamkills;
-    bool shouldcheckteamkills = false;
 
     void addteamkill(clientinfo *actor, clientinfo *victim, int n)
     {
@@ -661,10 +364,6 @@ namespace server
         return bots.inrange(n) ? bots[n] : NULL;
     }
 
-    uint mcrc = 0;
-    vector<entity> ments;
-    vector<server_entity> sents;
-    vector<savedscore> scores;
 
     int msgsizelookup(int msg)
     {
@@ -760,39 +459,6 @@ namespace server
         formatstring(cname[cidx], ci->state.aitype == AI_NONE ? "%s %s(%d)%s" : "%s %s[%d]%s", name, COL_MAGENTA, ci->clientnum, COL_WHITE);
         return cname[cidx];
     }
-
-    struct servmode
-    {
-        virtual ~servmode() {}
-
-        virtual void entergame(clientinfo *ci) {}
-        virtual void leavegame(clientinfo *ci, bool disconnecting = false) {}
-        virtual void connected(clientinfo *ci) {}
-
-        virtual void moved(clientinfo *ci, const vec &oldpos, bool oldclip, const vec &newpos, bool newclip) {}
-        virtual bool canspawn(clientinfo *ci, bool connecting = false) { return true; }
-        virtual void spawned(clientinfo *ci) {}
-        virtual int fragvalue(clientinfo *victim, clientinfo *actor)
-        {
-            if(victim==actor || isteam(victim->team, actor->team)) return -1;
-            return 1;
-        }
-        virtual bool canhit(clientinfo *victim, clientinfo *actor) { return true; }
-        virtual void died(clientinfo *victim, clientinfo *actor) {}
-        virtual bool canchangeteam(clientinfo *ci, const char *oldteam, const char *newteam) { return true; }
-        virtual void changeteam(clientinfo *ci, const char *oldteam, const char *newteam) {}
-        virtual void initclient(clientinfo *ci, packetbuf &p, bool connecting) {}
-        virtual void update() {}
-        virtual void updatelimbo() {}
-        virtual void cleanup() {}
-        virtual void setup() {}
-        virtual void newmap() {}
-        virtual void intermission() {}
-        virtual bool hidefrags() { return false; }
-        virtual int getteamscore(const char *team) { return 0; }
-        virtual void getteamscores(vector<teamscore> &scores) {}
-        virtual bool extinfoteam(const char *team, ucharbuf &p) { return false; }
-    };
 
     #define SERVMODE 1
     #include "inexor/fpsgame/capture.hpp"
@@ -1231,9 +897,9 @@ namespace server
     void changegamespeed(int val, clientinfo *ci = NULL)
     {
         val = clamp(val, 10, 1000);
-        if(gamespeed==val) return;
-        gamespeed = val;
-        sendf(-1, 1, "riii", N_GAMESPEED, gamespeed, ci ? ci->clientnum : -1);
+        if(inexor::server::gamespeed==val) return;
+        inexor::server::gamespeed = val;
+        sendf(-1, 1, "riii", N_GAMESPEED, inexor::server::gamespeed, ci ? ci->clientnum : -1);
     }
 
     void forcegamespeed(int speed)
@@ -1241,7 +907,7 @@ namespace server
         changegamespeed(speed);
     }
 
-    int scaletime(int t) { return t*gamespeed; }
+    int scaletime(int t) { return t*inexor::server::gamespeed; }
 
     void persistteams(bool val)
     {
@@ -1782,10 +1448,10 @@ namespace server
             putint(p, 1);
             putint(p, -1);
         }
-        if(gamespeed != 100)
+        if(inexor::server::gamespeed != 100)
         {
             putint(p, N_GAMESPEED);
-            putint(p, gamespeed);
+            putint(p, inexor::server::gamespeed);
             putint(p, -1);
         }
         if(m_teammode)
@@ -2332,12 +1998,6 @@ namespace server
         gamestate &gs = ci->state;
         if(m_mp(gamemode) && !gs.isalive(gamemillis)) return;
         pickup(ent, ci->clientnum);
-    }
-
-    bool gameevent::flush(clientinfo *ci, int fmillis)
-    {
-        process(ci);
-        return true;
     }
 
     bool timedevent::flush(clientinfo *ci, int fmillis)
@@ -3734,16 +3394,16 @@ namespace server
         }
 
         putint(p, numclients(-1, false, true));
-        putint(p, gamepaused || gamespeed != 100 ? 7 : 5);                   // number of attrs following
+        putint(p, gamepaused || inexor::server::gamespeed != 100 ? 7 : 5);                   // number of attrs following
         putint(p, PROTOCOL_VERSION);    // generic attributes, passed back below
         putint(p, gamemode);
         putint(p, m_timed ? max((gamelimit - gamemillis)/1000, 0) : 0);
         putint(p, maxclients);
         putint(p, serverpass[0] ? MM_PASSWORD : (!m_mp(gamemode) ? MM_PRIVATE : (mastermode || mastermask&MM_AUTOAPPROVE ? mastermode : MM_AUTH)));
-        if(gamepaused || gamespeed != 100)
+        if(gamepaused || inexor::server::gamespeed != 100)
         {
             putint(p, gamepaused ? 1 : 0);
-            putint(p, gamespeed);
+            putint(p, inexor::server::gamespeed);
         }
         sendstring(smapname, p);
         sendstring(serverdesc, p);

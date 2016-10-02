@@ -5,7 +5,7 @@
 
 // experimental
 #include "inexor/server/server_data_structures.hpp"
-using namespace inexor::server;
+//using namespace inexor::server;
 
 #ifdef SERVMODE
 
