@@ -6,6 +6,7 @@
 #include "inexor/fpsgame/game.hpp"
 #include "inexor/filesystem/mediadirs.hpp"
 #include "inexor/util/Logging.hpp"
+#include "inexor/server/server.hpp"
 
 using namespace inexor::filesystem;
 using namespace inexor::sound;
@@ -761,7 +762,7 @@ namespace game
 
     void forceintermission()
     {
-        if(!remote && !hasnonlocalclients()) server::startintermission();
+        if(!remote && !hasnonlocalclients()) inexor::server::startintermission();
         else addmsg(N_FORCEINTERMISSION, "r");
     }
 

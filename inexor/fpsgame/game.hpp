@@ -1327,8 +1327,6 @@ namespace server
 {
     extern const char *modename(int n, const char *unknown = "unknown");
     extern const char *mastermodename(int n, const char *unknown = "unknown");
-    extern void startintermission();
-    extern void forceintermission();
     extern void stopdemo();
     extern void forcemap(const char *map, int mode);
     extern void forcepaused(bool paused);
@@ -1339,6 +1337,15 @@ namespace server
     extern bool serveroption(const char *arg);
     extern bool delayspawn(int type);
 }
+
+namespace inexor {
+namespace server {
+
+    extern void startintermission();
+    extern void forceintermission();
+
+};
+};
 
 #endif /// __GAME_H__
 

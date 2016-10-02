@@ -24,46 +24,6 @@ extern ENetAddress masteraddress;
 
 namespace server
 {
-    struct timedevent : gameevent
-    {
-        int millis;
-
-        bool flush(clientinfo *ci, int fmillis);
-    };
-
-    struct shotevent : timedevent
-    {
-        int id, gun;
-        vec from, to;
-        vector<hitinfo> hits;
-
-        void process(clientinfo *ci);
-    };
-
-    struct explodeevent : timedevent
-    {
-        int id, gun;
-        vector<hitinfo> hits;
-
-        bool keepable() const { return true; }
-
-        void process(clientinfo *ci);
-    };
-
-    struct suicideevent : gameevent
-    {
-        void process(clientinfo *ci);
-    };
-
-    struct pickupevent : gameevent
-    {
-        int ent;
-
-        void process(clientinfo *ci);
-    };
-
-
-
     namespace aiman
     {
         extern void removeai(clientinfo *ci);
@@ -77,10 +37,8 @@ namespace server
         extern void addclient(clientinfo *ci);
         extern void changeteam(clientinfo *ci);
     }
-
-
+    
     bool gamepaused = false, teamspersisted = false, shouldstep = true;
-
     int mastermode = MM_OPEN, mastermask = MM_PRIVSERV;
 
     void addban(uint ip, int expire)
@@ -94,7 +52,6 @@ namespace server
         bannedips.add(b);
     }
 
-    vector<clientinfo *> connects, clients, bots;
 
     void kickclients(uint ip, clientinfo *actor = NULL, int priv = PRIV_NONE)
     {
@@ -320,22 +277,6 @@ namespace server
     COMMAND(teamkillkickreset, "");
     COMMANDN(teamkillkick, addteamkillkick, "sii");
 
-
-    void addteamkill(clientinfo *actor, clientinfo *victim, int n)
-    {
-        if(!m_timed || actor->state.aitype != AI_NONE || actor->local || actor->privilege || (victim && victim->state.aitype != AI_NONE)) return;
-        shouldcheckteamkills = true;
-        uint ip = getclientip(actor->clientnum);
-        loopv(teamkills) if(teamkills[i].ip == ip) 
-        { 
-            teamkills[i].teamkills += n;
-            return;
-        }
-        teamkillinfo &tk = teamkills.add();
-        tk.ip = ip;
-        tk.teamkills = n;
-    }
-
     void checkteamkills()
     {
         teamkillkick *kick = NULL;
@@ -356,14 +297,6 @@ namespace server
 
     void *newclientinfo() { return new clientinfo; }
     void deleteclientinfo(void *ci) { delete (clientinfo *)ci; }
-
-    clientinfo *getinfo(int n)
-    {
-        if(n < MAXCLIENTS) return (clientinfo *)getclientinfo(n);
-        n -= MAXCLIENTS;
-        return bots.inrange(n) ? bots[n] : NULL;
-    }
-
 
     int msgsizelookup(int msg)
     {
@@ -431,17 +364,6 @@ namespace server
         resetitems();
     }
 
-    int numclients(int exclude = -1, bool nospec = true, bool noai = true, bool priv = false)
-    {
-        int n = 0;
-        loopv(clients) 
-        {
-            clientinfo *ci = clients[i];
-            if(ci->clientnum!=exclude && (!nospec || ci->state.state!=CS_SPECTATOR || (priv && (ci->privilege || ci->local))) && (!noai || ci->state.aitype == AI_NONE)) n++;
-        }
-        return n;
-    }
-
     bool duplicatename(clientinfo *ci, const char *name)
     {
         if(!name) name = ci->name;
@@ -473,37 +395,10 @@ namespace server
     bombservmode bombmode;
     hideandseekservmode hideandseekmode;
 
-    servmode *smode = NULL;
 
     bool canspawnitem(int type) {
     	if(m_bomb) return (type>=I_BOMBS && type<=I_BOMBDELAY);
     	else return !m_noitems && (type>=I_SHELLS && type<=I_QUAD && (!m_noammo || type<I_SHELLS || type>I_CARTRIDGES));
-    }
-
-    int spawntime(int type)
-    {
-        if(m_classicsp) return INT_MAX;
-        int np = numclients(-1, true, false);
-        np = np<3 ? 4 : (np>4 ? 2 : 3);         // spawn times are dependent on number of players
-        int sec = 0;
-        switch(type)
-        {
-            case I_SHELLS:
-            case I_BULLETS:
-            case I_ROCKETS:
-            case I_ROUNDS:
-            case I_GRENADES:
-            case I_CARTRIDGES: sec = np*4; break;
-            case I_BOMBS:
-            case I_BOMBRADIUS: sec = np*9; break;
-            case I_BOMBDELAY: sec = np*7; break;
-            case I_HEALTH: sec = np*5; break;
-            case I_GREENARMOUR: sec = 20; break;
-            case I_YELLOWARMOUR: sec = 30; break;
-            case I_BOOST: sec = 60; break;
-            case I_QUAD: sec = 70; break;
-        }
-        return sec*1000;
     }
 
     bool delayspawn(int type)
@@ -521,20 +416,6 @@ namespace server
         }
     }
  
-    bool pickup(int i, int sender)         // server side item pickup, acknowledge first client that gets it
-    {
-        if((m_timed && gamemillis>=gamelimit) || !sents.inrange(i) || !sents[i].spawned) return false;
-        clientinfo *ci = getinfo(sender);
-        if(!ci || (!ci->local && !ci->state.canpickup(sents[i].type))) return false;
-        sents[i].spawned = false;
-        sents[i].spawntime = spawntime(sents[i].type);
-        sendf(-1, 1, "ri3", N_ITEMACC, i, sender);
-        ci->state.pickup(sents[i].type);
-        return true;
-    }
-
-    static hashset<teaminfo> teaminfos;
-
     void clearteaminfo()
     {
         teaminfos.clear();
@@ -893,14 +774,6 @@ namespace server
     }
 
     bool ispaused() { return gamepaused; }
-
-    void changegamespeed(int val, clientinfo *ci = NULL)
-    {
-        val = clamp(val, 10, 1000);
-        if(inexor::server::gamespeed==val) return;
-        inexor::server::gamespeed = val;
-        sendf(-1, 1, "riii", N_GAMESPEED, inexor::server::gamespeed, ci ? ci->clientnum : -1);
-    }
 
     void forcegamespeed(int speed)
     {
@@ -1755,260 +1628,6 @@ namespace server
             sendservmsgf("%s suggests %s on map %s (select map to vote)", colorname(ci), modename(reqmode), map[0] ? map : "[new map]");
             checkvotes();
         }
-    }
-
-    void checkintermission()
-    {
-        if(gamemillis >= gamelimit && !interm && !m_timeforward)
-        {
-            sendf(-1, 1, "ri2", N_TIMEUP, 0);
-            if(smode) smode->intermission();
-            changegamespeed(100);
-            interm = gamemillis + 10000;
-        }
-    }
-
-    void startintermission()
-    {
-        gamelimit = min(gamelimit, gamemillis);
-        checkintermission();
-    }
-
-    void forceintermission()
-    {
-        if(interm) return;
-        interm = gamemillis + 10000;
-        sendf(-1, 1, "ri2", N_TIMEUP, 0);
-        if(smode) smode->intermission();
-    }
-
-    ///
-    // Checks if the game has ended because only one player is still alive.
-    // It does this by checking if less than 2 players have their state set to alive.
-    // This means, the game will also end if someone is gagging
-    // If only one is still alive this method forces intermission.
-    ///
-    void checklms()
-    {
-        if(m_teammode)
-        {
-            int teamsalive = 0;
-            vector<teamscore> teams;
-            for(int cn=0; cn<clients.length(); cn++)
-            {
-                bool found = false;
-                for(int t=0; t<teams.length(); t++)
-                {
-                    if(strcmp(teams[t].team, clients[cn]->team) == 0)
-                    {
-                        found = true;
-                        if(clients[cn]->state.state == CS_ALIVE) teams[t].score++;
-                        break;
-                    }
-                }
-                if(!found) teams.add(teamscore(clients[cn]->team, (clients[cn]->state.state == CS_ALIVE) ? 1 : 0));
-            }
-            for(int t=0; t<teams.length(); t++)
-            {
-                if(teams[t].score > 0) teamsalive++;
-            }
-            if(teamsalive < 2) startintermission();
-        }
-        else
-        {
-            int plalive = 0;  // Number of players still alive;
-                              // n > 1 Means the game is still running;
-                              // 1 means player x has won;
-                              // n < 1 means that the game should end, but there is now winner (probatly only,
-                              // if the two last players killed them self at the same time)
-            int clfound = -1; // The index of the client whose player is last found as alive, the winner. IF $plalive == 1
-                              // It is currently not used
-            // Get player check if players are alive; if yes set plfound and increase plalive
-            for (int clnum = 0; clnum < clients.length() && plalive < 2; clnum++)
-                if (clients[clnum]->state.state == CS_ALIVE) {
-                    plalive++;
-                    clfound = clnum;
-                }
-            // Stop game if less than 2 players are alive
-            if (plalive < 2) startintermission();
-        }
-    }
-	
-    void dodamage(clientinfo *target, clientinfo *actor, int damage, int gun, const vec &hitpush = vec(0, 0, 0))
-    {
-        if (smode && !smode->canhit(target, actor)) return;
-        gamestate &ts = target->state;
-        ts.dodamage(damage);
-        if(target!=actor && !isteam(target->team, actor->team)) actor->state.damage += damage;
-        sendf(-1, 1, "ri6", N_DAMAGE, target->clientnum, actor->clientnum, damage, ts.armour, ts.health);
-        if(target==actor) target->setpushed();
-        else if(!hitpush.iszero())
-        {
-            ivec v(vec(hitpush).rescale(DNF));
-            sendf(ts.health<=0 ? -1 : target->ownernum, 1, "ri7", N_HITPUSH, target->clientnum, gun, damage, v.x, v.y, v.z);
-            target->setpushed();
-        }
-        if(ts.health<=0)
-        {
-            target->state.deaths++;
-            int fragvalue = smode ? smode->fragvalue(target, actor) : (target==actor || isteam(target->team, actor->team) ? -1 : 1);
-            actor->state.frags += fragvalue;
-            if(fragvalue>0)
-            {
-                int friends = 0, enemies = 0; // note: friends also includes the fragger
-                if(m_teammode) loopv(clients) if(strcmp(clients[i]->team, actor->team)) enemies++; else friends++;
-                else { friends = 1; enemies = clients.length()-1; }
-                actor->state.effectiveness += fragvalue*friends/float(max(enemies, 1));
-            }
-            teaminfo *t = m_teammode ? teaminfos.access(actor->team) : NULL;
-            if(t) t->frags += fragvalue; 
-            sendf(-1, 1, "ri5", N_DIED, target->clientnum, actor->clientnum, actor->state.frags, t ? t->frags : 0);
-            target->position.setsize(0);
-            if(smode) smode->died(target, actor);
-            ts.state = CS_DEAD;
-            ts.lastdeath = gamemillis;
-
-            if (m_lms) checklms(); // Last Man Standing
-            else ts.respawn();
-
-            if(actor!=target && isteam(actor->team, target->team)) 
-            {
-                actor->state.teamkills++;
-                addteamkill(actor, target, 1);
-            }
-
-            ts.deadflush = ts.lastdeath + DEATHMILLIS;
-            // don't issue respawn yet until DEATHMILLIS has elapsed
-            // ts.respawn();
-        }
-    }
-
-    void suicide(clientinfo *ci)
-    {
-        gamestate &gs = ci->state;
-        if(gs.state!=CS_ALIVE) return;
-        int fragvalue = smode ? smode->fragvalue(ci, ci) : -1;
-        ci->state.frags += fragvalue;
-        ci->state.deaths++;
-        teaminfo *t = m_teammode ? teaminfos.access(ci->team) : NULL;
-        if(t) t->frags += fragvalue;
-        sendf(-1, 1, "ri5", N_DIED, ci->clientnum, ci->clientnum, gs.frags, t ? t->frags : 0);
-        ci->position.setsize(0);
-        if(smode) smode->died(ci, NULL);
-        gs.state = CS_DEAD;
-        gs.lastdeath = gamemillis;
-        gs.respawn();
-
-        if (m_lms) checklms();
-    }
-
-    void suicideevent::process(clientinfo *ci)
-    {
-        suicide(ci);
-    }
-
-    void explodeevent::process(clientinfo *ci)
-    {
-        gamestate &gs = ci->state;
-        switch(gun)
-        {
-            case GUN_RL:
-                if(!gs.rockets.remove(id)) return;
-                break;
-
-            case GUN_GL:
-                if(!gs.grenades.remove(id)) return;
-                break;
-
-            case GUN_BOMB:
-                if(!gs.bombs.remove(id)) return;
-                break;
-
-            case GUN_SPLINTER:
-                break;
-
-            default:
-                return;
-        }
-        sendf(-1, 1, "ri4x", N_EXPLODEFX, ci->clientnum, gun, id, ci->ownernum);
-        if(gun==GUN_BOMB && ci->state.ammo[GUN_BOMB] < itemstats[GUN_BOMB].max) ci->state.ammo[GUN_BOMB]++; // add a bomb if the bomb explodes
-        loopv(hits)
-        {
-            hitinfo &h = hits[i];
-            clientinfo *target = getinfo(h.target);
-            if(!target || target->state.state!=CS_ALIVE || h.lifesequence!=target->state.lifesequence || h.dist<0 || h.dist>guns[gun].exprad) continue;
-
-            bool dup = false;
-            loopj(i) if(hits[j].target==h.target) { dup = true; break; }
-            if(dup) continue;
-
-            int damage = guns[gun].damage;
-            if(gs.quadmillis) damage *= 4;
-            damage = int(damage*(1-h.dist/EXP_DISTSCALE/guns[gun].exprad));
-            if(target==ci) damage /= EXP_SELFDAMDIV;
-            dodamage(target, ci, damage, gun, h.dir);
-        }
-    }
-
-    void shotevent::process(clientinfo *ci)
-    {
-        gamestate &gs = ci->state;
-        int wait = millis - gs.lastshot;
-        if(gun!=GUN_SPLINTER &&
-          (!gs.isalive(gamemillis) ||
-           wait<gs.gunwait ||
-           gun<GUN_FIST || gun>GUN_BOMB  ||
-           gs.ammo[gun]<=0 || (guns[gun].range && from.dist(to) > guns[gun].range + 1)))
-            return;
-        if(gun!=GUN_FIST) gs.ammo[gun]--;
-        gs.lastshot = millis;
-        gs.gunwait = guns[gun].attackdelay;
-        sendf(-1, 1, "rii9x", N_SHOTFX, ci->clientnum, gun, id,
-                int(from.x*DMF), int(from.y*DMF), int(from.z*DMF),
-                int(to.x*DMF), int(to.y*DMF), int(to.z*DMF),
-                ci->ownernum);
-        gs.shotdamage += guns[gun].damage*(gs.quadmillis ? 4 : 1)*guns[gun].rays;
-        switch(gun)
-        {
-            case GUN_RL: gs.rockets.add(id); break;
-            case GUN_GL: gs.grenades.add(id); break;
-            case GUN_BOMB: gs.bombs.add(id); break;
-            default:
-            {
-                int totalrays = 0, maxrays = guns[gun].rays;
-                loopv(hits)
-                {
-                    hitinfo &h = hits[i];
-                    clientinfo *target = getinfo(h.target);
-                    if(!target || target->state.state!=CS_ALIVE || h.lifesequence!=target->state.lifesequence || h.rays<1 || h.dist > guns[gun].range + 1) continue;
-
-                    totalrays += h.rays;
-                    if(totalrays>maxrays) continue;
-                    int damage = h.rays*guns[gun].damage;
-                    if(gs.quadmillis) damage *= 4;
-                    dodamage(target, ci, damage, gun, h.dir);
-                }
-                break;
-            }
-        }
-    }
-
-    void pickupevent::process(clientinfo *ci)
-    {
-        gamestate &gs = ci->state;
-        if(m_mp(gamemode) && !gs.isalive(gamemillis)) return;
-        pickup(ent, ci->clientnum);
-    }
-
-    bool timedevent::flush(clientinfo *ci, int fmillis)
-    {
-        if(millis > fmillis) return false;
-        else if(millis >= ci->lastevent)
-        {
-            ci->lastevent = millis;
-            process(ci);
-        }
-        return true;
     }
 
     void clearevent(clientinfo *ci)

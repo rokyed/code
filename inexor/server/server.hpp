@@ -7,6 +7,7 @@
 #define INEXOR_GAME_SERVER_H_
 
 #include "inexor/server/server_data_structures.hpp"
+#include "inexor/server/server_events.hpp"
 
 namespace inexor {
 namespace server {

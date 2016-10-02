@@ -34,12 +34,13 @@ namespace server {
     static bool shouldcheckteamkills = false;
     static uint mcrc = 0;
     static vector<entity> ments;
-
     static int gamemillis = 0;
     static int gamelimit = 0;
     static int nextexceeded = 0;
     static int gamespeed = 100;
     static int gamemode = 0;
+
+    static hashset<teaminfo> teaminfos;
 
     /**
      * server side version of "entity" type
@@ -335,25 +336,7 @@ namespace server {
 
     static vector<savedscore> scores;
 
-    /**
-     *
-     */
-    struct clientinfo;
-
-    struct gameevent
-    {
-        virtual ~gameevent() {}
-
-        virtual bool flush(clientinfo *ci, int fmillis)
-        {
-            process(ci);
-            return true;
-        }
-        virtual void process(clientinfo *ci) {}
-
-        virtual bool keepable() const { return false; }
-    };
-
+    extern struct gameevent;
     
     /**
      *
@@ -510,6 +493,7 @@ namespace server {
         }
     };
 
+    static vector<clientinfo *> connects, clients, bots;
 
     /**
      * 
@@ -546,6 +530,9 @@ namespace server {
         virtual void getteamscores(vector<teamscore> &scores) {}
         virtual bool extinfoteam(const char *team, ucharbuf &p) { return false; }
     };
+
+    static servmode *smode = NULL;
+
 };
 };
 
