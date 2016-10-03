@@ -13,6 +13,7 @@
 #include "inexor/util/Subsystem.hpp"
 #include "inexor/rpc/SharedTree.hpp"
 #include "inexor/rpc/RpcSubsystem.hpp"
+#include "inexor/rpc/RpcTestClient.hpp"
 
 
 SUBSYSTEM_REGISTER(rpc, inexor::rpc::RpcSubsystem<{{namespace}}::TreeNodeChanged, {{namespace}}::TreeService::AsyncService>); // needs to be in no namespace!
@@ -41,7 +42,9 @@ void testrpcclient()
 }
 
 // We currently use a static function to signal the subsystem changes (since we cant yet SUBSYSTEM_GET it) .. so this is a temporary workaround.
-std::vector<RpcServer<TreeNodeChanged, TreeService::AsyncService>::clienthandler> RpcServer<TreeNodeChanged, TreeService::AsyncService>::clients;
+template <>
+std::vector<RpcServer<TreeNodeChanged, TreeService::AsyncService>::clienthandler> RpcServer<TreeNodeChanged, TreeService::AsyncService>::clients = {};
+
 
 void set_on_change_functions()
 {
