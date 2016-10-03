@@ -10,7 +10,7 @@ string(REPLACE " " ";" PATHS_LIST ${PATHS_TO_REMOVE})
 
 foreach(cfile ${PATHS_LIST})
 message(STATUS "Removing ${cfile}")
-  if (EXISTS ${cfile})
+  if (EXISTS "${cfile}")
      file(REMOVE_RECURSE ${cfile})
   endif()
 endforeach()
