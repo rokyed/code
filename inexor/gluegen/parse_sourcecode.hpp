@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <string>
+#include <sstream>
 
 #include "inexor/gluegen/tree.hpp"
 

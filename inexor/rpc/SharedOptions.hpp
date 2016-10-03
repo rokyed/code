@@ -16,7 +16,7 @@ class fu_cast
 {
 public:
     fu_cast(const char *input) {}
-    operator S() { return *nullptr; }
+    operator S() { return 0; }
 };
 
 class Range : public SharedOption

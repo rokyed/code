@@ -1,8 +1,6 @@
 #include <iostream>
 #include <set>
-#include <sstream>
 #include <vector>
-#include <string>
 
 #include <boost/algorithm/string.hpp>
 
@@ -212,7 +210,9 @@ void handle_so_constructors(optionclass &opt, const xml_node &compound_xml)
         std::cout << "arg.name: " << arg.name << std::endl;
         if(opt.hasdefaultvals)
         {
-            arg.default_value = parse_bracket(arg.default_value, string(), string()); //fu_cast<float>("{{index}}") -> "{{index}}"
+            string l;
+            string r;
+            arg.default_value = parse_bracket(arg.default_value, l, r); //fu_cast<float>("{{index}}") -> "{{index}}"
             remove_quotes(arg.default_value);
             // TODO need escaping!
         }
@@ -351,7 +351,8 @@ void handle_shared_var(const xml_node var_xml, std::vector<ShTreeNode> &tree, st
     {
         ShTreeNode::shared_option_arg option;
 
-        string constructor_argsstr = parse_bracket(raw_str, option.class_name, string());
+        string r;
+        string constructor_argsstr = parse_bracket(raw_str, option.class_name, r);
         option.constructor_args = tokenize_arg_list(constructor_argsstr);
 
 
