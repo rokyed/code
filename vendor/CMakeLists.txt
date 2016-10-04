@@ -308,7 +308,7 @@ endfunction()
 #### Rapidjson
 
 find_path(RAPIDJSON_INCLUDE_DIRS rapidjson/rapidjson.h)
-function(require_rapidjson)
+function(require_rapidjson targ)
   message(STATUS "Configuring ${targ} with rapidjson")
 
   add_definitions(-DRAPIDJSON_SSE2)
