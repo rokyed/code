@@ -77,4 +77,3 @@ public:
 //    const char *cpp_receive_template = "da";
 //};
 
-//} } // ns inexor::rpc
