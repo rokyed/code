@@ -2,6 +2,9 @@
 #include "inexor/fpsgame/game.hpp"
 #include "inexor/util/Logging.hpp"
 
+#include "inexor/server/server_assets.hpp"
+using namespace inexor::server;
+
 using namespace inexor::sound;
 
 extern int physsteps;
@@ -420,7 +423,7 @@ namespace game
         spdlog::get("gameplay")->info() << "--- single player time score: ---";
         int pen, score = 0;
 
-        pen = ((lastmillis-maptime)*100)/game::scaletime(1000); score += pen;
+        pen = ((lastmillis-maptime)*100)/inexor::server::scaletime(1000); score += pen;
         if(pen)
             spdlog::get("gameplay")->info("time taken: {0} seconds ({1} simulated seconds)", pen, ((lastmillis-maptime)/1000));
 

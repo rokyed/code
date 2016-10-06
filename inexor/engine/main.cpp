@@ -7,6 +7,9 @@
 #include "inexor/crashreporter/CrashReporter.hpp"
 #include "inexor/util/Logging.hpp"
 
+#include "inexor/server/server_assets.hpp"
+using namespace inexor::server;
+
 /// extern functions and data here
 
 namespace inexor {
@@ -1463,7 +1466,7 @@ int main(int argc, char **argv)
         limitfps(millis, totalmillis);
         elapsedtime = millis - totalmillis;
         static int timeerr = 0;
-        int scaledtime = game::scaletime(elapsedtime) + timeerr;
+        int scaledtime = scaletime(elapsedtime) + timeerr;
         curtime = scaledtime/100;
         timeerr = scaledtime%100;
         if(!multiplayer(false) && curtime>200) curtime = 200;

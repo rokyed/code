@@ -7,10 +7,12 @@
 #include "inexor/filesystem/mediadirs.hpp"
 #include "inexor/util/Logging.hpp"
 #include "inexor/server/server.hpp"
+#include "inexor/server/server_assets.hpp"
 
 using namespace inexor::filesystem;
 using namespace inexor::sound;
 using namespace inexor::util;
+using namespace inexor::server;
 
 namespace game
 {
@@ -178,7 +180,7 @@ namespace game
     bool connected = false, remote = false, demoplayback = false, gamepaused = false, teamspersisted = false;
     int sessionid = 0, mastermode = MM_OPEN;
 
-    extern int gamespeed;
+    //extern int gamespeed;
     
     string servinfo = "", servauth = "", connectpass = "";
 
@@ -449,7 +451,7 @@ namespace game
 	/// return master mode 
     ICOMMAND(getmastermode, "", (), intret(mastermode));
 	/// return master mode name
-    ICOMMAND(mastermodename, "i", (int *mm), result(server::mastermodename(*mm, "")));
+    ICOMMAND(mastermodename, "i", (int *mm), result(mastermodename(*mm, "")));
 
 	/// check if this cn is spectator
     bool isspectator(int cn)
@@ -668,7 +670,7 @@ namespace game
     {
         if(multiplayer(false) && !m_mp(mode))
         {
-            spdlog::get("gameplay")->error("mode {0} ({1}) not supported in multiplayer", server::modename(mode), mode);
+            spdlog::get("gameplay")->error("mode {0} ({1}) not supported in multiplayer", modename(mode), mode);
             loopi(NUMGAMEMODES) if(m_mp(STARTGAMEMODE + i)) { mode = STARTGAMEMODE + i; break; }
         }
 
@@ -689,7 +691,7 @@ namespace game
     {
         if(multiplayer(false) && !m_mp(mode))
         {
-            spdlog::get("gameplay")->error("mode {0} ({1}) not supported in multiplayer", server::modename(mode), mode);
+            spdlog::get("gameplay")->error("mode {0} ({1}) not supported in multiplayer", modename(mode), mode);
             intret(0);
             return;
         }
@@ -762,7 +764,7 @@ namespace game
 
     void forceintermission()
     {
-        if(!remote && !hasnonlocalclients()) inexor::server::startintermission();
+        if(!remote && !hasnonlocalclients()) startintermission();
         else addmsg(N_FORCEINTERMISSION, "r");
     }
 
@@ -1011,15 +1013,9 @@ namespace game
     ICOMMAND(gamespeed, "iN$", (int *val, int *numargs, ident *id),
     {
         if(*numargs > 0) changegamespeed(clampvar(id, *val, 10, 1000));
-        else if(*numargs < 0) intret(inexor::server::gamespeed);
-        else printvar(id, inexor::server::gamespeed);
+        else if(*numargs < 0) intret(gamespeed);
+        else printvar(id, gamespeed);
     });
-
-	/// scale time with gametime
-    int scaletime(int t) 
-	{
-		return t*inexor::server::gamespeed;
-	}
 
     /// collect client to server messages conveniently
     vector<uchar> messages;
@@ -1074,7 +1070,7 @@ namespace game
             }
             va_end(args);
         }
-        int num = nums || numf ? 0 : numi, msgsize = server::msgsizelookup(type);
+        int num = nums || numf ? 0 : numi, msgsize = msgsizelookup(type);
         if(msgsize && num!=msgsize) { fatal("inconsistent msg size for %d (%d != %d)", type, num, msgsize); }
         if(reliable) messagereliable = true;
         if(mcn != messagecn)
@@ -1129,7 +1125,7 @@ namespace game
         sendcrc = senditemstoserver = false;
         demoplayback = false;
         gamepaused = false;
-        inexor::server::gamespeed = 100;
+        gamespeed = 100;
         clearclients(false);
         if(cleanup)
         {
@@ -1550,7 +1546,7 @@ namespace game
             {
                 int val = clamp(getint(p), 10, 1000), cn = getint(p);
                 fpsent *a = cn >= 0 ? getclient(cn) : NULL;
-                if(!demopacket) inexor::server::gamespeed = val;
+                if(!demopacket) gamespeed = val;
                 extern SharedVar<int> slowmosp;
                 if(m_sp && slowmosp) break;
                 if(a) spdlog::get("gameplay")->info() << colorname(a) << " set gamespeed to " << val;
@@ -2140,7 +2136,7 @@ namespace game
                 if(mm != mastermode)
                 {
                     mastermode = mm;
-                    spdlog::get("gameplay")->info("mastermode is {0} ({1})", server::mastermodename(mastermode), mastermode);
+                    spdlog::get("gameplay")->info("mastermode is {0} ({1})", mastermodename(mastermode), mastermode);
                 }
                 break;
             }
@@ -2148,7 +2144,7 @@ namespace game
             case N_MASTERMODE:
             {
                 mastermode = getint(p);
-                spdlog::get("gameplay")->info("mastermode is {0} ({1})", server::mastermodename(mastermode), mastermode);
+                spdlog::get("gameplay")->info("mastermode is {0} ({1})", mastermodename(mastermode), mastermode);
                 break;
             }
 

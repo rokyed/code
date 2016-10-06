@@ -40,29 +40,7 @@ namespace server
     
     bool gamepaused = false, teamspersisted = false, shouldstep = true;
     int mastermode = MM_OPEN, mastermask = MM_PRIVSERV;
-
-    void addban(uint ip, int expire)
-    {
-        allowedips.removeobj(ip);
-        ban b;
-        b.time = totalmillis;
-        b.expire = totalmillis + expire;
-        b.ip = ip;
-        loopv(bannedips) if(bannedips[i].expire - b.expire > 0) { bannedips.insert(i, b); return; }
-        bannedips.add(b);
-    }
-
-
-    void kickclients(uint ip, clientinfo *actor = NULL, int priv = PRIV_NONE)
-    {
-        loopvrev(clients)
-        {
-            clientinfo &c = *clients[i];
-            if(c.state.aitype != AI_NONE || c.privilege >= PRIV_ADMIN || c.local) continue;
-            if(actor && ((c.privilege > priv && !actor->local) || c.clientnum == actor->clientnum)) continue;
-            if(getclientip(c.clientnum) == ip) disconnect_client(c.clientnum, DISC_KICK);
-        }
-    }
+    
  
     struct maprotation
     {
@@ -135,67 +113,6 @@ namespace server
         }
         return best;
     }
-
-    bool searchmodename(const char *haystack, const char *needle)
-    {
-        if(!needle[0]) return true;
-        do
-        {
-            if(needle[0] != '.')
-            {
-                haystack = strchr(haystack, needle[0]);
-                if(!haystack) break;
-                haystack++;
-            }
-            const char *h = haystack, *n = needle+1;
-            for(; *h && *n; h++)
-            {
-                if(*h == *n) n++;
-                else if(*h != ' ') break; 
-            }
-            if(!*n) return true;
-            if(*n == '.') return !*h;
-        } while(needle[0] != '.');
-        return false;
-    }
-
-    int genmodemask(vector<char *> &modes)
-    {
-        long modemask = 0;
-        loopv(modes)
-        {
-            const char *mode = modes[i];
-            int op = mode[0];
-            switch(mode[0])
-            {
-                case '*':
-                    modemask |= (long)1<<NUMGAMEMODES;
-                    loopk(NUMGAMEMODES) if(m_checknot(k+STARTGAMEMODE, M_DEMO|M_EDIT|M_LOCAL)) modemask |= 1<<k;
-                    continue;
-                case '!':
-                    mode++;
-                    if(mode[0] != '?') break;
-                case '?':
-                    mode++;
-                    loopk(NUMGAMEMODES) if(searchmodename(gamemodes[k].name, mode))
-                    {
-                        if(op == '!') modemask &= ~(1<<k);
-                        else modemask |= 1<<k;
-                    }
-                    continue;
-            }
-            int modenum = INT_MAX;
-            if(isdigit(mode[0])) modenum = atoi(mode);
-            else loopk(NUMGAMEMODES) if(searchmodename(gamemodes[k].name, mode)) { modenum = k+STARTGAMEMODE; break; }
-            if(!m_valid(modenum)) continue;
-            switch(op)
-            {
-                case '!': modemask &= ~(1 << (modenum - STARTGAMEMODE)); break;
-                default: modemask |= 1 << (modenum - STARTGAMEMODE); break;
-            }
-        }
-        return modemask;
-    }
          
     bool addmaprotation(int modemask, const char *map)
     {
@@ -256,80 +173,8 @@ namespace server
     SVAR(servermotd, "");
     VAR(spectatemodifiedmap, 0, 1, 1);
 
-    vector<teamkillkick> teamkillkicks;
-
-    void teamkillkickreset()
-    {
-        teamkillkicks.setsize(0);
-    }
-
-    void addteamkillkick(char *modestr, int *limit, int *ban)
-    {
-        vector<char *> modes;
-        explodelist(modestr, modes);
-        teamkillkick &kick = teamkillkicks.add();
-        kick.modes = genmodemask(modes);
-        kick.limit = *limit;
-        kick.ban = *ban > 0 ? *ban*60000 : (*ban < 0 ? 0 : 30*60000); 
-        modes.deletearrays();
-    }
-
-    COMMAND(teamkillkickreset, "");
-    COMMANDN(teamkillkick, addteamkillkick, "sii");
-
-    void checkteamkills()
-    {
-        teamkillkick *kick = NULL;
-        if(m_timed) loopv(teamkillkicks) if(teamkillkicks[i].match(gamemode) && (!kick || kick->includes(teamkillkicks[i])))
-            kick = &teamkillkicks[i];
-        if(kick) loopvrev(teamkills)
-        {
-            teamkillinfo &tk = teamkills[i];
-            if(tk.teamkills >= kick->limit)
-            {
-                if(kick->ban > 0) addban(tk.ip, kick->ban);
-                kickclients(tk.ip);
-                teamkills.removeunordered(i);
-            }
-        }
-        shouldcheckteamkills = false;
-    }
-
     void *newclientinfo() { return new clientinfo; }
     void deleteclientinfo(void *ci) { delete (clientinfo *)ci; }
-
-    int msgsizelookup(int msg)
-    {
-        static int sizetable[NUMMSG] = { -1 };
-        if(sizetable[0] < 0)
-        {
-            memset(sizetable, -1, sizeof(sizetable));
-            for(const int *p = msgsizes; *p >= 0; p += 2) sizetable[p[0]] = p[1];
-        }
-        return msg >= 0 && msg < NUMMSG ? sizetable[msg] : -1;
-    }
-
-    const char *modename(int n, const char *unknown)
-    {
-        if(m_valid(n)) return gamemodes[n - STARTGAMEMODE].name;
-        return unknown;
-    }
-
-    const char *mastermodename(int n, const char *unknown)
-    {
-        return (n>=MM_START && size_t(n-MM_START)<sizeof(mastermodenames)/sizeof(mastermodenames[0])) ? mastermodenames[n-MM_START] : unknown;
-    }
-
-    const char *privname(int type)
-    {
-        switch(type)
-        {
-            case PRIV_ADMIN: return "admin";
-            case PRIV_AUTH: return "auth";
-            case PRIV_MASTER: return "master";
-            default: return "unknown";
-        }
-    }
 
     void sendservmsg(const char *s) { sendf(-1, 1, "ris", N_SERVMSG, s); }
     void sendservmsgf(const char *fmt, ...)
@@ -364,23 +209,6 @@ namespace server
         resetitems();
     }
 
-    bool duplicatename(clientinfo *ci, const char *name)
-    {
-        if(!name) name = ci->name;
-        loopv(clients) if(clients[i]!=ci && !strcmp(name, clients[i]->name)) return true;
-        return false;
-    }
-
-    const char *colorname(clientinfo *ci, const char *name = NULL)
-    {
-        if(!name) name = ci->name;
-        if(name[0] && !duplicatename(ci, name) && ci->state.aitype == AI_NONE) return name;
-        static string cname[3];
-        static int cidx = 0;
-        cidx = (cidx+1)%3;
-        formatstring(cname[cidx], ci->state.aitype == AI_NONE ? "%s %s(%d)%s" : "%s %s[%d]%s", name, COL_MAGENTA, ci->clientnum, COL_WHITE);
-        return cname[cidx];
-    }
 
     #define SERVMODE 1
     #include "inexor/fpsgame/capture.hpp"
@@ -396,7 +224,8 @@ namespace server
     hideandseekservmode hideandseekmode;
 
 
-    bool canspawnitem(int type) {
+    bool canspawnitem(int type)
+    {
     	if(m_bomb) return (type>=I_BOMBS && type<=I_BOMBDELAY);
     	else return !m_noitems && (type>=I_SHELLS && type<=I_QUAD && (!m_noammo || type<I_SHELLS || type>I_CARTRIDGES));
     }
@@ -421,7 +250,10 @@ namespace server
         teaminfos.clear();
     }
 
-    bool teamhasplayers(const char *team) { loopv(clients) if(!strcmp(clients[i]->team, team)) return true; return false; }
+    bool teamhasplayers(const char *team)
+    {
+        loopv(clients) if(!strcmp(clients[i]->team, team)) return true; return false;
+    }
 
     bool pruneteaminfo()
     {
@@ -773,14 +605,17 @@ namespace server
         pausegame(paused);
     }
 
-    bool ispaused() { return gamepaused; }
+    bool ispaused()
+    {
+        return gamepaused;
+    }
 
     void forcegamespeed(int speed)
     {
         changegamespeed(speed);
     }
 
-    int scaletime(int t) { return t*inexor::server::gamespeed; }
+
 
     void persistteams(bool val)
     {
@@ -1321,10 +1156,10 @@ namespace server
             putint(p, 1);
             putint(p, -1);
         }
-        if(inexor::server::gamespeed != 100)
+        if(gamespeed != 100)
         {
             putint(p, N_GAMESPEED);
-            putint(p, inexor::server::gamespeed);
+            putint(p, gamespeed);
             putint(p, -1);
         }
         if(m_teammode)
@@ -2929,7 +2764,7 @@ namespace server
             case N_REPLACE:
             case N_EDITVSLOT:
             {
-                int size = server::msgsizelookup(type);
+                int size = msgsizelookup(type);
                 if(size<=0) { disconnect_client(sender, DISC_MSGERR); return; }
                 loopi(size-1) getint(p);
                 if(p.remaining() < 2) { disconnect_client(sender, DISC_MSGERR); return; }
@@ -2982,7 +2817,7 @@ namespace server
 
             default: genericmsg:
             {
-                int size = server::msgsizelookup(type);
+                int size = msgsizelookup(type);
                 if(size<=0) { disconnect_client(sender, DISC_MSGERR); return; }
                 loopi(size-1) getint(p);
                 if(ci) switch(msgfilter[type])
@@ -3013,16 +2848,16 @@ namespace server
         }
 
         putint(p, numclients(-1, false, true));
-        putint(p, gamepaused || inexor::server::gamespeed != 100 ? 7 : 5);                   // number of attrs following
+        putint(p, gamepaused || gamespeed != 100 ? 7 : 5);                   // number of attrs following
         putint(p, PROTOCOL_VERSION);    // generic attributes, passed back below
         putint(p, gamemode);
         putint(p, m_timed ? max((gamelimit - gamemillis)/1000, 0) : 0);
         putint(p, maxclients);
         putint(p, serverpass[0] ? MM_PASSWORD : (!m_mp(gamemode) ? MM_PRIVATE : (mastermode || mastermask&MM_AUTOAPPROVE ? mastermode : MM_AUTH)));
-        if(gamepaused || inexor::server::gamespeed != 100)
+        if(gamepaused || gamespeed != 100)
         {
             putint(p, gamepaused ? 1 : 0);
-            putint(p, inexor::server::gamespeed);
+            putint(p, gamespeed);
         }
         sendstring(smapname, p);
         sendstring(serverdesc, p);

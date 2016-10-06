@@ -7,7 +7,8 @@ extern int lastmillis;                  // last time
 extern int elapsedtime;                 // elapsed frame time
 extern int totalmillis;                 // total elapsed time
 extern uint totalsecs;
-extern int gamespeed, paused;
+//extern int gamespeed,
+extern int paused;
 
 enum
 {

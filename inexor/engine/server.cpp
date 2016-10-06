@@ -5,6 +5,9 @@
 #include "inexor/crashreporter/CrashReporter.hpp"
 #include "inexor/util/Logging.hpp"
 
+#include "inexor/server/server_assets.hpp"
+//using namespace inexor::server;
+
 #define LOGSTRLEN 512
 
 char *initscript = NULL;
@@ -578,7 +581,7 @@ void serverslice(bool dedicated, uint timeout)   // main server update, called f
         int millis = (int)enet_time_get();
         elapsedtime = millis - totalmillis;
         static int timeerr = 0;
-        int scaledtime = server::scaletime(elapsedtime) + timeerr;
+        int scaledtime = inexor::server::scaletime(elapsedtime) + timeerr;
         curtime = scaledtime/100;
         timeerr = scaledtime%100;
         if(server::ispaused()) curtime = 0;

@@ -4,6 +4,9 @@
 #include "inexor/filesystem/mediadirs.hpp"
 #include "inexor/util/Logging.hpp"
 
+#include "inexor/server/server_assets.hpp"
+using namespace inexor::server;
+
 using namespace inexor::sound;
 
 namespace game
@@ -711,7 +714,7 @@ namespace game
             cmode->setup();
         }
 
-        spdlog::get("gameplay")->info() << "game mode is " << server::modename(gamemode);
+        spdlog::get("gameplay")->info() << "game mode is " << modename(gamemode);
 
         if(m_sp)
         {
@@ -750,7 +753,7 @@ namespace game
 
     const char *getclientmode()
     {
-        return server::modename(gamemode, NULL);
+        return modename(gamemode, NULL);
     }
 
     /// trigger sound effects depending on the material you enter
@@ -1265,7 +1268,7 @@ namespace game
                 break;
 
             case 2:
-                if(g->buttonf("%s ", 0xFFFFDD, NULL, attr.length()>=2 ? server::modename(attr[1], "") : "")&G3D_UP) return true;
+                if(g->buttonf("%s ", 0xFFFFDD, NULL, attr.length()>=2 ? modename(attr[1], "") : "")&G3D_UP) return true;
                 break;
 
             case 3:
@@ -1283,7 +1286,7 @@ namespace game
                 else if(g->buttonf(" ", 0xFFFFDD)&G3D_UP) return true;
                 break;
             case 5:
-                if(g->buttonf("%s%s ", 0xFFFFDD, NULL, attr.length()>=5 ? mastermodecolor(attr[4], "") : "", attr.length()>=5 ? server::mastermodename(attr[4], "") : "")&G3D_UP) return true;
+                if(g->buttonf("%s%s ", 0xFFFFDD, NULL, attr.length()>=5 ? mastermodecolor(attr[4], "") : "", attr.length()>=5 ? mastermodename(attr[4], "") : "")&G3D_UP) return true;
                 break;
 
             case 6:

@@ -8,6 +8,8 @@
 
 #include "inexor/server/server_data_structures.hpp"
 #include "inexor/server/server_events.hpp"
+#include "inexor/server/server_administration.hpp"
+#include "inexor/server/server_assets.hpp"
 
 namespace inexor {
 namespace server {

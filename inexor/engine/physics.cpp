@@ -7,6 +7,9 @@
 #include "inexor/engine/mpr.hpp"
 #include "inexor/util/Logging.hpp"
 
+#include "inexor/server/server_assets.hpp"
+using namespace inexor::server;
+
 #include <iomanip> // std::setprecision
 
 const int MAXCLIPPLANES = 1024;
@@ -1727,7 +1730,7 @@ void physicsframe()          // optimally schedule physics frames inside the gra
     if(diff <= 0) physsteps = 0;
     else
     {
-        physframetime = clamp(game::scaletime(PHYSFRAMETIME)/100, 1, PHYSFRAMETIME);
+        physframetime = clamp(scaletime(PHYSFRAMETIME)/100, 1, PHYSFRAMETIME);
         physsteps = (diff + physframetime - 1)/physframetime;
         lastphysframe += physsteps * physframetime;
     }

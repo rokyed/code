@@ -79,9 +79,9 @@ namespace server {
     static void changegamespeed(int val, clientinfo *ci = NULL)
     {
         val = clamp(val, 10, 1000);
-        if(inexor::server::gamespeed==val) return;
-        inexor::server::gamespeed = val;
-        sendf(-1, 1, "riii", N_GAMESPEED, inexor::server::gamespeed, ci ? ci->clientnum : -1);
+        if(gamespeed==val) return;
+        gamespeed = val;
+        sendf(-1, 1, "riii", N_GAMESPEED, gamespeed, ci ? ci->clientnum : -1);
     }
 
     /**
